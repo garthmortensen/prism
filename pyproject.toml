@@ -1,0 +1,56 @@
+[project]
+name = "prism"
+version = "0.1.0"
+description = "Risk adjustment analytics lab for decomposing the risk spectrum"
+requires-python = ">=3.11"
+readme = "README.md"
+dependencies = [
+    "dagster",
+    "dagster-dbt",
+    "dagster-webserver",
+    "dbt-duckdb",
+    "duckdb",
+    "hccpy",
+    "httpx",
+    "pandas",
+    "polars",
+    "pydantic>=2.0",
+    "pyyaml",
+    "rich",
+    "tabulate",
+    "typer",
+]
+
+[project.optional-dependencies]
+dev = [
+    "commitizen",
+    "pre-commit",
+    "pytest",
+    "pytest-cov",
+    "ruff",
+]
+
+[project.scripts]
+prism = "platform.cli:app"
+
+[tool.ruff]
+line-length = 100
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.commitizen]
+name = "cz_conventional_commits"
+version = "0.1.0"
+tag_format = "v$version"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_functions = "test_*"
+addopts = "-v --tb=short"
+
+[tool.hatch.build.targets.wheel]
+packages = ["calculators", "platform"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

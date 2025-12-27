@@ -1,0 +1,58 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+ENV/
+.eggs/
+*.egg-info/
+*.egg
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Build
+dist/
+build/
+*.manifest
+*.spec
+
+# Ruff
+.ruff_cache/
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+*.md
+!README.md
+docs/
+
+# Data (mount at runtime instead)
+data/
+*.duckdb
+*.db
+
+# Local config
+.env
+.env.local
+*.local.yaml
+
+# Misc
+.DS_Store
+Thumbs.db
