@@ -24,7 +24,6 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "commitizen",
-    "pre-commit",
     "pytest",
     "pytest-cov",
     "ruff",
@@ -35,6 +34,8 @@ prism = "platform.cli:app"
 
 [tool.ruff]
 line-length = 100
+
+[tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
 
 [tool.commitizen]
