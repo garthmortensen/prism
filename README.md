@@ -141,8 +141,7 @@ Each repository has its own focused structure:
 prism/
 ├── .github/
 │   └── workflows/
-│       ├── ci.yml                      # Lint, test, type-check
-│       └── deploy.yml                  # Build & push container
+│       └── cicd.yml                  # Build & push container
 ├── calculators/
 │   ├── __init__.py
 │   ├── py.typed
