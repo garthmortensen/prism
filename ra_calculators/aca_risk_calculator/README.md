@@ -2,6 +2,8 @@
 
 TODO: implement table 12 exclusions (and check other json mappings).
 
+TODO: implement interaction effect (gross)
+
 A production-ready HHS-HCC (Hierarchical Condition Category) risk score calculator for the Affordable Care Act (ACA) individual and small group markets.
 
 ## Overview

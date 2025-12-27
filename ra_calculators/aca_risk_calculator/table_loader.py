@@ -302,15 +302,23 @@ def load_rxc_hierarchies(model_year: str = "2024") -> dict[str, list[str]]:
 
     df = pl.read_parquet(tables_dir / "table_11.parquet")
 
-    # Determine RXC column name (e.g., v07_rxc for 2024)
-    rxc_col = next((col for col in df.columns if col.endswith("_rxc")), "v07_rxc")
+    # Determine RXC column name (e.g., v07_rxc for 2024).
+    # Some CMS releases use slightly different naming, so be flexible.
+    rxc_candidates = [col for col in df.columns if "rxc" in col.lower()]
+    if not rxc_candidates:
+        # If we can't confidently identify an RXC column, return empty hierarchies
+        # rather than raising a KeyError during row access.
+        _CACHE[cache_key] = hierarchies
+        return hierarchies
+    rxc_col = rxc_candidates[0]
 
-    # Determine zero column (e.g., rxcs_to_zero)
-    zero_col = next((col for col in df.columns if "zero" in col.lower()), "rxcs_to_zero")
+    # Determine zero column (e.g., rxcs_to_zero). Fall back to none if missing.
+    zero_candidates = [col for col in df.columns if "zero" in col.lower()]
+    zero_col = zero_candidates[0] if zero_candidates else None
 
     for row in df.iter_rows(named=True):
         rxc = str(row[rxc_col]).strip()
-        zeros = str(row.get(zero_col, "") or "").strip()
+        zeros = str(row.get(zero_col, "") or "").strip() if zero_col else ""
 
         if zeros:
             # Parse comma-separated list, handling spaces
