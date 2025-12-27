@@ -1,11 +1,11 @@
 # Prism Risk Adjustment Analytics Platform
 
 ```text
-         ____  _____(_)________ ___ 
+.........____  _____(_)________ ___ 
         / __ \/ ___/ / ___/ __ `__ \
-       / /_/ / /  / (__  ) / / / / /
+......./ /_/ / /  / (__  ) / / / / /..............
       / .___/_/  /_/____/_/ /_/ /_/   
-     /_/ Prism: Risk Adjustment Analytics Platform
+...../_/ Prism: Risk Adjustment Analytics Platform
                 -decompose the risk spectrum
 ```
 
