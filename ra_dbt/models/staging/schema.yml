@@ -1,0 +1,39 @@
+version: 2
+
+models:
+  - name: stg_enrollment
+    description: Staged enrollment data joined with member demographics
+    columns:
+      - name: member_id
+        tests:
+          - unique
+          - not_null
+      - name: date_of_birth
+      - name: gender
+      - name: metal_level
+      - name: start_date
+      - name: end_date
+
+  - name: stg_claims_dx
+    description: Staged diagnosis claims (medical only)
+    columns:
+      - name: claim_id
+        tests:
+          - unique
+          - not_null
+      - name: member_id
+        tests:
+          - not_null
+      - name: diagnosis_code
+
+  - name: stg_claims_rx
+    description: Staged pharmacy claims
+    columns:
+      - name: claim_id
+        tests:
+          - unique
+          - not_null
+      - name: member_id
+        tests:
+          - not_null
+      - name: ndc_code

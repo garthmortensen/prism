@@ -1,0 +1,109 @@
+version: 2
+
+seeds:
+  - name: raw_plans
+    config:
+      column_types:
+        monthly_premium: numeric(10,2)
+        deductible: integer
+        oop_max: integer
+    columns:
+      - name: plan_id
+        tests:
+          - not_null
+          - unique
+
+  - name: raw_providers
+    config:
+      column_types:
+        zip: text
+        phone: text
+        npi: text
+    columns:
+      - name: provider_id
+        tests:
+          - not_null
+          - unique
+
+  - name: raw_members
+    config:
+      column_types:
+        dob: date
+        zip: text
+        phone: text
+        email: text
+        fpl_ratio: numeric(5,2)
+        hios_id: text
+        ra_mm: numeric(5,3)
+        year: integer
+    columns:
+      - name: member_id
+        tests:
+          - not_null
+          - unique
+
+  - name: raw_enrollments
+    config:
+      column_types:
+        start_date: date
+        end_date: date
+        premium_paid: numeric(10,2)
+    columns:
+      - name: enrollment_id
+        tests:
+          - not_null
+          - unique
+
+  - name: raw_claims
+    config:
+      column_types:
+        claim_id: text
+        member_id: text
+        provider_id: text
+        plan_id: text
+        service_date: date
+        claim_amount: numeric(12,2)
+        allowed_amount: numeric(12,2)
+        paid_amount: numeric(12,2)
+        status: text
+        diagnosis_code: text
+        procedure_code: text
+        charges: numeric(12,2)
+        allowed: numeric(12,2)
+        clean_claim_status: text
+        claim_from: date
+        clean_claim_out: date
+        utilization: numeric(10,2)
+        hcg_units_days: integer
+        claim_type: text
+        major_service_category: text
+        provider_specialty: text
+        detailed_service_category: text
+        ms_drg: text
+        ms_drg_description: text
+        ms_drg_mdc: text
+        ms_drg_mdc_desc: text
+        cpt: text
+        cpt_consumer_description: text
+        procedure_level_1: text
+        procedure_level_2: text
+        procedure_level_3: text
+        procedure_level_4: text
+        procedure_level_5: text
+        channel: text
+        drug_name: text
+        drug_class: text
+        drug_subclass: text
+        drug: text
+        is_oon: integer
+        best_contracting_entity_name: text
+        provider_group_name: text
+        ccsr_system_description: text
+        ccsr_description: text
+    columns:
+      - name: claim_id
+        tests:
+          - not_null
+          - unique
+
+

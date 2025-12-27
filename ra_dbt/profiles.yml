@@ -1,0 +1,8 @@
+prism:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: '../prism.duckdb'
+      extensions: 
+        - httpfs
