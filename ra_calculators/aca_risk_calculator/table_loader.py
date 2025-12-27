@@ -249,6 +249,80 @@ def load_model_exclusions(model_year: str = "2024") -> dict[str, set[str]]:
     return exclusions
 
 
+def load_ndc_to_rxc(model_year: str = "2024") -> dict[str, list[str]]:
+    """Load NDC to RXC mappings from table_10a.parquet.
+
+    Args:
+        model_year: Model year (e.g., "2024")
+
+    Returns:
+        Dictionary mapping NDC codes to list of RXCs
+    """
+    cache_key = f"ndc_to_rxc_{model_year}"
+    if cache_key in _CACHE:
+        return _CACHE[cache_key]
+
+    tables_dir = _get_tables_dir(model_year)
+    ndc_to_rxc: dict[str, list[str]] = {}
+
+    df = pl.read_parquet(tables_dir / "table_10a.parquet")
+
+    # Identify columns
+    ndc_col = next((col for col in df.columns if "ndc" in col.lower()), "ndc")
+    rxc_col = next((col for col in df.columns if "rxc" in col.lower()), "rxc")
+
+    for row in df.iter_rows(named=True):
+        ndc = str(row[ndc_col]).strip()
+        rxc = str(row[rxc_col]).strip()
+
+        if ndc and rxc:
+            if ndc not in ndc_to_rxc:
+                ndc_to_rxc[ndc] = []
+            if rxc not in ndc_to_rxc[ndc]:
+                ndc_to_rxc[ndc].append(rxc)
+
+    _CACHE[cache_key] = ndc_to_rxc
+    return ndc_to_rxc
+
+
+def load_rxc_hierarchies(model_year: str = "2024") -> dict[str, list[str]]:
+    """Load RXC hierarchies from table_11.parquet.
+
+    Args:
+        model_year: Model year (e.g., "2024")
+
+    Returns:
+        Dictionary mapping dominant RXC to list of RXCs it supersedes
+    """
+    cache_key = f"rxc_hierarchies_{model_year}"
+    if cache_key in _CACHE:
+        return _CACHE[cache_key]
+
+    tables_dir = _get_tables_dir(model_year)
+    hierarchies: dict[str, list[str]] = {}
+
+    df = pl.read_parquet(tables_dir / "table_11.parquet")
+
+    # Determine RXC column name (e.g., v07_rxc for 2024)
+    rxc_col = next((col for col in df.columns if col.endswith("_rxc")), "v07_rxc")
+
+    # Determine zero column (e.g., rxcs_to_zero)
+    zero_col = next((col for col in df.columns if "zero" in col.lower()), "rxcs_to_zero")
+
+    for row in df.iter_rows(named=True):
+        rxc = str(row[rxc_col]).strip()
+        zeros = str(row.get(zero_col, "") or "").strip()
+
+        if zeros:
+            # Parse comma-separated list, handling spaces
+            superseded = [r.strip() for r in zeros.split(",") if r.strip()]
+            if superseded:
+                hierarchies[rxc] = superseded
+
+    _CACHE[cache_key] = hierarchies
+    return hierarchies
+
+
 def clear_cache() -> None:
     """Clear the table cache."""
     _CACHE.clear()

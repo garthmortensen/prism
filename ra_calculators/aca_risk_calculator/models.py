@@ -22,6 +22,7 @@ class MemberInput(BaseModel):
     gender: str = Field(pattern="^[MF]$")
     metal_level: str = Field(default="silver")
     diagnoses: list[str] = Field(default_factory=list)
+    ndc_codes: list[str] = Field(default_factory=list)
     enrollment_months: int = Field(default=12, ge=1, le=12)
 
 

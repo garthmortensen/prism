@@ -20,6 +20,8 @@ from ra_calculators.aca_risk_calculator.table_loader import (
     load_hcc_groups,
     load_icd_to_cc,
     load_model_exclusions,
+    load_ndc_to_rxc,
+    load_rxc_hierarchies,
 )
 
 
@@ -61,6 +63,8 @@ class ACACalculator:
         self._icd_to_cc = load_icd_to_cc(model_year)
         self._coefficients = load_coefficients(model_year)
         self._exclusions = load_model_exclusions(model_year)
+        self._ndc_to_rxc = load_ndc_to_rxc(model_year)
+        self._rxc_hierarchies = load_rxc_hierarchies(model_year)
 
     def _calculate_age(self, dob: date, as_of: date | None = None) -> int:
         """Calculate age in years as of a given date.
@@ -244,6 +248,43 @@ class ACACalculator:
         excluded = self._exclusions.get(model, set())
         return hccs - excluded
 
+    def _map_ndcs_to_rxcs(self, ndc_codes: list[str]) -> set[str]:
+        """Map NDC codes to RXCs.
+
+        Args:
+            ndc_codes: List of NDC codes
+
+        Returns:
+            Set of RXC numbers (as strings)
+        """
+        rxcs: set[str] = set()
+
+        for ndc in ndc_codes:
+            # Normalize: remove dashes, ensure 11 digits if possible?
+            # For now, just strip whitespace
+            ndc_clean = ndc.replace("-", "").strip()
+
+            if ndc_clean in self._ndc_to_rxc:
+                rxcs.update(self._ndc_to_rxc[ndc_clean])
+
+        return rxcs
+
+    def _apply_rxc_hierarchies(self, rxcs: set[str]) -> set[str]:
+        """Apply RXC hierarchies.
+
+        Args:
+            rxcs: Set of RXCs
+
+        Returns:
+            Set of RXCs after hierarchy application
+        """
+        final_rxcs = rxcs.copy()
+        for dominant, superseded_list in self._rxc_hierarchies.items():
+            if dominant in final_rxcs:
+                for superseded in superseded_list:
+                    final_rxcs.discard(superseded)
+        return final_rxcs
+
     def score(self, member: MemberInput, prediction_year: int | None = None) -> ScoreOutput:
         """Calculate risk score for a single member.
 
@@ -298,11 +339,42 @@ class ACACalculator:
                 hcc_score += coef
                 hcc_details[group] = coef
 
-        # Step 8: Calculate total score
-        total_score = demographic_factor + hcc_score
+        # Step 8: RXC Scoring
+        raw_rxcs = self._map_ndcs_to_rxcs(member.ndc_codes)
+        rxcs_after_hierarchy = self._apply_rxc_hierarchies(raw_rxcs)
+
+        rxc_score = 0.0
+        rxc_details: dict[str, float] = {}
+
+        for rxc in rxcs_after_hierarchy:
+            # Try different variable name formats
+            # RXC codes are typically 2 digits (e.g., "01", "02")
+            candidates = [
+                f"RXC_{rxc.zfill(2)}",
+                f"RXC_{rxc.zfill(3)}",
+                f"RXC_{rxc}",
+                rxc,
+            ]
+
+            coef = 0.0
+            var_name = ""
+            for candidate in candidates:
+                c = self._get_coefficient(model, candidate, member.metal_level)
+                if c != 0.0:
+                    coef = c
+                    var_name = candidate
+                    break
+
+            if coef != 0.0:
+                rxc_score += coef
+                rxc_details[var_name] = coef
+
+        # Step 9: Calculate total score
+        total_score = demographic_factor + hcc_score + rxc_score
 
         # Build final HCC list (includes groups for transparency)
         final_hccs = sorted(remaining_hccs) + sorted(triggered_groups)
+        final_rxcs = sorted(rxcs_after_hierarchy)
 
         return ScoreOutput(
             member_id=member.member_id,
@@ -322,6 +394,10 @@ class ACACalculator:
                 "triggered_groups": sorted(triggered_groups),
                 "hcc_coefficients": hcc_details,
                 "hcc_score": round(hcc_score, 4),
+                "raw_rxcs": sorted(raw_rxcs),
+                "rxcs_after_hierarchy": sorted(final_rxcs),
+                "rxc_coefficients": rxc_details,
+                "rxc_score": round(rxc_score, 4),
                 "model_year": self.model_year,
             },
         )

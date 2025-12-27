@@ -44,6 +44,26 @@ diy_tables/
 
 > **Note:** Tables are stored in Parquet format for faster loading performance. Original CSV files are also retained.
 
+## Input Requirements
+
+To use the calculator, you need to provide the following data for each member. This data will typically come from your enrollment and claims tables.
+
+| Field | Type | Description | Required | Default |
+|-------|------|-------------|----------|---------|
+| `member_id` | String | Unique identifier for the member | Yes | - |
+| `date_of_birth` | Date | Member's date of birth (YYYY-MM-DD) | Yes | - |
+| `gender` | String | 'M' for Male, 'F' for Female | Yes | - |
+| `metal_level` | String | Plan metal level: 'platinum', 'gold', 'silver', 'bronze', 'catastrophic' | No | 'silver' |
+| `diagnoses` | List[String] | List of valid ICD-10-CM diagnosis codes | No | [] |
+| `ndc_codes` | List[String] | List of valid National Drug Codes (NDCs) | No | [] |
+| `enrollment_months` | Integer | Number of months enrolled in the benefit year (1-12) | No | 12 |
+
+**Data Preparation Notes:**
+*   **Diagnoses:** Ensure diagnosis codes are cleaned (stripped of decimals, e.g., "E11.9" -> "E119").
+*   **NDCs:** Ensure NDCs are 11-digit format if possible, though the calculator attempts to normalize them.
+*   **Enrollment:** You may need to aggregate enrollment spans to calculate total `enrollment_months`.
+*   **Model Year:** The calculator requires a model year (e.g., "2024") to load the correct coefficients.
+
 ## How It Works
 
 ```mermaid
@@ -61,11 +81,17 @@ flowchart TD
     I --> J[Remove Model Exclusions<br/>table_12.parquet]
     J --> K[Apply HCC Groupings<br/>table_6/7.json]
     
+    A --> P[Map NDCs]
+    P --> Q[NDC → RXC<br/>table_10a.parquet]
+    Q --> R[Apply RXC Hierarchies<br/>table_11.parquet]
+
     D --> L[Demographic Factor<br/>table_9.csv]
     K --> M[HCC Coefficients<br/>table_9.csv]
+    R --> S[RXC Coefficients<br/>table_9.csv]
     
     L --> N[Sum Factors]
     M --> N
+    S --> N
     N --> O[Risk Score]
 ```
 
@@ -74,12 +100,17 @@ flowchart TD
 ```mermaid
 erDiagram
     MEMBER ||--o{ DIAGNOSIS : has
+    MEMBER ||--o{ NDC : has
     MEMBER ||--|| DEMOGRAPHIC_FACTOR : maps_to
     DIAGNOSIS ||--o| CC : "maps via table_3"
     CC ||--o| HCC : "survives table_4 hierarchy"
     HCC ||--o| HCC_GROUP : "grouped via table_6/7"
     HCC ||--|| COEFFICIENT : "from table_9"
     HCC_GROUP ||--|| COEFFICIENT : "from table_9"
+    
+    NDC ||--o| RXC : "maps via table_10a"
+    RXC ||--o| RXC_HIERARCHY : "survives table_11 hierarchy"
+    RXC ||--|| COEFFICIENT : "from table_9"
     
     MEMBER {
         string member_id PK
@@ -92,6 +123,10 @@ erDiagram
         string icd10_code
     }
     
+    NDC {
+        string ndc_code
+    }
+    
     CC {
         string cc_number
     }
@@ -99,6 +134,11 @@ erDiagram
     HCC {
         string hcc_number
         string hcc_label
+    }
+    
+    RXC {
+        string rxc_number
+        string rxc_label
     }
     
     HCC_GROUP {
@@ -156,7 +196,7 @@ Some HCCs are grouped together (from `table_6.json` / `table_7.json`). When any 
 ## Scoring Formula
 
 ```
-Risk Score = Demographic Factor + Σ(HCC/Group Coefficients)
+Risk Score = Demographic Factor + Σ(HCC/Group Coefficients) + Σ(RXC Coefficients)
 ```
 
 Where coefficients vary by metal level (from `table_9.parquet`):
@@ -165,7 +205,7 @@ Where coefficients vary by metal level (from `table_9.parquet`):
 |----------|----------|------|--------|--------|
 | MAGE_LAST_55_59 | 0.441 | 0.325 | 0.246 | 0.185 |
 | HHS_HCC002 | 9.632 | 9.382 | 9.265 | 9.203 |
-| G01 | 0.XXX | 0.XXX | 0.XXX | 0.XXX |
+| RXC_01 | 0.XXX | 0.XXX | 0.XXX | 0.XXX |
 
 ## Usage
 
@@ -183,6 +223,7 @@ member = MemberInput(
     gender="M",
     metal_level="silver",
     diagnoses=["E1165", "I509", "F329"],  # Diabetes, Heart failure, Depression
+    ndc_codes=["00000000001", "99999999999"], # Sample NDCs
 )
 
 # Calculate risk score
@@ -191,17 +232,21 @@ result = calculator.score(member)
 print(f"Risk Score: {result.risk_score:.4f}")
 print(f"Model: {result.details['model']}")
 print(f"HCCs: {result.hcc_list}")
+print(f"RXCs: {result.details['rxcs_after_hierarchy']}")
 print(f"Demographic Factor: {result.details['demographic_factor']:.4f}")
 print(f"HCC Score: {result.details['hcc_score']:.4f}")
+print(f"RXC Score: {result.details['rxc_score']:.4f}")
 ```
 
 **Example Output:**
 ```
-Risk Score: 2.8940
+Risk Score: 3.0170
 Model: Adult
 HCCs: ['128', 'G01', 'G03']
+RXCs: ['01']
 Demographic Factor: 0.2460
 HCC Score: 2.6480
+RXC Score: 0.1230
 ```
 
 ## Detailed Calculation Breakdown
@@ -227,6 +272,12 @@ The `ScoreOutput.details` dictionary provides full auditability:
         "G03": 0.847
     },
     "hcc_score": 2.648,
+    "raw_rxcs": ["01", "02"],
+    "rxcs_after_hierarchy": ["01"],
+    "rxc_coefficients": {
+        "RXC_01": 0.123
+    },
+    "rxc_score": 0.123,
     "model_year": "2024"
 }
 ```
@@ -269,9 +320,9 @@ for result in results:
 
 ## Limitations
 
-- **RXC (Pharmacy) scoring**: Not yet implemented. The calculator currently only scores diagnosis-based HCCs. RXC tables (10a, 10b, 11) are available but not integrated.
 - **Infant severity model**: Simplified implementation. Full infant model requires severity level assignment from table_8.json.
 - **Interaction terms**: Not implemented. Some model years include HCC interaction terms.
+- **RXC Interactions**: Interactions between RXCs and HCCs are not yet implemented.
 
 ## References
 
