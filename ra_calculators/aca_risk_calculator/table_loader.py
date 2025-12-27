@@ -30,8 +30,7 @@ def _get_tables_dir(model_year: str) -> Path:
     tables_dir = DATA_DIR / f"cy{model_year}_diy_tables"
     if not tables_dir.exists():
         raise FileNotFoundError(
-            f"DIY tables not found for model year {model_year}. "
-            f"Expected directory: {tables_dir}"
+            f"DIY tables not found for model year {model_year}. Expected directory: {tables_dir}"
         )
     return tables_dir
 
