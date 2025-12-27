@@ -1,0 +1,142 @@
+[
+  {
+    "model": "Adult",
+    "variable(s)": "AGE_LAST",
+    "description": "Age as of last day of enrollment in benefit year",
+    "definition": "21 <= AGE_LAST",
+    "continuation": []
+  },
+  {
+    "model": "Child",
+    "variable(s)": "AGE_LAST",
+    "description": "Age as of last day of enrollment in benefit year",
+    "definition": "2 <= AGE_LAST <=  20",
+    "continuation": []
+  },
+  {
+    "model": "Infant",
+    "variable(s)": "AGE_LAST",
+    "description": "Age as of last day of enrollment in benefit year",
+    "definition": "0 <= AGE_LAST <=   1",
+    "continuation": []
+  },
+  {
+    "model": "Adult, Child, Infant",
+    "variable(s)": "SEX",
+    "description": "Sex",
+    "definition": "SEX in {Male, Female}",
+    "continuation": []
+  },
+  {
+    "model": "Adult, Child, Infant",
+    "variable(s)": "Various HHS_HCC 0/1 markers, ICD10 diagnoses, and AGE_LAST",
+    "description": "Include adults/children or infants having both completed pregnancy records and newborn records. \"Bundled\" claims should be separated into separate mother and infant claims whenever possible (as is described in the note at the end of Section II of the instructions document).",
+    "definition": null,
+    "continuation": [
+      {
+        "description": "Infants with a record in the person-level file that cannot be matched with a claim or who do not have claims will have no diagnoses in the diagnosis-level file. All infants without diagnoses will be assigned to the lowest severity category and the Age 1 maturity category for infants as detailed in Table 8, rows 130 and 137.  Age 0 infants with diagnoses but who lack a newborn HCC will be assigned to the corresponding severity category and the Age 1 maturity category for infants as detailed in Table 8, rows 5-130 and 137.  Male infants will also have the male demographic factor assigned. Male age 0 infants who lack a newborn HCC will have their demographic factor reassigned to Age 1 as detailed in Table 8, row 142."
+      },
+      {
+        "description": "Beginning step of algorithm for including diagnoses for mother, if mother is the Enrollee on the bundled claim:",
+        "definition": "if ( 2 <= AGE_LAST) and"
+      },
+      {
+        "definition": "(HHS_HCC207=1 or HHS_HCC208=1 or HHS_HCC209=1) and"
+      },
+      {
+        "definition": "(Enrollee has one or more ICD10 diagnoses corresponding to a newborn HCC in Table 3 {HHS_HCC242 or HHS_HCC243 or HHS_HCC244 or HHS_HCC245 or HHS_HCC246 or HHS_HCC247 or HHS_HCC248 or HHS_HCC249}"
+      },
+      {
+        "definition": "} ) then include the Enrollee and all HHS_HCCs that are valid for the mother (based on diagnoses that pass age/sex edits for the mother). Diagnoses that could apply to either the mother or the infant are assumed to apply to the mother."
+      },
+      {
+        "description": "Beginning step of algorithm for including diagnoses for infant, if infant is the Enrollee on the bundled claim:",
+        "definition": "if ( 0 = AGE_LAST) and"
+      },
+      {
+        "definition": "(HHS_HCC242=1 or HHS_HCC243=1 or HHS_HCC244=1 or HHS_HCC245=1 or HHS_HCC246=1 or HHS_HCC247=1 or HHS_HCC248=1 or HHS_HCC249=1) and"
+      },
+      {
+        "definition": "(Enrollee has one or more ICD10 diagnoses corresponding to a completed pregnancy HCC in Table 3 {HHS_HCC207 or HHS_HCC208 or HHS_HCC209}"
+      },
+      {
+        "definition": "} ) then include the Enrollee and all HHS_HCCs that are valid for the infant (based on diagnoses that pass age/sex edits for the infant). Diagnoses that could apply to either the mother or the infant are assumed to apply to the infant."
+      }
+    ]
+  },
+  {
+    "model": "Adult",
+    "variable(s)": "ENROLDURATION",
+    "description": "Enrollee's enrollment duration in months in benefit year; used in Adult model to create 11 mutually-exclusive enrollment duration in months 0/1 markers (ED_1 through ED_11) that indicate partial year enrollment",
+    "definition": "Allowable values for ENROLDURATION are 1-12 based on months enrolled in plan in benefit year as defined by days:\n1 = 1\u201331 days enrolled\n2 = 32\u201362 days enrolled\n3 = 63\u201392 days enrolled\n4 = 93\u2013123 days enrolled\n5 = 124\u2013153 days enrolled \n6 = 154\u2013184 days enrolled \n7 = 185\u2013214 days enrolled \n8 = 215\u2013245 days enrolled\n9 = 246\u2013275 days enrolled\n10 = 276\u2013306 days enrolled\n11 = 307\u2013335 days enrolled\n12 = 336\u2013366 days enrolled.",
+    "continuation": []
+  },
+  {
+    "model": "Child, Infant",
+    "variable(s)": "ENROLDURATION",
+    "description": "Enrollee's enrollment duration in months in benefit year; enrollment duration is not applicable to Child and Infant models; variable ignored",
+    "definition": "Allowable values for ENROLDURATION are 1-12 as described above.",
+    "continuation": []
+  },
+  {
+    "model": "Adult",
+    "variable(s)": "RXCs and RXC interactions",
+    "description": "Prescription Drug Categories (RXCs) based on prescription drugs in pharmacy claims in benefit year; used in Adult model only; RXCs 1-10 are variables; RXCs 1-10 are used in Adult risk score formula; RXCs 1-10 are used in creation of 13 RXC interaction variables; all 13 RXC interaction variables are used in Adult risk score formula",
+    "definition": "See Table 6 for RXCs and RXC interactions. See Table 10a for RXC to National Drug Code (NDC) Crosswalk.  See Table 10b for RXC to Healthcare Common Procedure Coding System (HCPCS) Crosswalk. See Table 11 for RXC Hierarchies.",
+    "continuation": []
+  },
+  {
+    "model": "Adult, Child, Infant",
+    "variable(s)": "METAL",
+    "description": "Enrollee's plan level",
+    "definition": "METAL in {Platinum, Gold, Silver, Bronze, Catastrophic}",
+    "continuation": []
+  },
+  {
+    "model": "Adult, Child, Infant",
+    "variable(s)": "CSR_INDICATOR",
+    "description": "Enrollees (including enrollees in premium assistance Medicaid alternative plan) who qualify for cost-sharing reductions (CSR) are assigned CSR_INDICATOR values 1-13. Non-CSR recipients and enrollees with unknown CSR status are assigned CSR_INDICATOR value 0.",
+    "definition": "CSR_INDICATOR = 1 for enrollees in 94% Actuarial Value (AV) Silver Plan Variation",
+    "continuation": [
+      {
+        "definition": "CSR_INDICATOR = 2 for enrollees in 87% AV Silver Plan Variation"
+      },
+      {
+        "definition": "CSR_INDICATOR = 3 for enrollees in 73% AV Silver Plan Variation"
+      },
+      {
+        "definition": "CSR_INDICATOR = 4 for enrollees in Zero Cost Sharing Plan Variation of Platinum Level Qualified Health Plan (QHP)"
+      },
+      {
+        "definition": "CSR_INDICATOR = 5 for enrollees in Zero Cost Sharing Plan Variation of Gold Level QHP"
+      },
+      {
+        "definition": "CSR_INDICATOR = 6 for enrollees in Zero Cost Sharing Plan Variation of Silver Level QHP"
+      },
+      {
+        "definition": "CSR_INDICATOR = 7 for enrollees in Zero Cost Sharing Plan Variation of Bronze Level QHP"
+      },
+      {
+        "definition": "CSR_INDICATOR = 8 for enrollees in Limited Cost Sharing Plan Variation of Platinum Level QHP"
+      },
+      {
+        "definition": "CSR_INDICATOR = 9 for enrollees in Limited Cost Sharing Plan Variation of Gold Level QHP"
+      },
+      {
+        "definition": "CSR_INDICATOR = 10 for enrollees in Limited Cost Sharing Plan Variation of Silver Level QHP"
+      },
+      {
+        "definition": "CSR_INDICATOR = 11 for enrollees in Limited Cost Sharing Plan Variation of Bronze Level QHP"
+      },
+      {
+        "definition": "CSR_INDICATOR = 12 for enrollees in Premium Assistance Medicaid Alternative Plan with 94% AV Silver Plan Variation"
+      },
+      {
+        "definition": "CSR_INDICATOR = 13 for enrollees in Premium Assistance Medicaid Alternative Plan with Zero Cost Sharing Plan Variation of Silver Level QHP"
+      },
+      {
+        "definition": "CSR_INDICATOR = 0 for non-CSR recipients and enrollees with unknown CSR status"
+      }
+    ]
+  }
+]

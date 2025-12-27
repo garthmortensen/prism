@@ -1,0 +1,779 @@
+[
+  {
+    "model": "Infant",
+    "variable": "IHCC_SEVERITY5",
+    "description": "Severity level (highest) (0/1)",
+    "variable_used_in_risk_score_formula?": "No",
+    "definition": "if HHS_HCC008 = 1 then IHCC_SEVERITY5 = 1;",
+    "continuation": [
+      {
+        "definition": "if HHS_HCC018 = 1 then IHCC_SEVERITY5 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC034 = 1 then IHCC_SEVERITY5 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC041 = 1 then IHCC_SEVERITY5 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC042 = 1 then IHCC_SEVERITY5 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC125 = 1 then IHCC_SEVERITY5 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC128 = 1 then IHCC_SEVERITY5 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC129 = 1 then IHCC_SEVERITY5 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC130 = 1 then IHCC_SEVERITY5 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC137 = 1 then IHCC_SEVERITY5 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC158 = 1 then IHCC_SEVERITY5 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC183 = 1 then IHCC_SEVERITY5 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC184 = 1 then IHCC_SEVERITY5 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC251 = 1 then IHCC_SEVERITY5 = 1;"
+      }
+    ]
+  },
+  {
+    "model": "Infant",
+    "variable": "IHCC_SEVERITY4",
+    "description": "Severity level (0/1)",
+    "variable_used_in_risk_score_formula?": "No",
+    "definition": "if HHS_HCC002 = 1 then IHCC_SEVERITY4 = 1;",
+    "continuation": [
+      {
+        "definition": "if HHS_HCC009 = 1 then IHCC_SEVERITY4 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC026 = 1 then IHCC_SEVERITY4 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC030 = 1 then IHCC_SEVERITY4 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC035_1 = 1 then IHCC_SEVERITY4 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC035_2 = 1 then IHCC_SEVERITY4 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC064 = 1 then IHCC_SEVERITY4 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC067 = 1 then IHCC_SEVERITY4 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC068 = 1 then IHCC_SEVERITY4 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC073 = 1 then IHCC_SEVERITY4 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC106 = 1 then IHCC_SEVERITY4 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC107 = 1 then IHCC_SEVERITY4 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC111 = 1 then IHCC_SEVERITY4 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC112 = 1 then IHCC_SEVERITY4 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC115 = 1 then IHCC_SEVERITY4 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC122 = 1 then IHCC_SEVERITY4 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC126 = 1 then IHCC_SEVERITY4 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC127 = 1 then IHCC_SEVERITY4 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC131 = 1 then IHCC_SEVERITY4 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC135 = 1 then IHCC_SEVERITY4 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC138 = 1 then IHCC_SEVERITY4 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC145 = 1 then IHCC_SEVERITY4 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC146 = 1 then IHCC_SEVERITY4 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC154 = 1 then IHCC_SEVERITY4 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC156 = 1 then IHCC_SEVERITY4 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC163 = 1 then IHCC_SEVERITY4 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC187 = 1 then IHCC_SEVERITY4 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC253 = 1 then IHCC_SEVERITY4 = 1;"
+      }
+    ]
+  },
+  {
+    "model": "Infant",
+    "variable": "IHCC_SEVERITY3",
+    "description": "Severity level (0/1)",
+    "variable_used_in_risk_score_formula?": "No",
+    "definition": "if HHS_HCC001 = 1 then IHCC_SEVERITY3 = 1;",
+    "continuation": [
+      {
+        "definition": "if HHS_HCC003 = 1 then IHCC_SEVERITY3 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC006 = 1 then IHCC_SEVERITY3 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC010 = 1 then IHCC_SEVERITY3 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC011 = 1 then IHCC_SEVERITY3 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC012 = 1 then IHCC_SEVERITY3 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC027 = 1 then IHCC_SEVERITY3 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC045 = 1 then IHCC_SEVERITY3 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC054 = 1 then IHCC_SEVERITY3 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC055 = 1 then IHCC_SEVERITY3 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC061 = 1 then IHCC_SEVERITY3 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC063 = 1 then IHCC_SEVERITY3 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC066 = 1 then IHCC_SEVERITY3 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC074 = 1 then IHCC_SEVERITY3 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC075 = 1 then IHCC_SEVERITY3 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC081 = 1 then IHCC_SEVERITY3 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC082 = 1 then IHCC_SEVERITY3 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC083 = 1 then IHCC_SEVERITY3 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC084 = 1 then IHCC_SEVERITY3 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC096 = 1 then IHCC_SEVERITY3 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC108 = 1 then IHCC_SEVERITY3 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC109 = 1 then IHCC_SEVERITY3 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC110 = 1 then IHCC_SEVERITY3 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC113 = 1 then IHCC_SEVERITY3 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC114 = 1 then IHCC_SEVERITY3 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC117 = 1 then IHCC_SEVERITY3 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC119 = 1 then IHCC_SEVERITY3 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC121 = 1 then IHCC_SEVERITY3 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC132 = 1 then IHCC_SEVERITY3 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC139 = 1 then IHCC_SEVERITY3 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC142 = 1 then IHCC_SEVERITY3 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC149 = 1 then IHCC_SEVERITY3 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC150 = 1 then IHCC_SEVERITY3 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC159 = 1 then IHCC_SEVERITY3 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC218 = 1 then IHCC_SEVERITY3 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC223 = 1 then IHCC_SEVERITY3 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC226 = 1 then IHCC_SEVERITY3 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC228 = 1 then IHCC_SEVERITY3 = 1;"
+      }
+    ]
+  },
+  {
+    "model": "Infant",
+    "variable": "IHCC_SEVERITY2",
+    "description": "Severity level (0/1)",
+    "variable_used_in_risk_score_formula?": "No",
+    "definition": "if HHS_HCC004 = 1 then IHCC_SEVERITY2 = 1;",
+    "continuation": [
+      {
+        "definition": "if HHS_HCC013 = 1 then IHCC_SEVERITY2 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC019 = 1 then IHCC_SEVERITY2 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC020 = 1 then IHCC_SEVERITY2 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC021 = 1 then IHCC_SEVERITY2 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC023 = 1 then IHCC_SEVERITY2 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC028 = 1 then IHCC_SEVERITY2 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC029 = 1 then IHCC_SEVERITY2 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC036 = 1 then IHCC_SEVERITY2 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC046 = 1 then IHCC_SEVERITY2 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC047 = 1 then IHCC_SEVERITY2 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC048 = 1 then IHCC_SEVERITY2 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC056 = 1 then IHCC_SEVERITY2 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC057 = 1 then IHCC_SEVERITY2 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC062 = 1 then IHCC_SEVERITY2 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC069 = 1 then IHCC_SEVERITY2 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC070 = 1 then IHCC_SEVERITY2 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC097 = 1 then IHCC_SEVERITY2 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC120 = 1 then IHCC_SEVERITY2 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC151 = 1 then IHCC_SEVERITY2 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC153 = 1 then IHCC_SEVERITY2 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC160 = 1 then IHCC_SEVERITY2 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC161_1 = 1 then IHCC_SEVERITY2 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC162 = 1 then IHCC_SEVERITY2 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC188 = 1 then IHCC_SEVERITY2 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC217 = 1 then IHCC_SEVERITY2 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC219 = 1 then IHCC_SEVERITY2 = 1;"
+      }
+    ]
+  },
+  {
+    "model": "Infant",
+    "variable": "IHCC_SEVERITY1",
+    "description": "Severity level (lowest) (0/1)",
+    "variable_used_in_risk_score_formula?": "No",
+    "definition": "if HHS_HCC037_1 = 1 then IHCC_SEVERITY1 = 1;",
+    "continuation": [
+      {
+        "definition": "if HHS_HCC037_2 = 1 then IHCC_SEVERITY1 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC071 = 1 then IHCC_SEVERITY1 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC102 = 1 then IHCC_SEVERITY1 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC103 = 1 then IHCC_SEVERITY1 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC118 = 1 then IHCC_SEVERITY1 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC161_2 = 1 then IHCC_SEVERITY1 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC234 = 1 then IHCC_SEVERITY1 = 1;"
+      },
+      {
+        "definition": "if HHS_HCC254 = 1 then IHCC_SEVERITY1 = 1;"
+      },
+      {
+        "description": "Impose hierarchy",
+        "definition": "if IHCC_SEVERITY5 = 1 then do; IHCC_SEVERITY4 = 0; IHCC_SEVERITY3 = 0; IHCC_SEVERITY2 = 0; IHCC_SEVERITY1 = 0; end;"
+      },
+      {
+        "definition": "if IHCC_SEVERITY4 = 1 then do;                     IHCC_SEVERITY3 = 0; IHCC_SEVERITY2 = 0; IHCC_SEVERITY1 = 0; end;"
+      },
+      {
+        "definition": "if IHCC_SEVERITY3 = 1 then do;                                         IHCC_SEVERITY2 = 0; IHCC_SEVERITY1 = 0; end;"
+      },
+      {
+        "definition": "if IHCC_SEVERITY2 = 1 then do;                                                             IHCC_SEVERITY1 = 0; end;"
+      },
+      {
+        "definition": "if IHCC_SEVERITY5 = 0 and IHCC_SEVERITY4 = 0 and IHCC_SEVERITY3 = 0 and IHCC_SEVERITY2 = 0 then IHCC_SEVERITY1 = 1;"
+      }
+    ]
+  },
+  {
+    "model": "Infant",
+    "variable": "IHCC_AGE1",
+    "description": "Maturity level (0/1)",
+    "variable_used_in_risk_score_formula?": "No",
+    "definition": "if AGE_LAST = 1 then IHCC_AGE1 = 1;",
+    "continuation": []
+  },
+  {
+    "model": "Infant",
+    "variable": "IHCC_EXTREMELY_IMMATURE",
+    "description": null,
+    "variable_used_in_risk_score_formula?": "No",
+    "definition": "if AGE_LAST = 0 and (HHS_HCC242 = 1 or HHS_HCC243 = 1 or HHS_HCC244 = 1) then IHCC_EXTREMELY_IMMATURE = 1;",
+    "continuation": []
+  },
+  {
+    "model": "Infant",
+    "variable": "IHCC_IMMATURE",
+    "description": null,
+    "variable_used_in_risk_score_formula?": "No",
+    "definition": "if AGE_LAST = 0 and (HHS_HCC245 = 1 or HHS_HCC246 = 1) then IHCC_IMMATURE = 1;",
+    "continuation": []
+  },
+  {
+    "model": "Infant",
+    "variable": "IHCC_PREMATURE_MULTIPLES",
+    "description": null,
+    "variable_used_in_risk_score_formula?": "No",
+    "definition": "if AGE_LAST = 0 and (HHS_HCC247 = 1 or HHS_HCC248 = 1) then IHCC_PREMATURE_MULTIPLES = 1;",
+    "continuation": []
+  },
+  {
+    "model": "Infant",
+    "variable": "IHCC_TERM",
+    "description": null,
+    "variable_used_in_risk_score_formula?": "No",
+    "definition": "if AGE_LAST = 0 and HHS_HCC249 = 1 then IHCC_TERM = 1;",
+    "continuation": [
+      {
+        "description": "Assign as IHCC_AGE1 if needed",
+        "definition": "if AGE_LAST = 0 and (HHS_HCC242 = 0 and HHS_HCC243 = 0 and HHS_HCC244 = 0 and HHS_HCC245 = 0 and HHS_HCC246 = 0 and HHS_HCC247 = 0 and  HHS_HCC248 = 0 and HHS_HCC249 = 0) then IHCC_AGE1 = 1;"
+      },
+      {
+        "description": "Impose hierarchy",
+        "definition": "if IHCC_EXTREMELY_IMMATURE  = 1 then do; IHCC_IMMATURE = 0; IHCC_PREMATURE_MULTIPLES = 0; IHCC_TERM = 0; end;"
+      },
+      {
+        "definition": "if IHCC_IMMATURE            = 1 then do;                    IHCC_PREMATURE_MULTIPLES = 0; IHCC_TERM = 0; end;"
+      },
+      {
+        "definition": "if IHCC_PREMATURE_MULTIPLES = 1 then do;                                                  IHCC_TERM = 0; end;"
+      },
+      {
+        "description": "Reassign age-sex variable if needed",
+        "variable_used_in_risk_score_formula?": "Yes",
+        "definition": "if AGE_LAST = 0 and IHCC_AGE1 = 1 and AGE0_MALE = 1 then do ; AGE1_MALE = 1 ; AGE0_MALE = 0; end;"
+      }
+    ]
+  },
+  {
+    "model": "Infant",
+    "variable": "EXTREMELY_IMMATURE_X_SEVERITY5",
+    "description": "Maturity x severity level interactions (0/1)",
+    "variable_used_in_risk_score_formula?": "Yes",
+    "definition": "if IHCC_SEVERITY5 = 1 and IHCC_EXTREMELY_IMMATURE  = 1 then EXTREMELY_IMMATURE_X_SEVERITY5  = 1;",
+    "continuation": []
+  },
+  {
+    "model": "Infant",
+    "variable": "IMMATURE_X_SEVERITY5",
+    "description": null,
+    "variable_used_in_risk_score_formula?": "Yes",
+    "definition": "if IHCC_SEVERITY5 = 1 and IHCC_IMMATURE            = 1 then IMMATURE_X_SEVERITY5            = 1;",
+    "continuation": []
+  },
+  {
+    "model": "Infant",
+    "variable": "PREMATURE_MULTIPLES_X_SEVERITY5",
+    "description": null,
+    "variable_used_in_risk_score_formula?": "Yes",
+    "definition": "if IHCC_SEVERITY5 = 1 and IHCC_PREMATURE_MULTIPLES = 1 then PREMATURE_MULTIPLES_X_SEVERITY5 = 1;",
+    "continuation": []
+  },
+  {
+    "model": "Infant",
+    "variable": "TERM_X_SEVERITY5",
+    "description": null,
+    "variable_used_in_risk_score_formula?": "Yes",
+    "definition": "if IHCC_SEVERITY5 = 1 and IHCC_TERM                = 1 then TERM_X_SEVERITY5                = 1;",
+    "continuation": []
+  },
+  {
+    "model": "Infant",
+    "variable": "AGE1_X_SEVERITY5",
+    "description": null,
+    "variable_used_in_risk_score_formula?": "Yes",
+    "definition": "if IHCC_SEVERITY5 = 1 and IHCC_AGE1                = 1 then AGE1_X_SEVERITY5                = 1;",
+    "continuation": []
+  },
+  {
+    "model": "Infant",
+    "variable": "EXTREMELY_IMMATURE_X_SEVERITY4",
+    "description": null,
+    "variable_used_in_risk_score_formula?": "Yes",
+    "definition": "if IHCC_SEVERITY4 = 1 and IHCC_EXTREMELY_IMMATURE  = 1 then EXTREMELY_IMMATURE_X_SEVERITY4  = 1;",
+    "continuation": []
+  },
+  {
+    "model": "Infant",
+    "variable": "IMMATURE_X_SEVERITY4",
+    "description": null,
+    "variable_used_in_risk_score_formula?": "Yes",
+    "definition": "if IHCC_SEVERITY4 = 1 and IHCC_IMMATURE            = 1 then IMMATURE_X_SEVERITY4            = 1;",
+    "continuation": []
+  },
+  {
+    "model": "Infant",
+    "variable": "PREMATURE_MULTIPLES_X_SEVERITY4",
+    "description": null,
+    "variable_used_in_risk_score_formula?": "Yes",
+    "definition": "if IHCC_SEVERITY4 = 1 and IHCC_PREMATURE_MULTIPLES = 1 then PREMATURE_MULTIPLES_X_SEVERITY4 = 1;",
+    "continuation": []
+  },
+  {
+    "model": "Infant",
+    "variable": "TERM_X_SEVERITY4",
+    "description": null,
+    "variable_used_in_risk_score_formula?": "Yes",
+    "definition": "if IHCC_SEVERITY4 = 1 and IHCC_TERM                = 1 then TERM_X_SEVERITY4                = 1;",
+    "continuation": []
+  },
+  {
+    "model": "Infant",
+    "variable": "AGE1_X_SEVERITY4",
+    "description": null,
+    "variable_used_in_risk_score_formula?": "Yes",
+    "definition": "if IHCC_SEVERITY4 = 1 and IHCC_AGE1                = 1 then AGE1_X_SEVERITY4                = 1;",
+    "continuation": []
+  },
+  {
+    "model": "Infant",
+    "variable": "EXTREMELY_IMMATURE_X_SEVERITY3",
+    "description": null,
+    "variable_used_in_risk_score_formula?": "Yes",
+    "definition": "if IHCC_SEVERITY3 = 1 and IHCC_EXTREMELY_IMMATURE  = 1 then EXTREMELY_IMMATURE_X_SEVERITY3  = 1;",
+    "continuation": []
+  },
+  {
+    "model": "Infant",
+    "variable": "IMMATURE_X_SEVERITY3",
+    "description": null,
+    "variable_used_in_risk_score_formula?": "Yes",
+    "definition": "if IHCC_SEVERITY3 = 1 and IHCC_IMMATURE            = 1 then IMMATURE_X_SEVERITY3            = 1;",
+    "continuation": []
+  },
+  {
+    "model": "Infant",
+    "variable": "PREMATURE_MULTIPLES_X_SEVERITY3",
+    "description": null,
+    "variable_used_in_risk_score_formula?": "Yes",
+    "definition": "if IHCC_SEVERITY3 = 1 and IHCC_PREMATURE_MULTIPLES = 1 then PREMATURE_MULTIPLES_X_SEVERITY3 = 1;",
+    "continuation": []
+  },
+  {
+    "model": "Infant",
+    "variable": "TERM_X_SEVERITY3",
+    "description": null,
+    "variable_used_in_risk_score_formula?": "Yes",
+    "definition": "if IHCC_SEVERITY3 = 1 and IHCC_TERM                = 1 then TERM_X_SEVERITY3                = 1;",
+    "continuation": []
+  },
+  {
+    "model": "Infant",
+    "variable": "AGE1_X_SEVERITY3",
+    "description": null,
+    "variable_used_in_risk_score_formula?": "Yes",
+    "definition": "if IHCC_SEVERITY3 = 1 and IHCC_AGE1                = 1 then AGE1_X_SEVERITY3                = 1;",
+    "continuation": []
+  },
+  {
+    "model": "Infant",
+    "variable": "EXTREMELY_IMMATURE_X_SEVERITY2",
+    "description": null,
+    "variable_used_in_risk_score_formula?": "Yes",
+    "definition": "if IHCC_SEVERITY2 = 1 and IHCC_EXTREMELY_IMMATURE  = 1 then EXTREMELY_IMMATURE_X_SEVERITY2  = 1;",
+    "continuation": []
+  },
+  {
+    "model": "Infant",
+    "variable": "IMMATURE_X_SEVERITY2",
+    "description": null,
+    "variable_used_in_risk_score_formula?": "Yes",
+    "definition": "if IHCC_SEVERITY2 = 1 and IHCC_IMMATURE            = 1 then IMMATURE_X_SEVERITY2            = 1;",
+    "continuation": []
+  },
+  {
+    "model": "Infant",
+    "variable": "PREMATURE_MULTIPLES_X_SEVERITY2",
+    "description": null,
+    "variable_used_in_risk_score_formula?": "Yes",
+    "definition": "if IHCC_SEVERITY2 = 1 and IHCC_PREMATURE_MULTIPLES = 1 then PREMATURE_MULTIPLES_X_SEVERITY2 = 1;",
+    "continuation": []
+  },
+  {
+    "model": "Infant",
+    "variable": "TERM_X_SEVERITY2",
+    "description": null,
+    "variable_used_in_risk_score_formula?": "Yes",
+    "definition": "if IHCC_SEVERITY2 = 1 and IHCC_TERM                = 1 then TERM_X_SEVERITY2                = 1;",
+    "continuation": []
+  },
+  {
+    "model": "Infant",
+    "variable": "AGE1_X_SEVERITY2",
+    "description": null,
+    "variable_used_in_risk_score_formula?": "Yes",
+    "definition": "if IHCC_SEVERITY2 = 1 and IHCC_AGE1                = 1 then AGE1_X_SEVERITY2                = 1;",
+    "continuation": []
+  },
+  {
+    "model": "Infant",
+    "variable": "EXTREMELY_IMMATURE_X_SEVERITY1",
+    "description": null,
+    "variable_used_in_risk_score_formula?": "Yes",
+    "definition": "if IHCC_SEVERITY1 = 1 and IHCC_EXTREMELY_IMMATURE  = 1 then EXTREMELY_IMMATURE_X_SEVERITY1  = 1;",
+    "continuation": []
+  },
+  {
+    "model": "Infant",
+    "variable": "IMMATURE_X_SEVERITY1",
+    "description": null,
+    "variable_used_in_risk_score_formula?": "Yes",
+    "definition": "if IHCC_SEVERITY1 = 1 and IHCC_IMMATURE            = 1 then IMMATURE_X_SEVERITY1            = 1;",
+    "continuation": []
+  },
+  {
+    "model": "Infant",
+    "variable": "PREMATURE_MULTIPLES_X_SEVERITY1",
+    "description": null,
+    "variable_used_in_risk_score_formula?": "Yes",
+    "definition": "if IHCC_SEVERITY1 = 1 and IHCC_PREMATURE_MULTIPLES = 1 then PREMATURE_MULTIPLES_X_SEVERITY1 = 1;",
+    "continuation": []
+  },
+  {
+    "model": "Infant",
+    "variable": "TERM_X_SEVERITY1",
+    "description": null,
+    "variable_used_in_risk_score_formula?": "Yes",
+    "definition": "if IHCC_SEVERITY1 = 1 and IHCC_TERM                = 1 then TERM_X_SEVERITY1                = 1;",
+    "continuation": []
+  },
+  {
+    "model": "Infant",
+    "variable": "AGE1_X_SEVERITY1",
+    "description": null,
+    "variable_used_in_risk_score_formula?": "Yes",
+    "definition": "if IHCC_SEVERITY1 = 1 and IHCC_AGE1                = 1 then AGE1_X_SEVERITY1                = 1;",
+    "continuation": []
+  },
+  {
+    "model": "Infant",
+    "variable": "SCORE_INFANT_PLATINUM",
+    "description": "Risk scores, one each for Platinum, Gold, Silver, Bronze, and Catastrophic levels",
+    "variable_used_in_risk_score_formula?": "Risk score formula for each metal level",
+    "definition": "Sum of (0/1 variable x Table 9 coefficient) over all of the following:",
+    "continuation": []
+  },
+  {
+    "model": "Infant",
+    "variable": "SCORE_INFANT_GOLD",
+    "description": null,
+    "variable_used_in_risk_score_formula?": null,
+    "definition": "0/1 age-sex categories for INFANT model,",
+    "continuation": []
+  },
+  {
+    "model": "Infant",
+    "variable": "SCORE_INFANT_SILVER",
+    "description": null,
+    "variable_used_in_risk_score_formula?": null,
+    "definition": "0/1 maturity x severity level interactions for INFANT model.",
+    "continuation": []
+  },
+  {
+    "model": "Infant",
+    "variable": "SCORE_INFANT_BRONZE",
+    "description": null,
+    "variable_used_in_risk_score_formula?": null,
+    "definition": "Note that coefficients may differ by metal level but designation of 0/1 variables does not.",
+    "continuation": []
+  },
+  {
+    "model": "Infant",
+    "variable": "SCORE_INFANT_CATASTROPHIC",
+    "description": null,
+    "variable_used_in_risk_score_formula?": null,
+    "definition": null,
+    "continuation": []
+  },
+  {
+    "model": "Infant",
+    "variable": "CSR_ADJUSTED_SCORE_INFANT_PLATINUM",
+    "description": "Cost sharing reduction (CSR) adjusted risk scores, one each for Platinum, Gold, Silver, Bronze, and Catastrophic levels",
+    "variable_used_in_risk_score_formula?": "CSR adjusted risk score formula for each metal level",
+    "definition": "if CSR_INDICATOR = 2 then CSR_ADJUSTED_SCORE_INFANT_GOLD = SCORE_INFANT_GOLD x 1.07;",
+    "continuation": []
+  },
+  {
+    "model": "Infant",
+    "variable": "CSR_ADJUSTED_SCORE_INFANT_GOLD",
+    "description": null,
+    "variable_used_in_risk_score_formula?": null,
+    "definition": "else if CSR_INDICATOR = 3 then CSR_ADJUSTED_SCORE_INFANT_SILVER = SCORE_INFANT_SILVER x 1.12;",
+    "continuation": []
+  },
+  {
+    "model": "Infant",
+    "variable": "CSR_ADJUSTED_SCORE_INFANT_SILVER",
+    "description": null,
+    "variable_used_in_risk_score_formula?": null,
+    "definition": "else if CSR_INDICATOR = 4 then CSR_ADJUSTED_SCORE_INFANT_BRONZE = SCORE_INFANT_BRONZE x 1.15;",
+    "continuation": []
+  },
+  {
+    "model": "Infant",
+    "variable": "CSR_ADJUSTED_SCORE_INFANT_BRONZE",
+    "description": null,
+    "variable_used_in_risk_score_formula?": null,
+    "definition": "else do;",
+    "continuation": []
+  },
+  {
+    "model": "Infant",
+    "variable": "CSR_ADJUSTED_SCORE_INFANT_CATASTROPHIC",
+    "description": null,
+    "variable_used_in_risk_score_formula?": null,
+    "definition": "CSR_ADJUSTED_SCORE_INFANT_PLATINUM = SCORE_INFANT_PLATINUM x 1.00;",
+    "continuation": [
+      {
+        "definition": "CSR_ADJUSTED_SCORE_INFANT_GOLD = SCORE_INFANT_GOLD x 1.00;"
+      },
+      {
+        "definition": "CSR_ADJUSTED_SCORE_INFANT_SILVER = SCORE_INFANT_SILVER x 1.00;"
+      },
+      {
+        "definition": "CSR_ADJUSTED_SCORE_INFANT_BRONZE = SCORE_INFANT_BRONZE x 1.00;"
+      },
+      {
+        "definition": "CSR_ADJUSTED_SCORE_INFANT_CATASTROPHIC = SCORE_INFANT_CATASTROPHIC x 1.00;"
+      },
+      {
+        "definition": "end;"
+      }
+    ]
+  },
+  {
+    "model": "Infant",
+    "variable": "SCORE_INFANT",
+    "description": "Enrollee's risk score",
+    "variable_used_in_risk_score_formula?": "Risk score",
+    "definition": "SCORE_INFANT in { SCORE_INFANT_PLATINUM, SCORE_INFANT_GOLD, SCORE_INFANT_SILVER,",
+    "continuation": [
+      {
+        "definition": "SCORE_INFANT_BRONZE, SCORE_INFANT_CATASTROPHIC } depending on the enrollee's metal level"
+      }
+    ]
+  },
+  {
+    "model": "Infant",
+    "variable": "CSR_ADJUSTED_SCORE_INFANT",
+    "description": "Enrollee's CSR adjusted risk score",
+    "variable_used_in_risk_score_formula?": "CSR adjusted risk score",
+    "definition": "CSR_ADJUSTED_SCORE_INFANT in { CSR_ADJUSTED_SCORE_INFANT_PLATINUM, CSR_ADJUSTED_SCORE_INFANT_GOLD,",
+    "continuation": [
+      {
+        "definition": "CSR_ADJUSTED_SCORE_INFANT_SILVER, CSR_ADJUSTED_SCORE_INFANT_BRONZE, CSR_ADJUSTED_SCORE_INFANT_CATASTROPHIC }"
+      },
+      {
+        "definition": "depending on the enrollee's metal level"
+      }
+    ]
+  }
+]
