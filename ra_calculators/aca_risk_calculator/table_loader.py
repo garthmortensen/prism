@@ -3,19 +3,20 @@
 This module loads the official CMS lookup tables from:
     diy_tables/cy202*_diy_tables/
 
-Tables loaded:
-    - table_3.csv: ICD-10 to CC mappings
-    - table_4.csv: HCC hierarchies
-    - table_9.csv: Risk coefficients by metal level
+Tables loaded (parquet format for performance):
+    - table_3.parquet: ICD-10 to CC mappings
+    - table_4.parquet: HCC hierarchies
+    - table_9.parquet: Risk coefficients by metal level
     - table_6.json: Adult HCC groupings
     - table_7.json: Child HCC groupings
-    - table_12.csv: Model-specific HCC exclusions
+    - table_12.parquet: Model-specific HCC exclusions
 """
 
-import csv
 import json
 from pathlib import Path
 from typing import Any
+
+import polars as pl
 
 # Base directory for DIY tables
 DATA_DIR = Path(__file__).parent / "diy_tables"
@@ -36,7 +37,7 @@ def _get_tables_dir(model_year: str) -> Path:
 
 
 def load_icd_to_cc(model_year: str = "2024") -> dict[str, list[str]]:
-    """Load ICD-10 to CC mappings from table_3.csv.
+    """Load ICD-10 to CC mappings from table_3.parquet.
 
     Args:
         model_year: Model year (e.g., "2024")
@@ -52,31 +53,30 @@ def load_icd_to_cc(model_year: str = "2024") -> dict[str, list[str]]:
     tables_dir = _get_tables_dir(model_year)
     icd_to_cc: dict[str, list[str]] = {}
 
-    with open(tables_dir / "table_3.csv", encoding="utf-8") as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            icd10 = row["icd10"].strip()
-            ccs = []
+    df = pl.read_parquet(tables_dir / "table_3.parquet")
+    for row in df.iter_rows(named=True):
+        icd10 = str(row["icd10"]).strip()
+        ccs = []
 
-            # Primary CC
-            if row.get("cc") and row["cc"].strip():
-                ccs.append(row["cc"].strip())
+        # Primary CC
+        if row.get("cc") and str(row["cc"]).strip():
+            ccs.append(str(row["cc"]).strip())
 
-            # Some diagnoses map to multiple CCs
-            if row.get("second_cc") and row["second_cc"].strip():
-                ccs.append(row["second_cc"].strip())
-            if row.get("third_cc") and row["third_cc"].strip():
-                ccs.append(row["third_cc"].strip())
+        # Some diagnoses map to multiple CCs
+        if row.get("second_cc") and str(row["second_cc"]).strip():
+            ccs.append(str(row["second_cc"]).strip())
+        if row.get("third_cc") and str(row["third_cc"]).strip():
+            ccs.append(str(row["third_cc"]).strip())
 
-            if ccs:
-                icd_to_cc[icd10] = ccs
+        if ccs:
+            icd_to_cc[icd10] = ccs
 
     _CACHE[cache_key] = icd_to_cc
     return icd_to_cc
 
 
 def load_hierarchies(model_year: str = "2024") -> dict[str, list[str]]:
-    """Load HCC hierarchies from table_4.csv.
+    """Load HCC hierarchies from table_4.parquet.
 
     Args:
         model_year: Model year (e.g., "2024")
@@ -91,24 +91,23 @@ def load_hierarchies(model_year: str = "2024") -> dict[str, list[str]]:
     tables_dir = _get_tables_dir(model_year)
     hierarchies: dict[str, list[str]] = {}
 
-    with open(tables_dir / "table_4.csv", encoding="utf-8") as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            hcc = row["v07_hcc"].strip()
-            zeros = row.get("hccs_to_zero", "").strip()
+    df = pl.read_parquet(tables_dir / "table_4.parquet")
+    for row in df.iter_rows(named=True):
+        hcc = str(row["v07_hcc"]).strip()
+        zeros = str(row.get("hccs_to_zero", "") or "").strip()
 
-            if zeros:
-                # Parse comma-separated list, handling spaces
-                superseded = [h.strip() for h in zeros.split(",") if h.strip()]
-                if superseded:
-                    hierarchies[hcc] = superseded
+        if zeros:
+            # Parse comma-separated list, handling spaces
+            superseded = [h.strip() for h in zeros.split(",") if h.strip()]
+            if superseded:
+                hierarchies[hcc] = superseded
 
     _CACHE[cache_key] = hierarchies
     return hierarchies
 
 
 def load_coefficients(model_year: str = "2024") -> dict[tuple[str, str], dict[str, float]]:
-    """Load risk coefficients from table_9.csv.
+    """Load risk coefficients from table_9.parquet.
 
     Args:
         model_year: Model year (e.g., "2024")
@@ -124,19 +123,18 @@ def load_coefficients(model_year: str = "2024") -> dict[tuple[str, str], dict[st
     tables_dir = _get_tables_dir(model_year)
     coefficients: dict[tuple[str, str], dict[str, float]] = {}
 
-    with open(tables_dir / "table_9.csv", encoding="utf-8") as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            model = row["model"].strip()
-            variable = row["variable"].strip()
+    df = pl.read_parquet(tables_dir / "table_9.parquet")
+    for row in df.iter_rows(named=True):
+        model = str(row["model"]).strip()
+        variable = str(row["variable"]).strip()
 
-            coefficients[(model, variable)] = {
-                "platinum": float(row["platinum_level"]),
-                "gold": float(row["gold_level"]),
-                "silver": float(row["silver_level"]),
-                "bronze": float(row["bronze_level"]),
-                "catastrophic": float(row["catastrophic_level"]),
-            }
+        coefficients[(model, variable)] = {
+            "platinum": float(row["platinum_level"]),
+            "gold": float(row["gold_level"]),
+            "silver": float(row["silver_level"]),
+            "bronze": float(row["bronze_level"]),
+            "catastrophic": float(row["catastrophic_level"]),
+        }
 
     _CACHE[cache_key] = coefficients
     return coefficients
@@ -208,7 +206,7 @@ def _extract_hccs_from_definition(definition: str) -> list[str]:
 
 
 def load_model_exclusions(model_year: str = "2024") -> dict[str, set[str]]:
-    """Load HCCs excluded from each model from table_12.csv.
+    """Load HCCs excluded from each model from table_12.parquet.
 
     Args:
         model_year: Model year (e.g., "2024")
@@ -228,17 +226,16 @@ def load_model_exclusions(model_year: str = "2024") -> dict[str, set[str]]:
         "Infant": set(),
     }
 
-    with open(tables_dir / "table_12.csv", encoding="utf-8") as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            hcc = row["v07_hhs-hcc"].strip()
+    df = pl.read_parquet(tables_dir / "table_12.parquet")
+    for row in df.iter_rows(named=True):
+        hcc = str(row["v07_hhs-hcc"]).strip()
 
-            if row.get("payment_hccs_excluded_from_adult_model", "").strip():
-                exclusions["Adult"].add(hcc)
-            if row.get("payment_hccs_excluded_from_child_model", "").strip():
-                exclusions["Child"].add(hcc)
-            if row.get("payment_hccs_excluded_from_infant_model", "").strip():
-                exclusions["Infant"].add(hcc)
+        if str(row.get("payment_hccs_excluded_from_adult_model", "") or "").strip():
+            exclusions["Adult"].add(hcc)
+        if str(row.get("payment_hccs_excluded_from_child_model", "") or "").strip():
+            exclusions["Child"].add(hcc)
+        if str(row.get("payment_hccs_excluded_from_infant_model", "") or "").strip():
+            exclusions["Infant"].add(hcc)
 
     _CACHE[cache_key] = exclusions
     return exclusions

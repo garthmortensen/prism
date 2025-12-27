@@ -24,21 +24,23 @@ diy_tables/
 ├── cy2022_diy_tables/
 ├── cy2023_diy_tables/
 ├── cy2024_diy_tables/
-│   ├── table_1.json      # Model eligibility criteria
-│   ├── table_2.csv       # Included HCPCS/CPT codes
-│   ├── table_3.csv       # ICD-10 → CC mappings (11K+ codes)
-│   ├── table_4.csv       # HCC hierarchies
-│   ├── table_5.csv       # Demographic variable definitions
-│   ├── table_6.json      # Adult HCC groupings
-│   ├── table_7.json      # Child HCC groupings
-│   ├── table_8.json      # Infant severity levels
-│   ├── table_9.csv       # Risk coefficients by metal level
-│   ├── table_10a.csv     # RXC → NDC mappings (pharmacy)
-│   ├── table_10b.csv     # RXC → HCPCS mappings (medical drugs)
-│   ├── table_11.csv      # RXC hierarchy
-│   └── table_12.csv      # Model-specific HCC exclusions
+│   ├── table_1.json        # Model eligibility criteria
+│   ├── table_2.parquet     # Included HCPCS/CPT codes
+│   ├── table_3.parquet     # ICD-10 → CC mappings (11K+ codes)
+│   ├── table_4.parquet     # HCC hierarchies
+│   ├── table_5.parquet     # Demographic variable definitions
+│   ├── table_6.json        # Adult HCC groupings
+│   ├── table_7.json        # Child HCC groupings
+│   ├── table_8.json        # Infant severity levels
+│   ├── table_9.parquet     # Risk coefficients by metal level
+│   ├── table_10a.parquet   # RXC → NDC mappings (pharmacy)
+│   ├── table_10b.parquet   # RXC → HCPCS mappings (medical drugs)
+│   ├── table_11.parquet    # RXC hierarchy
+│   └── table_12.parquet    # Model-specific HCC exclusions
 └── cy2025_diy_tables/
 ```
+
+> **Note:** Tables are stored in Parquet format for faster loading performance. Original CSV files are also retained.
 
 ## How It Works
 
@@ -51,10 +53,10 @@ flowchart TD
     C -->|0-1| F[Infant Model]
     
     A --> G[Map Diagnoses]
-    G --> H[ICD-10 → CC<br/>table_3.csv]
+    G --> H[ICD-10 → CC<br/>table_3.parquet]
     
-    H --> I[Apply Hierarchies<br/>table_4.csv]
-    I --> J[Remove Model Exclusions<br/>table_12.csv]
+    H --> I[Apply Hierarchies<br/>table_4.parquet]
+    I --> J[Remove Model Exclusions<br/>table_12.parquet]
     J --> K[Apply HCC Groupings<br/>table_6/7.json]
     
     D --> L[Demographic Factor<br/>table_9.csv]
@@ -119,7 +121,7 @@ erDiagram
 
 ## Hierarchy Logic
 
-The HHS-HCC model applies hierarchies (from `table_4.csv`) to avoid double-counting related conditions:
+The HHS-HCC model applies hierarchies (from `table_4.parquet`) to avoid double-counting related conditions:
 
 ```mermaid
 flowchart TD
@@ -155,7 +157,7 @@ Some HCCs are grouped together (from `table_6.json` / `table_7.json`). When any 
 Risk Score = Demographic Factor + Σ(HCC/Group Coefficients)
 ```
 
-Where coefficients vary by metal level (from `table_9.csv`):
+Where coefficients vary by metal level (from `table_9.parquet`):
 
 | Variable | Platinum | Gold | Silver | Bronze |
 |----------|----------|------|--------|--------|
