@@ -30,7 +30,7 @@ dev = [
 ]
 
 [project.scripts]
-prism = "platform.cli:app"
+prism = "ra_dagster.cli:app"
 
 [tool.ruff]
 line-length = 100
@@ -50,7 +50,7 @@ python_functions = "test_*"
 addopts = "-v --tb=short"
 
 [tool.hatch.build.targets.wheel]
-packages = ["calculators", "platform"]
+packages = ["ra_calculators", "ra_dagster"]
 
 [build-system]
 requires = ["hatchling"]

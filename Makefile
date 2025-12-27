@@ -107,14 +107,14 @@ test:
 	uv run pytest
 
 test-cov:
-	uv run pytest --cov=calculators --cov=platform --cov-report=term-missing --cov-report=html
+	uv run pytest --cov=ra_calculators --cov=ra_dagster --cov-report=term-missing --cov-report=html
 
 # =============================================================================
 # Services
 # =============================================================================
 
 dagster:
-	uv run dagster dev -m platform.definitions
+	uv run dagster dev -m ra_dagster.definitions
 
 db-shell:
 	uv run duckdb data/prism.duckdb
@@ -124,31 +124,31 @@ db-shell:
 # =============================================================================
 
 dbt-run:
-	cd dbt && uv run dbt run
+	cd ra_dbt && uv run dbt run
 
 dbt-test:
-	cd dbt && uv run dbt test
+	cd ra_dbt && uv run dbt test
 
 dbt-build:
-	cd dbt && uv run dbt build
+	cd ra_dbt && uv run dbt build
 
 dbt-seed:
-	cd dbt && uv run dbt seed
+	cd ra_dbt && uv run dbt seed
 
 dbt-compile:
-	cd dbt && uv run dbt compile
+	cd ra_dbt && uv run dbt compile
 
 dbt-docs:
-	cd dbt && uv run dbt docs generate
+	cd ra_dbt && uv run dbt docs generate
 
 dbt-docs-serve:
-	cd dbt && uv run dbt docs serve
+	cd ra_dbt && uv run dbt docs serve
 
 dbt-deps:
-	cd dbt && uv run dbt deps
+	cd ra_dbt && uv run dbt deps
 
 dbt-clean:
-	cd dbt && uv run dbt clean
+	cd ra_dbt && uv run dbt clean
 
 # =============================================================================
 # Container (Podman)
