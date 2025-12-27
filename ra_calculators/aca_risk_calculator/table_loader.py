@@ -92,8 +92,12 @@ def load_hierarchies(model_year: str = "2024") -> dict[str, list[str]]:
     hierarchies: dict[str, list[str]] = {}
 
     df = pl.read_parquet(tables_dir / "table_4.parquet")
+
+    # Determine HCC column name (e.g., v07_hcc for 2024, v08_hcc for 2025)
+    hcc_col = next((col for col in df.columns if col.endswith("_hcc")), "v07_hcc")
+
     for row in df.iter_rows(named=True):
-        hcc = str(row["v07_hcc"]).strip()
+        hcc = str(row[hcc_col]).strip()
         zeros = str(row.get("hccs_to_zero", "") or "").strip()
 
         if zeros:
@@ -227,8 +231,12 @@ def load_model_exclusions(model_year: str = "2024") -> dict[str, set[str]]:
     }
 
     df = pl.read_parquet(tables_dir / "table_12.parquet")
+
+    # Determine HCC column name (e.g., v07_hhs-hcc for 2024, v08_hhs-hcc for 2025)
+    hcc_col = next((col for col in df.columns if col.endswith("_hhs-hcc")), "v07_hhs-hcc")
+
     for row in df.iter_rows(named=True):
-        hcc = str(row["v07_hhs-hcc"]).strip()
+        hcc = str(row[hcc_col]).strip()
 
         if str(row.get("payment_hccs_excluded_from_adult_model", "") or "").strip():
             exclusions["Adult"].add(hcc)

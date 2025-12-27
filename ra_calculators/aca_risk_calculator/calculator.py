@@ -244,17 +244,23 @@ class ACACalculator:
         excluded = self._exclusions.get(model, set())
         return hccs - excluded
 
-    def score(self, member: MemberInput) -> ScoreOutput:
+    def score(self, member: MemberInput, prediction_year: int | None = None) -> ScoreOutput:
         """Calculate risk score for a single member.
 
         Args:
             member: Member input data
+            prediction_year: Year to calculate age as of (defaults to model_year).
+                           Use this to simulate scores for different years.
 
         Returns:
             ScoreOutput with risk score and calculation details
         """
         # Step 1: Determine model type from age
-        age = self._calculate_age(member.date_of_birth)
+        # HHS uses age as of the last day of the benefit year
+        target_year = prediction_year if prediction_year is not None else int(self.model_year)
+        benefit_year_end = date(target_year, 12, 31)
+
+        age = self._calculate_age(member.date_of_birth, as_of=benefit_year_end)
         model = self._get_model_type(age)
 
         # Step 2: Get demographic factor
@@ -320,13 +326,16 @@ class ACACalculator:
             },
         )
 
-    def score_batch(self, members: list[MemberInput]) -> list[ScoreOutput]:
+    def score_batch(
+        self, members: list[MemberInput], prediction_year: int | None = None
+    ) -> list[ScoreOutput]:
         """Calculate risk scores for multiple members.
 
         Args:
             members: List of member inputs
+            prediction_year: Optional year override for age calculation
 
         Returns:
             List of score outputs in same order as inputs
         """
-        return [self.score(member) for member in members]
+        return [self.score(member, prediction_year) for member in members]
