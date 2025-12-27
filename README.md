@@ -273,14 +273,6 @@ The three primary downstream tables from `RUN_REGISTRY` have a dependency hierar
 | `MARTS.RUN_COMPARISON` | member × run_timestamp_pair | Delta between two runs (FULL OUTER JOIN — includes members in A only, B only, or both) |
 | `MARTS.DECOMPOSITION` | analysis_id | Aggregate 4-run attribution |
 
-```mermaid
-flowchart TD
-    RUN_REGISTRY --> RISK_SCORES
-    RISK_SCORES --> RUN_COMPARISON
-    RISK_SCORES --> DECOMPOSITION
-    RUN_COMPARISON -.->|"optional input"| DECOMPOSITION
-```
-
 ### Run Comparison Membership Matching
 
 When comparing two runs, use a FULL OUTER JOIN to capture all membership scenarios:
