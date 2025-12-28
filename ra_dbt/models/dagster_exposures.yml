@@ -1,0 +1,36 @@
+version: 2
+
+exposures:
+  - name: dagster_scoring_pipeline
+    type: application
+    maturity: low
+    owner:
+      name: dagster
+      email: null
+    description: Dagster pipeline that reads dbt intermediate inputs and writes risk scores + run registry.
+    depends_on:
+      - ref('int_aca_risk_input')
+      - source('dagster_meta', 'run_registry')
+      - source('dagster_marts', 'risk_scores')
+
+  - name: dagster_run_comparison
+    type: application
+    maturity: low
+    owner:
+      name: dagster
+      email: null
+    description: Dagster asset that compares two runs and writes member-level deltas.
+    depends_on:
+      - source('dagster_marts', 'risk_scores')
+      - source('dagster_marts', 'run_comparison')
+
+  - name: dagster_decomposition
+    type: application
+    maturity: low
+    owner:
+      name: dagster
+      email: null
+    description: Dagster asset that computes a 4-run decomposition into total/pop/coeff/interaction effects.
+    depends_on:
+      - source('dagster_marts', 'risk_scores')
+      - source('dagster_marts', 'decomposition')

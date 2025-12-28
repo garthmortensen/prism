@@ -1,0 +1,92 @@
+version: 2
+
+sources:
+  - name: dagster_meta
+    description: Dagster-managed operational metadata tables.
+    schema: main_meta
+    tables:
+      - name: run_registry
+        description: Run metadata and lineage for Dagster executions.
+        columns:
+          - name: run_timestamp
+            description: Run timestamp key (YYYYMMDDHHMMSSUUUU).
+          - name: run_id
+            description: UUID for the run.
+          - name: group_id
+          - name: group_description
+          - name: run_description
+          - name: analysis_type
+          - name: calculator
+          - name: model_version
+          - name: benefit_year
+          - name: data_effective
+          - name: json_config
+          - name: git_branch
+          - name: git_commit
+          - name: git_commit_short
+          - name: git_commit_clean
+          - name: status
+          - name: trigger_source
+          - name: created_at
+          - name: updated_at
+
+  - name: dagster_marts
+    description: Dagster-managed analytics outputs.
+    schema: main_marts
+    tables:
+      - name: risk_scores
+        description: Member-level risk scores output by Dagster.
+        columns:
+          - name: run_timestamp
+          - name: run_id
+          - name: member_id
+          - name: calculator
+          - name: model_version
+          - name: benefit_year
+          - name: risk_score
+          - name: demographic_score
+          - name: hcc_score
+          - name: rxc_score
+          - name: hcc_list
+          - name: rxc_list
+          - name: details
+          - name: created_at
+
+      - name: run_comparison
+        description: Member-level deltas between two runs.
+        columns:
+          - name: comparison_id
+          - name: group_id
+          - name: run_timestamp_a
+          - name: run_timestamp_b
+          - name: member_id
+          - name: match_status
+          - name: score_a
+          - name: score_b
+          - name: score_diff
+          - name: hcc_added
+          - name: hcc_removed
+          - name: details
+          - name: created_at
+
+      - name: decomposition
+        description: Aggregate 4-run decomposition results.
+        columns:
+          - name: analysis_id
+          - name: group_id
+          - name: run_ts_baseline
+          - name: run_ts_coeff_only
+          - name: run_ts_pop_only
+          - name: run_ts_actual
+          - name: prior_period
+          - name: current_period
+          - name: prior_model_version
+          - name: current_model_version
+          - name: aggregation_level
+          - name: dimensions
+          - name: total_change
+          - name: pop_effect
+          - name: coeff_effect
+          - name: interaction_effect
+          - name: details
+          - name: created_at

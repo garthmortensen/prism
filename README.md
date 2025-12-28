@@ -54,13 +54,24 @@ Member data in, decomposed risks out.
 
 #### Data Mart Schema Organization
 
-| Schema | Contents |
-|--------|----------|
-| `raw` | EDGE tables (enrollment, claims, pharmacy, supplemental) |
-| `staging` | Cleaned, typed source data (dbt endpoint) |
-| `intermediate` | Transformation steps (Dagster picks up here) |
-| `marts` | Final outputs (risk scores, run comparisons, decompositions) |
-| `meta` | Run metadata (group IDs, execution IDs, coordination info) |
+DuckDB tooling shows the `main_` prefix because `main` is the default database.
+This project documents *logical* layer names and maps them to the physical DuckDB schema.
+
+| Logical Layer | DuckDB Schema | Contents |
+| ------------- | ------------- | -------- |
+| `raw` | `main_raw` | `raw_claims`, `raw_members`, … |
+| `staging` | `main_staging` | `stg_claims_dx`, `stg_enrollment`, … |
+| `intermediate` | `main_intermediate` | `int_aca_risk_input`, … |
+| `meta` | `main_meta` | `run_registry` (Dagster-managed) |
+| `marts` | `main_marts` | `risk_scores`, `run_comparison`, `decomposition` (Dagster-managed) |
+
+#### dbt materializations
+
+| Layer | Materialization | Why |
+| ----- | --------------- | --- |
+| `raw` | table (seeds) | Source of truth; rarely rebuilt. |
+| `staging` | view | Light transforms; always up-to-date. |
+| `intermediate` | view | Dagster reads from this; snapshot semantics are useful. |
 
 #### Meta schema 
 
@@ -73,8 +84,8 @@ Member data in, decomposed risks out.
 - `git_commit` - for cloning point-in-time code
 - `git_commit_clean` - for confirming referenced commit is clean and reliable
 
-Implementation note: `meta.run_registry` is the source of truth for run metadata,
-and downstream tables live in `marts` (e.g., `marts.risk_scores`, `marts.run_comparison`, `marts.decomposition`).
+Implementation note: `main_meta.run_registry` is the source of truth for run metadata,
+and downstream tables live in `main_marts` (e.g., `main_marts.risk_scores`, `main_marts.run_comparison`, `main_marts.decomposition`).
 
 ### Schema features built-in reproducibility
 
@@ -86,7 +97,7 @@ dagster run show <run_id>
 dagster job execute -j scoring_job --config-from-run <run_id>
 
 # 2b. or manually with the stored config
-SELECT config_json FROM meta.run_registry 
+SELECT config_json FROM main_meta.run_registry 
 WHERE effective = '20251115120000';
 ```
 
@@ -263,7 +274,7 @@ make test     # Run tests
 
 ### Core Output Tables
 
-The three primary downstream tables from `RUN_REGISTRY` have a dependency hierarchy:
+The three primary downstream tables from `main_meta.run_registry` have a dependency hierarchy:
 
 1. **RISK_SCORES** is the base output — must exist for anything else
 2. **RUN_COMPARISON** compares two RISK_SCORES runs (needs `comparison_run_timestamp` reference)
@@ -271,9 +282,9 @@ The three primary downstream tables from `RUN_REGISTRY` have a dependency hierar
 
 | Table | Granularity | Purpose |
 |-------|-------------|----------|
-| `MARTS.RISK_SCORES` | member × run_timestamp | Raw scoring output per run |
-| `MARTS.RUN_COMPARISON` | member × run_timestamp_pair | Delta between two runs (FULL OUTER JOIN — includes members in A only, B only, or both) |
-| `MARTS.DECOMPOSITION` | analysis_id | Aggregate 4-run attribution |
+| `main_marts.risk_scores` | member × run_timestamp | Raw scoring output per run |
+| `main_marts.run_comparison` | member × run_timestamp_pair | Delta between two runs (FULL OUTER JOIN — includes members in A only, B only, or both) |
+| `main_marts.decomposition` | analysis_id | Aggregate 4-run attribution |
 
 ### Run Comparison Membership Matching
 

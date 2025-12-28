@@ -31,9 +31,6 @@ models:
       schema: staging
 
     intermediate:
-      materialized: ephemeral
+      materialized: view
       schema: intermediate
 
-    mart:
-      materialized: table
-      schema: mart

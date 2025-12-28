@@ -6,7 +6,7 @@ This dbt project transforms raw enrollment and claims data into the input format
 
 - **Staging**: Cleans raw data from seeds/sources.
 - **Intermediate**: Aggregates diagnoses and NDCs per member.
-- **Marts**: `mart_aca_risk_input` joins everything into a single table ready for the Python calculator.
+- **Intermediate (final)**: `int_aca_risk_input` joins everything into a single relation ready for the Python calculator (Dagster reads from here).
 
 ## Running
 
@@ -29,14 +29,23 @@ This dbt project transforms raw enrollment and claims data into the input format
 
 This project uses DuckDB schemas to keep layers clear:
 
+Note: DuckDB tooling may show `main_` prefixes because `main` is the default database.
+
 - `raw`: dbt seeds (e.g., `raw_claims`)
 - `staging`: dbt staging views (e.g., `stg_claims_dx`)
-- `mart`: dbt final input table for the Python calculator (`mart_aca_risk_input`)
-- `meta` / `marts`: created and written by Dagster (run registry + scored outputs)
+- `intermediate`: dbt intermediate views (including `int_aca_risk_input`)
+- `main_meta` / `main_marts`: created and written by Dagster (run registry + scored outputs)
+
+## Data dictionary (Dagster tables)
+
+Dagster-managed relations are documented in dbt via `sources` and `exposures`:
+
+- `models/dagster_sources.yml`: `main_meta.run_registry`, `main_marts.risk_scores`, `main_marts.run_comparison`, `main_marts.decomposition`
+- `models/dagster_exposures.yml`: high-level Dagster pipeline dependencies
 
 ## Output
 
-The final model `mart_aca_risk_input` will have the following schema:
+The `int_aca_risk_input` model will have the following schema:
 
 | Column | Type | Description |
 |--------|------|-------------|
