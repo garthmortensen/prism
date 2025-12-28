@@ -55,17 +55,13 @@ sources:
       - name: run_comparison
         description: Member-level deltas between two runs.
         columns:
-          - name: comparison_id
-          - name: group_id
-          - name: run_timestamp_a
-          - name: run_timestamp_b
+          - name: run_id_a
+          - name: run_id_b
           - name: member_id
           - name: match_status
           - name: score_a
           - name: score_b
           - name: score_diff
-          - name: hcc_added
-          - name: hcc_removed
           - name: details
           - name: created_at
 
@@ -73,11 +69,10 @@ sources:
         description: Aggregate 4-run decomposition results.
         columns:
           - name: analysis_id
-          - name: group_id
-          - name: run_ts_baseline
-          - name: run_ts_coeff_only
-          - name: run_ts_pop_only
-          - name: run_ts_actual
+          - name: run_id_baseline
+          - name: run_id_coeff_only
+          - name: run_id_pop_only
+          - name: run_id_actual
           - name: prior_period
           - name: current_period
           - name: prior_model_version
