@@ -117,7 +117,7 @@ dagster:
 	uv run dagster dev -m ra_dagster.definitions
 
 db-shell:
-	uv run duckdb data/prism.duckdb
+	uv run duckdb data/risk_adjustment.duckdb
 
 # =============================================================================
 # dbt

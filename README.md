@@ -2,7 +2,7 @@
 
 ```text
          ____   ____(_)_______   __ .................
-        / __ \/ ___/ / ___/ __ \/__ \.................
+        / __ \/ ___/ / ___/ __ \/__ \................
 ......./ /_/ / /  / (__  ) / / / / /.................
       / .___/_/  /_/____/_/ /_/ /_/..................
      /_/ Prism: Risk Adjustment Analytics Platform...
@@ -76,9 +76,7 @@ This project documents *logical* layer names and maps them to the physical DuckD
 #### Meta schema 
 
 - `run_timestamp`: Go down to 4-digit microseconds (YYYYMMDDHHMMSSUUUU) to avoid collisions.
-- group_id: `SELECT MAX(group_id) + 1 FROM run_registry` - this is a one to many relationship with run_id which might be required for decomposition executions, which require multiple runs.
-- `group_description`
-- `run_id`
+- `run_id`: `SELECT MAX(group_id) + 1 FROM run_registry`
 - `run_description`
 - `json_config`: field contains entire configuration in string(?) format for direct referencing
 - `git_commit` - for cloning point-in-time code
