@@ -175,9 +175,23 @@ def load_hcc_groups(model_year: str = "2024", model: str = "Adult") -> dict[str,
         if not variable:
             continue
 
+        # Only include groups that replace HCCs (contain "= 0")
+        # This excludes interaction variables like SEVERE, TRANSPLANT, etc.
+        # which do not zero out the underlying HCCs.
+        is_replacement = False
+        definition = item.get("definition", "")
+        if "= 0" in definition:
+            is_replacement = True
+        
+        for cont in item.get("continuation", []):
+            if "= 0" in cont.get("definition", ""):
+                is_replacement = True
+        
+        if not is_replacement:
+            continue
+
         # Parse HCCs from definition and continuation
         hccs = []
-        definition = item.get("definition", "")
         if definition:
             hccs.extend(_extract_hccs_from_definition(definition))
 

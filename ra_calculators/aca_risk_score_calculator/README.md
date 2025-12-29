@@ -1,4 +1,4 @@
-# ACA Risk Score Calculator
+# aca_risk_score_calculator
 
 TODO: implement table 12 exclusions (and check other json mappings).
 
@@ -213,7 +213,7 @@ Where coefficients vary by metal level (from `table_9.parquet`):
 
 ```python
 from datetime import date
-from ra_calculators.aca_risk_calculator import ACACalculator, MemberInput
+from ra_calculators.aca_risk_score_calculator import ACACalculator, MemberInput
 
 # Initialize calculator with model year
 calculator = ACACalculator(model_year="2024")

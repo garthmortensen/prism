@@ -13,9 +13,9 @@ The calculator loads official CMS DIY tables from:
 
 from datetime import date
 
-from ra_calculators.aca_risk_calculator.hierarchies import apply_hierarchies
-from ra_calculators.aca_risk_calculator.models import MemberInput, ScoreOutput
-from ra_calculators.aca_risk_calculator.table_loader import (
+from ra_calculators.aca_risk_score_calculator.hierarchies import apply_hierarchies
+from ra_calculators.aca_risk_score_calculator.models import MemberInput, ScoreOutput
+from ra_calculators.aca_risk_score_calculator.table_loader import (
     load_coefficients,
     load_hcc_groups,
     load_icd_to_cc,
@@ -195,7 +195,18 @@ class ACACalculator:
                     ccs.update(self._icd_to_cc[prefix])
                     break
 
-        return ccs
+        # Normalize CCs to match hierarchy and coefficient table formats
+        # e.g., "21.0" -> "21", "35.1" -> "35_1"
+        normalized_ccs: set[str] = set()
+        for cc in ccs:
+            # Remove .0 suffix
+            if cc.endswith(".0"):
+                cc = cc[:-2]
+            # Replace remaining dots with underscores
+            cc = cc.replace(".", "_")
+            normalized_ccs.add(cc)
+
+        return normalized_ccs
 
     def _apply_groupings(
         self,
@@ -326,7 +337,16 @@ class ACACalculator:
 
         # Score individual HCCs
         for hcc in remaining_hccs:
-            var_name = f"HHS_HCC{hcc.zfill(3)}" if hcc.isdigit() else f"HHS_HCC{hcc}"
+            if hcc.isdigit():
+                var_name = f"HHS_HCC{hcc.zfill(3)}"
+            else:
+                # Handle cases like "35_1" -> "HHS_HCC035_1"
+                parts = hcc.split("_")
+                if len(parts) == 2 and parts[0].isdigit():
+                    var_name = f"HHS_HCC{parts[0].zfill(3)}_{parts[1]}"
+                else:
+                    var_name = f"HHS_HCC{hcc}"
+
             coef = self._get_coefficient(model, var_name, member.metal_level)
             if coef != 0.0:
                 hcc_score += coef

@@ -4,7 +4,7 @@ from datetime import date
 
 import pytest
 
-from ra_calculators.aca_risk_calculator import ACACalculator, MemberInput, ScoreOutput
+from ra_calculators.aca_risk_score_calculator import ACACalculator, MemberInput, ScoreOutput
 
 
 class TestMemberInput:

@@ -10,7 +10,7 @@ Example: Diabetes hierarchy
     - If member has HCC 19 + HCC 21, only HCC 19 counts
 """
 
-from ra_calculators.aca_risk_calculator.table_loader import load_hierarchies
+from ra_calculators.aca_risk_score_calculator.table_loader import load_hierarchies
 
 
 def apply_hierarchies(
