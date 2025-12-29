@@ -5,7 +5,7 @@ import csv
 import json
 import os
 from collections.abc import Iterable
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 from typing import Any
 
@@ -14,22 +14,27 @@ import duckdb
 from ra_calculators.aca_risk_score_calculator import ACACalculator, MemberInput
 
 
+def _get_repo_root() -> Path:
+    return Path(__file__).resolve().parents[2]
+
+
 def _default_duckdb_path() -> str:
     env_path = os.environ.get("DUCKDB_PATH")
     if env_path:
         return env_path
-    # repo_root/ra_calculators/aca_risk_score_calculator/duckdb_to_csv.py -> parents[3] = repo root
-    return str((Path(__file__).resolve().parents[3] / "risk_adjustment.duckdb").resolve())
+    return str((_get_repo_root() / "risk_adjustment.duckdb").resolve())
 
 
 def _coerce_str_list(value: Any) -> list[str]:
     if value is None:
         return []
     if isinstance(value, list):
-        return [str(x) for x in value]
+        # Filter out None values and convert to strings
+        return [str(x) for x in value if x is not None]
     # DuckDB may return ARRAY as tuple in some cases
     if isinstance(value, tuple):
-        return [str(x) for x in value]
+        # Filter out None values and convert to strings
+        return [str(x) for x in value if x is not None]
     return [str(value)]
 
 
@@ -151,12 +156,9 @@ def score_from_duckdb_to_csv(
             "prediction_year",
             "benefit_year",
             "risk_score",
-            "demographic_factor",
-            "hcc_score",
-            "rxc_score",
             "hcc_list",
             "rxc_list",
-            "details_json",
+            "components_json",
         ]
 
         benefit_year = int(prediction_year) if prediction_year is not None else int(model_year)
@@ -167,7 +169,12 @@ def score_from_duckdb_to_csv(
 
             for member in members:
                 score = calculator.score(member, prediction_year=prediction_year)
-                details = score.details or {}
+                
+                # Convert components to JSON-serializable format
+                components_json = [comp.model_dump() for comp in score.components]
+                
+                # Extract RXC list from details for backward compatibility with existing queries
+                rxc_list = score.details.get("rxcs_after_hierarchy", [])
 
                 writer.writerow(
                     {
@@ -176,20 +183,21 @@ def score_from_duckdb_to_csv(
                         "prediction_year": prediction_year,
                         "benefit_year": benefit_year,
                         "risk_score": score.risk_score,
-                        "demographic_factor": details.get("demographic_factor", 0.0),
-                        "hcc_score": details.get("hcc_score", 0.0),
-                        "rxc_score": details.get("rxc_score", 0.0),
                         "hcc_list": json.dumps(score.hcc_list),
-                        "rxc_list": json.dumps(details.get("rxcs_after_hierarchy", [])),
-                        "details_json": json.dumps(details, default=str),
+                        "rxc_list": json.dumps(rxc_list),
+                        "components_json": json.dumps(components_json, default=str),
                     }
                 )
 
         skipped = int(stats.get("skipped", 0))
         if skipped:
+            total_rows = len(rows)
+            pct = (skipped / total_rows) * 100 if total_rows > 0 else 0
             invalids = stats.get("invalid_gender_values", {})
             invalids_str = ", ".join(f"{k}={v}" for k, v in sorted(invalids.items()))
-            print(f"Skipped {skipped} rows due to invalid gender values: {invalids_str}")
+            print(
+                f"Skipped {skipped}/{total_rows} ({pct:.2f}%) rows due to invalid gender values: {invalids_str}"
+            )
 
         return len(members)
     finally:
@@ -211,8 +219,8 @@ def _build_arg_parser() -> argparse.ArgumentParser:
     )
     p.add_argument(
         "--output-csv",
-        required=True,
-        help="Output CSV path",
+        required=False,
+        help="Output CSV path. Defaults to tmp_exports/YYYYMMDD_HHMMSSssss_aca_scores_out.csv",
     )
     p.add_argument(
         "--model-year",
@@ -259,9 +267,20 @@ def _build_arg_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = _build_arg_parser().parse_args(argv)
 
+    output_csv = args.output_csv
+    if not output_csv:
+        # Format: YYYYMMDD_HHMMSSssss_aca_scores_out.csv
+        # Note: %f gives microseconds (6 digits), user asked for ssss (4 digits?) or just milliseconds?
+        # Usually ssss implies milliseconds or similar. I'll use microseconds and truncate or just use standard format.
+        # User asked for YYYYMMDD_HHMMSSssss. Let's assume they want microseconds or similar unique string.
+        # Let's use %f which is microseconds (000000).
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S%f")
+        # Write to tmp_exports relative to this script
+        output_csv = str(Path(__file__).parent / "tmp_exports" / f"{timestamp}_aca_scores_out.csv")
+
     count = score_from_duckdb_to_csv(
         duckdb_path=args.duckdb_path,
-        output_csv_path=args.output_csv,
+        output_csv_path=output_csv,
         model_year=str(args.model_year),
         prediction_year=str(args.prediction_year) if args.prediction_year else None,
         schema=str(args.schema),
@@ -271,7 +290,7 @@ def main(argv: list[str] | None = None) -> int:
         coerce_gender=str(args.coerce_gender) if args.coerce_gender else None,
     )
 
-    print(f"Wrote {count} rows to {Path(args.output_csv).expanduser().resolve()}")
+    print(f"Wrote {count} rows to {Path(output_csv).expanduser().resolve()}")
     return 0
 
 

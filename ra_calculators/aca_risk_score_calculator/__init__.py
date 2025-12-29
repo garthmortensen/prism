@@ -5,6 +5,6 @@ Loads official DIY tables from diy_tables/cy202*_diy_tables/.
 """
 
 from ra_calculators.aca_risk_score_calculator.calculator import ACACalculator
-from ra_calculators.aca_risk_score_calculator.models import MemberInput, ScoreOutput
+from ra_calculators.aca_risk_score_calculator.models import MemberInput, ScoreComponent, ScoreOutput
 
-__all__ = ["ACACalculator", "MemberInput", "ScoreOutput"]
+__all__ = ["ACACalculator", "MemberInput", "ScoreComponent", "ScoreOutput"]

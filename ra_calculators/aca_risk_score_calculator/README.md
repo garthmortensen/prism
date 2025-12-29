@@ -18,6 +18,25 @@ This calculator implements the CMS HHS-HCC risk adjustment model used to calcula
 - Applies HCC groupings from table_6.json / table_7.json
 - Returns detailed calculation breakdown for auditability
 
+## Usage
+
+You can run the calculator directly from the command line to process data from DuckDB and export scores to CSV:
+
+```bash
+python -m ra_calculators.aca_risk_score_calculator.duckdb_to_csv \
+  --model-year 2024
+```
+
+This will output a file to `tmp_exports/YYYYMMDD_HHMMSSssss_aca_scores_out.csv`. You can also specify a custom output path:
+
+```bash
+python -m ra_calculators.aca_risk_score_calculator.duckdb_to_csv \
+  --output-csv scores.csv \
+  --model-year 2024
+```
+
+See `python -m ra_calculators.aca_risk_score_calculator.duckdb_to_csv --help` for all available options.
+
 ## Data Sources
 
 The calculator uses official CMS "Do-It-Yourself" (DIY) tables located in:

@@ -14,7 +14,7 @@ The calculator loads official CMS DIY tables from:
 from datetime import date
 
 from ra_calculators.aca_risk_score_calculator.hierarchies import apply_hierarchies
-from ra_calculators.aca_risk_score_calculator.models import MemberInput, ScoreOutput
+from ra_calculators.aca_risk_score_calculator.models import MemberInput, ScoreComponent, ScoreOutput
 from ra_calculators.aca_risk_score_calculator.table_loader import (
     load_coefficients,
     load_hcc_groups,
@@ -277,6 +277,13 @@ class ACACalculator:
 
             if ndc_clean in self._ndc_to_rxc:
                 rxcs.update(self._ndc_to_rxc[ndc_clean])
+            # Try padding to 11 digits if it's numeric and shorter (e.g. integer input)
+            # DIY tables use 11-digit NDCs (e.g., 00003196401). If input data stores NDCs
+            # as integers or strings without leading zeros (e.g., 3196401), they wouldn't match
+            elif ndc_clean.isdigit() and len(ndc_clean) < 11:
+                padded = ndc_clean.zfill(11)
+                if padded in self._ndc_to_rxc:
+                    rxcs.update(self._ndc_to_rxc[padded])
 
         return rxcs
 
@@ -295,6 +302,40 @@ class ACACalculator:
                 for superseded in superseded_list:
                     final_rxcs.discard(superseded)
         return final_rxcs
+
+    def _find_source_icds_for_hcc(self, hcc: str, diagnoses: list[str]) -> list[str]:
+        """Find which ICD codes contributed to a specific HCC.
+        
+        Args:
+            hcc: HCC code (e.g., "19", "35_1")
+            diagnoses: List of ICD-10 diagnosis codes
+            
+        Returns:
+            List of ICD codes that mapped to this HCC
+        """
+        source_icds = []
+        for dx in diagnoses:
+            dx_ccs = self._map_diagnoses_to_ccs([dx])
+            if hcc in dx_ccs:
+                source_icds.append(dx)
+        return source_icds
+
+    def _find_source_ndcs_for_rxc(self, rxc: str, ndc_codes: list[str]) -> list[str]:
+        """Find which NDC codes contributed to a specific RXC.
+        
+        Args:
+            rxc: RXC code (e.g., "1", "01")
+            ndc_codes: List of NDC codes
+            
+        Returns:
+            List of NDC codes that mapped to this RXC
+        """
+        source_ndcs = []
+        for ndc in ndc_codes:
+            ndc_rxcs = self._map_ndcs_to_rxcs([ndc])
+            if rxc in ndc_rxcs:
+                source_ndcs.append(ndc)
+        return source_ndcs
 
     def score(self, member: MemberInput, prediction_year: int | None = None) -> ScoreOutput:
         """Calculate risk score for a single member.
@@ -319,6 +360,18 @@ class ACACalculator:
         demo_var = self._get_demographic_variable(model, member.gender, age)
         demographic_factor = self._get_coefficient(model, demo_var, member.metal_level)
 
+        # Initialize components list for audit trail
+        components: list[ScoreComponent] = []
+        
+        # Track demographic component
+        components.append(ScoreComponent(
+            component_type='demographic',
+            component_code=demo_var,
+            coefficient=demographic_factor,
+            source_data=[f"age={age}", f"gender={member.gender}"],
+            table_references={'table': 'table_9', 'model': model, 'metal_level': member.metal_level}
+        ))
+
         # Step 3: Map diagnoses to CCs
         raw_ccs = self._map_diagnoses_to_ccs(member.diagnoses)
 
@@ -334,6 +387,13 @@ class ACACalculator:
         # Step 7: Calculate HCC score
         hcc_score = 0.0
         hcc_details: dict[str, float] = {}
+        
+        # Track which HCCs were superseded by hierarchy
+        superseded_hccs = set(raw_ccs) - set(hccs_after_hierarchy)
+        # Track which HCCs were filtered by model exclusions
+        model_excluded_hccs = set(hccs_after_hierarchy) - set(hccs_filtered)
+        # Track which HCCs were grouped
+        grouped_hccs = set(hccs_filtered) - set(remaining_hccs)
 
         # Score individual HCCs
         for hcc in remaining_hccs:
@@ -351,6 +411,22 @@ class ACACalculator:
             if coef != 0.0:
                 hcc_score += coef
                 hcc_details[var_name] = coef
+                
+                # Track HCC component for audit trail
+                source_icds = self._find_source_icds_for_hcc(hcc, member.diagnoses)
+                components.append(ScoreComponent(
+                    component_type='hcc',
+                    component_code=var_name,
+                    coefficient=coef,
+                    source_data=source_icds,
+                    table_references={
+                        'icd_mapping': 'table_3',
+                        'hierarchy': 'table_4',
+                        'coefficient': 'table_9',
+                        'model': model,
+                        'metal_level': member.metal_level
+                    }
+                ))
 
         # Score group variables
         for group in triggered_groups:
@@ -358,10 +434,32 @@ class ACACalculator:
             if coef != 0.0:
                 hcc_score += coef
                 hcc_details[group] = coef
+                
+                # Find which HCCs were grouped into this group variable
+                from ra_calculators.aca_risk_score_calculator.table_loader import load_hcc_groups
+                groups_map = load_hcc_groups(self.model_year, model)
+                group_member_hccs = [hcc for hcc in groups_map.get(group, []) if hcc in grouped_hccs]
+                
+                # Track group component for audit trail
+                components.append(ScoreComponent(
+                    component_type='hcc_group',
+                    component_code=group,
+                    coefficient=coef,
+                    source_data=group_member_hccs,
+                    table_references={
+                        'grouping': f'table_{"6" if model == "Adult" else "7"}',
+                        'coefficient': 'table_9',
+                        'model': model,
+                        'metal_level': member.metal_level
+                    }
+                ))
 
         # Step 8: RXC Scoring
         raw_rxcs = self._map_ndcs_to_rxcs(member.ndc_codes)
         rxcs_after_hierarchy = self._apply_rxc_hierarchies(raw_rxcs)
+        
+        # Track which RXCs were superseded by hierarchy
+        superseded_rxcs = raw_rxcs - rxcs_after_hierarchy
 
         rxc_score = 0.0
         rxc_details: dict[str, float] = {}
@@ -388,6 +486,22 @@ class ACACalculator:
             if coef != 0.0:
                 rxc_score += coef
                 rxc_details[var_name] = coef
+                
+                # Track RXC component for audit trail
+                source_ndcs = self._find_source_ndcs_for_rxc(rxc, member.ndc_codes)
+                components.append(ScoreComponent(
+                    component_type='rxc',
+                    component_code=var_name,
+                    coefficient=coef,
+                    source_data=source_ndcs,
+                    table_references={
+                        'ndc_mapping': 'table_10a',
+                        'hierarchy': 'table_11',
+                        'coefficient': 'table_9',
+                        'model': model,
+                        'metal_level': member.metal_level
+                    }
+                ))
 
         # Step 9: Calculate total score
         total_score = demographic_factor + hcc_score + rxc_score
@@ -398,26 +512,27 @@ class ACACalculator:
 
         return ScoreOutput(
             member_id=member.member_id,
-            risk_score=round(total_score, 4),
+            risk_score=total_score,
             hcc_list=final_hccs,
+            components=components,
             details={
                 "model": model,
                 "age": age,
                 "gender": member.gender,
                 "metal_level": member.metal_level,
                 "demographic_variable": demo_var,
-                "demographic_factor": round(demographic_factor, 4),
+                "demographic_factor": demographic_factor,
                 "raw_ccs": sorted(raw_ccs),
                 "hccs_after_hierarchy": sorted(hccs_after_hierarchy),
                 "hccs_filtered": sorted(hccs_filtered),
                 "remaining_hccs": sorted(remaining_hccs),
                 "triggered_groups": sorted(triggered_groups),
                 "hcc_coefficients": hcc_details,
-                "hcc_score": round(hcc_score, 4),
+                "hcc_score": hcc_score,
                 "raw_rxcs": sorted(raw_rxcs),
                 "rxcs_after_hierarchy": sorted(final_rxcs),
                 "rxc_coefficients": rxc_details,
-                "rxc_score": round(rxc_score, 4),
+                "rxc_score": rxc_score,
                 "model_year": self.model_year,
             },
         )
