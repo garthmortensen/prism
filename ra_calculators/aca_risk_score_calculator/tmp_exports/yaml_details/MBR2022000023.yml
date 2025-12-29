@@ -1,0 +1,59 @@
+member_id: MBR2022000023
+age: 0
+gender: M
+metal_level: gold
+enrollment_months: 11
+model_year: '2024'
+prediction_year: null
+benefit_year: 2024
+risk_score: 0.0
+input_icd10_codes:
+- G901
+- O0900
+- Q206
+input_ndc_codes:
+- 00054047921
+hcc_pipeline:
+  raw_ccs:
+  - '114'
+  - '139'
+  - '212'
+  hccs_after_hierarchy:
+  - '114'
+  - '139'
+  - '212'
+  hccs_filtered:
+  - '114'
+  - '139'
+  remaining_hccs:
+  - '114'
+  - '139'
+  triggered_groups: []
+  hcc_cnt: 2
+rxc_pipeline:
+  raw_rxcs:
+  - '8'
+  rxcs_after_hierarchy: &id001
+  - '8'
+edf:
+  edf_variable: null
+  edf_factor: 0.0
+hcc_list:
+- '114'
+- '139'
+rxc_list: *id001
+components:
+- component_type: demographic
+  component_code: MAGE_LAST_0_1
+  description: null
+  coefficient: 0.0
+  source_data:
+  - age=0
+  - gender=M
+  superseded_by: null
+  supersedes: []
+  grouped_into: null
+  table_references:
+    table: table_9
+    model: Infant
+    metal_level: gold

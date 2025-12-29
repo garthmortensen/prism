@@ -1,0 +1,115 @@
+member_id: MBR2022000115
+age: 24
+gender: F
+metal_level: silver
+enrollment_months: 5
+model_year: '2024'
+prediction_year: null
+benefit_year: 2024
+risk_score: 12.962000000000002
+input_icd10_codes:
+- E7500
+- M726
+input_ndc_codes:
+- '00002021301'
+hcc_pipeline:
+  raw_ccs:
+  - '119'
+  - '54'
+  hccs_after_hierarchy:
+  - '119'
+  - '54'
+  hccs_filtered:
+  - '119'
+  - '54'
+  remaining_hccs:
+  - '54'
+  triggered_groups:
+  - G12
+  hcc_cnt: 2
+rxc_pipeline:
+  raw_rxcs:
+  - '6'
+  rxcs_after_hierarchy: &id001
+  - '6'
+edf:
+  edf_variable: HCC_ED5
+  edf_factor: 1.121
+hcc_list:
+- '54'
+- G12
+rxc_list: *id001
+components:
+- component_type: demographic
+  component_code: FAGE_LAST_21_24
+  description: null
+  coefficient: 0.121
+  source_data:
+  - age=24
+  - gender=F
+  superseded_by: null
+  supersedes: []
+  grouped_into: null
+  table_references:
+    table: table_9
+    model: Adult
+    metal_level: silver
+- component_type: hcc
+  component_code: HHS_HCC054
+  description: Necrotizing Fasciitis
+  coefficient: 9.345
+  source_data:
+  - M726
+  superseded_by: null
+  supersedes: []
+  grouped_into: null
+  table_references:
+    icd_mapping: table_3
+    hierarchy: table_4
+    coefficient: table_9
+    model: Adult
+    metal_level: silver
+- component_type: hcc_group
+  component_code: G12
+  description: null
+  coefficient: 1.353
+  source_data:
+  - '119'
+  - '119'
+  superseded_by: null
+  supersedes: []
+  grouped_into: null
+  table_references:
+    grouping: table_6
+    coefficient: table_9
+    model: Adult
+    metal_level: silver
+- component_type: edf
+  component_code: HCC_ED5
+  description: Enrollment Duration 5 months, at least one HCC
+  coefficient: 1.121
+  source_data:
+  - enrollment_months=5
+  - hcc_cnt=2
+  superseded_by: null
+  supersedes: []
+  grouped_into: null
+  table_references:
+    coefficient: table_9
+    model: Adult
+    metal_level: silver
+- component_type: rxc
+  component_code: RXC_06
+  description: Insulin
+  coefficient: 1.022
+  source_data:
+  - '00002021301'
+  superseded_by: null
+  supersedes: []
+  grouped_into: null
+  table_references:
+    ndc_mapping: table_10a
+    hierarchy: table_11
+    coefficient: table_9
+    model: Adult
+    metal_level: silver

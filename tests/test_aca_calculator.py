@@ -177,6 +177,29 @@ class TestACACalculator:
         assert all(isinstance(r, ScoreOutput) for r in results)
         assert [r.member_id for r in results] == ["B000", "B001", "B002", "B003", "B004"]
 
+    def test_adult_edf_applied_when_partial_year_and_has_hcc(self, calculator):
+        """Adult EDF is added when enrollment_months is 1-11 and HCC_CNT > 0."""
+        member = MemberInput(
+            member_id="EDF001",
+            date_of_birth=date(1980, 1, 1),
+            gender="F",
+            metal_level="bronze",
+            enrollment_months=6,
+            # Use a diagnosis that maps to at least one payment HCC in the provided tables.
+            diagnoses=["K5000"],
+        )
+        result = calculator.score(member)
+
+        assert result.details["model"] == "Adult"
+        assert result.details["hcc_cnt"] > 0
+        assert result.details["edf_variable"] == "HCC_ED6"
+        assert isinstance(result.details["edf_factor"], float)
+        assert result.details["edf_factor"] != 0.0
+
+        edf_components = [c for c in result.components if c.component_type == "edf"]
+        assert len(edf_components) == 1
+        assert edf_components[0].component_code == "HCC_ED6"
+
 
 class TestHierarchyApplication:
     """Tests for HCC hierarchy logic."""

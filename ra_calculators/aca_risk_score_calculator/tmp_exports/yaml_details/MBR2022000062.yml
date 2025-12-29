@@ -1,0 +1,100 @@
+member_id: MBR2022000062
+age: 47
+gender: F
+metal_level: bronze
+enrollment_months: 6
+model_year: '2024'
+prediction_year: null
+benefit_year: 2024
+risk_score: 34.405
+input_icd10_codes:
+- D89810
+- Z9483
+input_ndc_codes:
+- '10122021201'
+hcc_pipeline:
+  raw_ccs:
+  - '18'
+  - '251'
+  hccs_after_hierarchy:
+  - '18'
+  - '251'
+  hccs_filtered:
+  - '18'
+  - '251'
+  remaining_hccs:
+  - '18'
+  - '251'
+  triggered_groups: []
+  hcc_cnt: 2
+rxc_pipeline:
+  raw_rxcs:
+  - '10'
+  rxcs_after_hierarchy: &id001
+  - '10'
+edf:
+  edf_variable: HCC_ED6
+  edf_factor: 0.561
+hcc_list:
+- '18'
+- '251'
+rxc_list: *id001
+components:
+- component_type: demographic
+  component_code: FAGE_LAST_45_49
+  description: null
+  coefficient: 0.201
+  source_data:
+  - age=47
+  - gender=F
+  superseded_by: null
+  supersedes: []
+  grouped_into: null
+  table_references:
+    table: table_9
+    model: Adult
+    metal_level: bronze
+- component_type: hcc
+  component_code: HHS_HCC251
+  description: Stem Cell, Including Bone Marrow, Transplant Status/Complications
+  coefficient: 19.203
+  source_data:
+  - D89810
+  superseded_by: null
+  supersedes: []
+  grouped_into: null
+  table_references:
+    icd_mapping: table_3
+    hierarchy: table_4
+    coefficient: table_9
+    model: Adult
+    metal_level: bronze
+- component_type: edf
+  component_code: HCC_ED6
+  description: Enrollment Duration 6 months, at least one HCC
+  coefficient: 0.561
+  source_data:
+  - enrollment_months=6
+  - hcc_cnt=2
+  superseded_by: null
+  supersedes: []
+  grouped_into: null
+  table_references:
+    coefficient: table_9
+    model: Adult
+    metal_level: bronze
+- component_type: rxc
+  component_code: RXC_10
+  description: Cystic Fibrosis Agents
+  coefficient: 14.44
+  source_data:
+  - '10122021201'
+  superseded_by: null
+  supersedes: []
+  grouped_into: null
+  table_references:
+    ndc_mapping: table_10a
+    hierarchy: table_11
+    coefficient: table_9
+    model: Adult
+    metal_level: bronze

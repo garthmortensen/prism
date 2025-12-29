@@ -1,0 +1,92 @@
+member_id: MBR2022000027
+age: 9
+gender: F
+metal_level: gold
+enrollment_months: 7
+model_year: '2024'
+prediction_year: null
+benefit_year: 2024
+risk_score: 15.806666666666667
+input_icd10_codes:
+- K5000
+- F10131
+- K91850
+input_ndc_codes:
+- '00002140701'
+hcc_pipeline:
+  raw_ccs:
+  - '253'
+  - '48'
+  - '83'
+  hccs_after_hierarchy:
+  - '253'
+  - '48'
+  - '83'
+  hccs_filtered:
+  - '253'
+  - '48'
+  - '83'
+  remaining_hccs:
+  - '253'
+  - '48'
+  - '83'
+  triggered_groups: []
+  hcc_cnt: 3
+rxc_pipeline:
+  raw_rxcs:
+  - '3'
+  rxcs_after_hierarchy: &id001
+  - '3'
+edf:
+  edf_variable: null
+  edf_factor: 0.0
+hcc_list:
+- '253'
+- '48'
+- '83'
+rxc_list: *id001
+components:
+- component_type: demographic
+  component_code: FAGE_LAST_5_9
+  description: null
+  coefficient: 0.08700000000000001
+  source_data:
+  - age=9
+  - gender=F
+  superseded_by: null
+  supersedes: []
+  grouped_into: null
+  table_references:
+    table: table_9
+    model: Child
+    metal_level: gold
+- component_type: hcc
+  component_code: HHS_HCC048
+  description: Inflammatory Bowel Disease
+  coefficient: 9.478333333333333
+  source_data:
+  - K5000
+  superseded_by: null
+  supersedes: []
+  grouped_into: null
+  table_references:
+    icd_mapping: table_3
+    hierarchy: table_4
+    coefficient: table_9
+    model: Child
+    metal_level: gold
+- component_type: hcc
+  component_code: HHS_HCC253
+  description: Artificial Openings for Feeding or Elimination
+  coefficient: 6.241333333333333
+  source_data:
+  - K91850
+  superseded_by: null
+  supersedes: []
+  grouped_into: null
+  table_references:
+    icd_mapping: table_3
+    hierarchy: table_4
+    coefficient: table_9
+    model: Child
+    metal_level: gold

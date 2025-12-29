@@ -1,0 +1,134 @@
+member_id: MBR2022000088
+age: 4
+gender: M
+metal_level: silver
+enrollment_months: 11
+model_year: '2024'
+prediction_year: null
+benefit_year: 2024
+risk_score: 25.770999999999997
+input_icd10_codes:
+- A870
+- K311
+- F21
+- G35
+- D590
+input_ndc_codes:
+- 00008201080
+hcc_pipeline:
+  raw_ccs:
+  - '118'
+  - '4'
+  - '45'
+  - '69'
+  - '90'
+  hccs_after_hierarchy:
+  - '118'
+  - '4'
+  - '45'
+  - '69'
+  - '90'
+  hccs_filtered:
+  - '118'
+  - '4'
+  - '45'
+  - '69'
+  - '90'
+  remaining_hccs:
+  - '118'
+  - '4'
+  - '45'
+  - '69'
+  - '90'
+  triggered_groups: []
+  hcc_cnt: 5
+rxc_pipeline:
+  raw_rxcs:
+  - '5'
+  rxcs_after_hierarchy: &id001
+  - '5'
+edf:
+  edf_variable: null
+  edf_factor: 0.0
+hcc_list:
+- '118'
+- '4'
+- '45'
+- '69'
+- '90'
+rxc_list: *id001
+components:
+- component_type: demographic
+  component_code: MAGE_LAST_2_4
+  description: null
+  coefficient: 0.14600000000000002
+  source_data:
+  - age=4
+  - gender=M
+  superseded_by: null
+  supersedes: []
+  grouped_into: null
+  table_references:
+    table: table_9
+    model: Child
+    metal_level: silver
+- component_type: hcc
+  component_code: HHS_HCC090
+  description: Personality Disorders
+  coefficient: 0.155
+  source_data:
+  - F21
+  superseded_by: null
+  supersedes: []
+  grouped_into: null
+  table_references:
+    icd_mapping: table_3
+    hierarchy: table_4
+    coefficient: table_9
+    model: Child
+    metal_level: silver
+- component_type: hcc
+  component_code: HHS_HCC004
+  description: Viral or Unspecified Meningitis
+  coefficient: 11.767666666666665
+  source_data:
+  - A870
+  superseded_by: null
+  supersedes: []
+  grouped_into: null
+  table_references:
+    icd_mapping: table_3
+    hierarchy: table_4
+    coefficient: table_9
+    model: Child
+    metal_level: silver
+- component_type: hcc
+  component_code: HHS_HCC045
+  description: Intestinal Obstruction
+  coefficient: 4.446333333333333
+  source_data:
+  - K311
+  superseded_by: null
+  supersedes: []
+  grouped_into: null
+  table_references:
+    icd_mapping: table_3
+    hierarchy: table_4
+    coefficient: table_9
+    model: Child
+    metal_level: silver
+- component_type: hcc
+  component_code: HHS_HCC118
+  description: Multiple Sclerosis
+  coefficient: 9.256
+  source_data:
+  - G35
+  superseded_by: null
+  supersedes: []
+  grouped_into: null
+  table_references:
+    icd_mapping: table_3
+    hierarchy: table_4
+    coefficient: table_9
+    model: Child
+    metal_level: silver

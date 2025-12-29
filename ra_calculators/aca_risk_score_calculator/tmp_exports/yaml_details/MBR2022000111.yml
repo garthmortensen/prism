@@ -1,0 +1,86 @@
+member_id: MBR2022000111
+age: 40
+gender: M
+metal_level: silver
+enrollment_months: 9
+model_year: '2024'
+prediction_year: null
+benefit_year: 2024
+risk_score: 15.998
+input_icd10_codes:
+- M4850XA
+- F10130
+input_ndc_codes:
+- 00002418230
+hcc_pipeline:
+  raw_ccs:
+  - '228'
+  - '84'
+  hccs_after_hierarchy:
+  - '228'
+  - '84'
+  hccs_filtered:
+  - '228'
+  - '84'
+  remaining_hccs:
+  - '228'
+  - '84'
+  triggered_groups: []
+  hcc_cnt: 2
+rxc_pipeline:
+  raw_rxcs:
+  - '9'
+  rxcs_after_hierarchy: &id001
+  - '9'
+edf:
+  edf_variable: null
+  edf_factor: 0.0
+hcc_list:
+- '228'
+- '84'
+rxc_list: *id001
+components:
+- component_type: demographic
+  component_code: MAGE_LAST_40_44
+  description: null
+  coefficient: 0.129
+  source_data:
+  - age=40
+  - gender=M
+  superseded_by: null
+  supersedes: []
+  grouped_into: null
+  table_references:
+    table: table_9
+    model: Adult
+    metal_level: silver
+- component_type: hcc
+  component_code: HHS_HCC228
+  description: Vertebral Fractures without Spinal Cord Injury
+  coefficient: 4.311
+  source_data:
+  - M4850XA
+  superseded_by: null
+  supersedes: []
+  grouped_into: null
+  table_references:
+    icd_mapping: table_3
+    hierarchy: table_4
+    coefficient: table_9
+    model: Adult
+    metal_level: silver
+- component_type: rxc
+  component_code: RXC_09
+  description: Immune suppressants and Immunomodulators
+  coefficient: 11.558
+  source_data:
+  - 00002418230
+  superseded_by: null
+  supersedes: []
+  grouped_into: null
+  table_references:
+    ndc_mapping: table_10a
+    hierarchy: table_11
+    coefficient: table_9
+    model: Adult
+    metal_level: silver

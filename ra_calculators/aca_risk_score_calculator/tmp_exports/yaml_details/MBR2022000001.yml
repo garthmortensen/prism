@@ -1,0 +1,50 @@
+member_id: MBR2022000001
+age: 13
+gender: F
+metal_level: silver
+enrollment_months: 7
+model_year: '2024'
+prediction_year: null
+benefit_year: 2024
+risk_score: 0.11
+input_icd10_codes:
+- E7601
+input_ndc_codes:
+- '00002115201'
+hcc_pipeline:
+  raw_ccs:
+  - '26'
+  hccs_after_hierarchy:
+  - '26'
+  hccs_filtered:
+  - '26'
+  remaining_hccs:
+  - '26'
+  triggered_groups: []
+  hcc_cnt: 1
+rxc_pipeline:
+  raw_rxcs:
+  - '7'
+  rxcs_after_hierarchy: &id001
+  - '7'
+edf:
+  edf_variable: null
+  edf_factor: 0.0
+hcc_list:
+- '26'
+rxc_list: *id001
+components:
+- component_type: demographic
+  component_code: FAGE_LAST_10_14
+  description: null
+  coefficient: 0.11
+  source_data:
+  - age=13
+  - gender=F
+  superseded_by: null
+  supersedes: []
+  grouped_into: null
+  table_references:
+    table: table_9
+    model: Child
+    metal_level: silver

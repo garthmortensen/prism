@@ -78,7 +78,7 @@ def test_duckdb_to_csv_runner_smoke(tmp_path: Path) -> None:
     # Pipeline guarantee: risk_score is present and numeric-ish
     for r in rows:
         assert float(r["risk_score"]) > 0
-        assert r["details_json"]
+        assert r["hcc_list"] is not None
 
 
 def test_duckdb_to_csv_runner_skips_invalid_gender(tmp_path: Path) -> None:

@@ -19,8 +19,9 @@ class ScoreComponent(BaseModel):
         table_references: Dictionary tracking which DIY tables were used
     """
     
-    component_type: str = Field(..., pattern="^(demographic|hcc|rxc|hcc_group)$")
+    component_type: str = Field(..., pattern="^(demographic|hcc|rxc|hcc_group|edf)$")
     component_code: str
+    description: str | None = None
     coefficient: float
     source_data: list[str] = Field(default_factory=list)
     superseded_by: str | None = None

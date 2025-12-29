@@ -4,6 +4,7 @@ import argparse
 import csv
 import json
 import os
+import yaml
 from collections.abc import Iterable
 from datetime import date, datetime
 from pathlib import Path
@@ -152,40 +153,70 @@ def score_from_duckdb_to_csv(
 
         fieldnames = [
             "member_id",
+            "age",
+            "gender",
+            "metal_level",
+            "enrollment_months",
             "model_year",
             "prediction_year",
             "benefit_year",
             "risk_score",
+            "details_json",
             "hcc_list",
             "rxc_list",
-            "components_json",
         ]
 
         benefit_year = int(prediction_year) if prediction_year is not None else int(model_year)
+
+        # Create directory for YAML exports
+        yaml_dir = output_path.parent / "yaml_details"
+        yaml_dir.mkdir(parents=True, exist_ok=True)
 
         with output_path.open("w", newline="", encoding="utf-8") as f:
             writer = csv.DictWriter(f, fieldnames=fieldnames)
             writer.writeheader()
 
-            for member in members:
+            for i, member in enumerate(members):
                 score = calculator.score(member, prediction_year=prediction_year)
                 
                 # Convert components to JSON-serializable format
-                components_json = [comp.model_dump() for comp in score.components]
+                components_data = [comp.model_dump() for comp in score.components]
                 
                 # Extract RXC list from details for backward compatibility with existing queries
                 rxc_list = score.details.get("rxcs_after_hierarchy", [])
 
-                writer.writerow(
-                    {
+                if i < 20:
+                    yaml_data = {
                         "member_id": member.member_id,
+                        "age": score.details.get("age"),
+                        "gender": member.gender,
+                        "metal_level": member.metal_level,
+                        "enrollment_months": member.enrollment_months,
                         "model_year": model_year,
                         "prediction_year": prediction_year,
                         "benefit_year": benefit_year,
                         "risk_score": score.risk_score,
+                        "hcc_list": score.hcc_list,
+                        "rxc_list": rxc_list,
+                        "components": components_data
+                    }
+                    with (yaml_dir / f"{member.member_id}.yml").open("w", encoding="utf-8") as yf:
+                        yaml.dump(yaml_data, yf, sort_keys=False)
+
+                writer.writerow(
+                    {
+                        "member_id": member.member_id,
+                        "age": score.details.get("age"),
+                        "gender": member.gender,
+                        "metal_level": member.metal_level,
+                        "enrollment_months": member.enrollment_months,
+                        "model_year": model_year,
+                        "prediction_year": prediction_year,
+                        "benefit_year": benefit_year,
+                        "risk_score": score.risk_score,
+                        "details_json": json.dumps(score.details, default=str),
                         "hcc_list": json.dumps(score.hcc_list),
                         "rxc_list": json.dumps(rxc_list),
-                        "components_json": json.dumps(components_json, default=str),
                     }
                 )
 

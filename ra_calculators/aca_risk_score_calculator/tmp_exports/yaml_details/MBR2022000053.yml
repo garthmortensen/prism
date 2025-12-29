@@ -1,0 +1,164 @@
+member_id: MBR2022000053
+age: 73
+gender: F
+metal_level: platinum
+enrollment_months: 11
+model_year: '2024'
+prediction_year: null
+benefit_year: 2024
+risk_score: 34.614000000000004
+input_icd10_codes:
+- G801
+- O0000
+- A0102
+- B180
+- I462
+input_ndc_codes:
+- 00002418230
+hcc_pipeline:
+  raw_ccs:
+  - '113'
+  - '127'
+  - '135'
+  - '203'
+  - '37_2'
+  hccs_after_hierarchy:
+  - '113'
+  - '127'
+  - '135'
+  - '203'
+  - '37_2'
+  hccs_filtered:
+  - '113'
+  - '127'
+  - '135'
+  - '203'
+  - '37_2'
+  remaining_hccs:
+  - '113'
+  - '135'
+  - '203'
+  - '37_2'
+  triggered_groups:
+  - G13
+  hcc_cnt: 5
+rxc_pipeline:
+  raw_rxcs:
+  - '9'
+  rxcs_after_hierarchy: &id001
+  - '9'
+edf:
+  edf_variable: null
+  edf_factor: 0.0
+hcc_list:
+- '113'
+- '135'
+- '203'
+- '37_2'
+- G13
+rxc_list: *id001
+components:
+- component_type: demographic
+  component_code: FAGE_LAST_60_GT
+  description: null
+  coefficient: 0.511
+  source_data:
+  - age=73
+  - gender=F
+  superseded_by: null
+  supersedes: []
+  grouped_into: null
+  table_references:
+    table: table_9
+    model: Adult
+    metal_level: platinum
+- component_type: hcc
+  component_code: HHS_HCC037_2
+  description: Chronic Hepatitis, Except Chronic Viral Hepatitis C
+  coefficient: 0.528
+  source_data:
+  - B180
+  superseded_by: null
+  supersedes: []
+  grouped_into: null
+  table_references:
+    icd_mapping: table_3
+    hierarchy: table_4
+    coefficient: table_9
+    model: Adult
+    metal_level: platinum
+- component_type: hcc
+  component_code: HHS_HCC203
+  description: Ectopic and Molar Pregnancy
+  coefficient: 2.101
+  source_data:
+  - O0000
+  superseded_by: null
+  supersedes: []
+  grouped_into: null
+  table_references:
+    icd_mapping: table_3
+    hierarchy: table_4
+    coefficient: table_9
+    model: Adult
+    metal_level: platinum
+- component_type: hcc
+  component_code: HHS_HCC113
+  description: Cerebral Palsy, Except Quadriplegic
+  coefficient: 0.603
+  source_data:
+  - G801
+  superseded_by: null
+  supersedes: []
+  grouped_into: null
+  table_references:
+    icd_mapping: table_3
+    hierarchy: table_4
+    coefficient: table_9
+    model: Adult
+    metal_level: platinum
+- component_type: hcc
+  component_code: HHS_HCC135
+  description: Heart Infection/Inflammation, Except Rheumatic
+  coefficient: 9.55
+  source_data:
+  - A0102
+  superseded_by: null
+  supersedes: []
+  grouped_into: null
+  table_references:
+    icd_mapping: table_3
+    hierarchy: table_4
+    coefficient: table_9
+    model: Adult
+    metal_level: platinum
+- component_type: hcc_group
+  component_code: G13
+  description: null
+  coefficient: 8.925
+  source_data:
+  - '127'
+  - '127'
+  superseded_by: null
+  supersedes: []
+  grouped_into: null
+  table_references:
+    grouping: table_6
+    coefficient: table_9
+    model: Adult
+    metal_level: platinum
+- component_type: rxc
+  component_code: RXC_09
+  description: Immune suppressants and Immunomodulators
+  coefficient: 12.396
+  source_data:
+  - 00002418230
+  superseded_by: null
+  supersedes: []
+  grouped_into: null
+  table_references:
+    ndc_mapping: table_10a
+    hierarchy: table_11
+    coefficient: table_9
+    model: Adult
+    metal_level: platinum

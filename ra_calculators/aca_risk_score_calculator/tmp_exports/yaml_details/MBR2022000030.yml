@@ -1,0 +1,86 @@
+member_id: MBR2022000030
+age: 7
+gender: F
+metal_level: gold
+enrollment_months: 10
+model_year: '2024'
+prediction_year: null
+benefit_year: 2024
+risk_score: 36.02833333333334
+input_icd10_codes:
+- S061X3A
+- Z95811
+input_ndc_codes:
+- '00002140701'
+hcc_pipeline:
+  raw_ccs:
+  - '128'
+  - '223'
+  hccs_after_hierarchy:
+  - '128'
+  - '223'
+  hccs_filtered:
+  - '128'
+  - '223'
+  remaining_hccs:
+  - '223'
+  triggered_groups:
+  - G14
+  hcc_cnt: 2
+rxc_pipeline:
+  raw_rxcs:
+  - '3'
+  rxcs_after_hierarchy: &id001
+  - '3'
+edf:
+  edf_variable: null
+  edf_factor: 0.0
+hcc_list:
+- '223'
+- G14
+rxc_list: *id001
+components:
+- component_type: demographic
+  component_code: FAGE_LAST_5_9
+  description: null
+  coefficient: 0.08700000000000001
+  source_data:
+  - age=7
+  - gender=F
+  superseded_by: null
+  supersedes: []
+  grouped_into: null
+  table_references:
+    table: table_9
+    model: Child
+    metal_level: gold
+- component_type: hcc
+  component_code: HHS_HCC223
+  description: Severe Head Injury
+  coefficient: 22.185000000000002
+  source_data:
+  - S061X3A
+  superseded_by: null
+  supersedes: []
+  grouped_into: null
+  table_references:
+    icd_mapping: table_3
+    hierarchy: table_4
+    coefficient: table_9
+    model: Child
+    metal_level: gold
+- component_type: hcc_group
+  component_code: G14
+  description: null
+  coefficient: 13.756333333333336
+  source_data:
+  - '128'
+  - '128'
+  superseded_by: null
+  supersedes: []
+  grouped_into: null
+  table_references:
+    grouping: table_7
+    coefficient: table_9
+    model: Child
+    metal_level: gold

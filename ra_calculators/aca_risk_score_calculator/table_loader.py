@@ -344,6 +344,73 @@ def load_rxc_hierarchies(model_year: str = "2024") -> dict[str, list[str]]:
     return hierarchies
 
 
+def load_hcc_labels(model_year: str = "2024") -> dict[str, str]:
+    """Load HCC labels from table_4.parquet.
+
+    Args:
+        model_year: Model year (e.g., "2024")
+
+    Returns:
+        Dictionary mapping HCC code to label
+    """
+    cache_key = f"hcc_labels_{model_year}"
+    if cache_key in _CACHE:
+        return _CACHE[cache_key]
+
+    tables_dir = _get_tables_dir(model_year)
+    labels: dict[str, str] = {}
+
+    df = pl.read_parquet(tables_dir / "table_4.parquet")
+
+    # Determine HCC column name
+    hcc_col = next((col for col in df.columns if col.endswith("_hcc")), "v07_hcc")
+    
+    # Determine label column
+    label_col = next((col for col in df.columns if "label" in col.lower()), "hcc_label")
+
+    for row in df.iter_rows(named=True):
+        hcc = str(row[hcc_col]).strip()
+        label = str(row.get(label_col, "")).strip()
+        if hcc and label:
+            labels[hcc] = label
+
+    _CACHE[cache_key] = labels
+    return labels
+
+
+def load_rxc_labels(model_year: str = "2024") -> dict[str, str]:
+    """Load RXC labels from table_10a.parquet.
+
+    Args:
+        model_year: Model year (e.g., "2024")
+
+    Returns:
+        Dictionary mapping RXC code to label
+    """
+    cache_key = f"rxc_labels_{model_year}"
+    if cache_key in _CACHE:
+        return _CACHE[cache_key]
+
+    tables_dir = _get_tables_dir(model_year)
+    labels: dict[str, str] = {}
+
+    df = pl.read_parquet(tables_dir / "table_10a.parquet")
+
+    # Identify columns
+    rxc_col = next((col for col in df.columns if "rxc" in col.lower() and "label" not in col.lower()), "rxc")
+    label_col = next((col for col in df.columns if "label" in col.lower()), "rxc_label")
+
+    for row in df.iter_rows(named=True):
+        rxc = str(row[rxc_col]).strip()
+        label = str(row.get(label_col, "")).strip()
+        
+        if rxc and label:
+            labels[rxc] = label
+
+    _CACHE[cache_key] = labels
+    return labels
+
+
 def clear_cache() -> None:
     """Clear the table cache."""
     _CACHE.clear()

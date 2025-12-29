@@ -18,10 +18,12 @@ from ra_calculators.aca_risk_score_calculator.models import MemberInput, ScoreCo
 from ra_calculators.aca_risk_score_calculator.table_loader import (
     load_coefficients,
     load_hcc_groups,
+    load_hcc_labels,
     load_icd_to_cc,
     load_model_exclusions,
     load_ndc_to_rxc,
     load_rxc_hierarchies,
+    load_rxc_labels,
 )
 
 
@@ -65,6 +67,8 @@ class ACACalculator:
         self._exclusions = load_model_exclusions(model_year)
         self._ndc_to_rxc = load_ndc_to_rxc(model_year)
         self._rxc_hierarchies = load_rxc_hierarchies(model_year)
+        self._hcc_labels = load_hcc_labels(model_year)
+        self._rxc_labels = load_rxc_labels(model_year)
 
     def _calculate_age(self, dob: date, as_of: date | None = None) -> int:
         """Calculate age in years as of a given date.
@@ -417,6 +421,7 @@ class ACACalculator:
                 components.append(ScoreComponent(
                     component_type='hcc',
                     component_code=var_name,
+                    description=self._hcc_labels.get(hcc),
                     coefficient=coef,
                     source_data=source_icds,
                     table_references={
@@ -453,6 +458,48 @@ class ACACalculator:
                         'metal_level': member.metal_level
                     }
                 ))
+
+        # Step 7b: Adult Enrollment Duration Factor (EDF)
+        # Per HHS/HCC EDF logic: if ENROLDURATION = N and HCC_CNT > 0 then HCC_EDN = 1
+        # Here we define HCC_CNT as the count of payment HCCs (post-hierarchy/exclusions/grouping)
+        # plus any triggered group variables.
+        edf_var: str | None = None
+        edf_factor = 0.0
+
+        hcc_cnt = 0
+        # Count final payment HCCs (post-hierarchy, post-exclusions, post-grouping)
+        hcc_cnt += len(remaining_hccs)
+        # Count group variables G*
+        hcc_cnt += len(triggered_groups)
+
+        if model == "Adult":
+            enrollment_months = int(getattr(member, "enrollment_months", 12) or 12)
+            # 2024 DIY table_9 includes HCC_ED1..HCC_ED6 for Adult EDF.
+            if 1 <= enrollment_months <= 6 and hcc_cnt > 0:
+                edf_var = f"HCC_ED{enrollment_months}"
+                edf_factor = self._get_coefficient(model, edf_var, member.metal_level)
+                if edf_factor != 0.0:
+                    hcc_score += edf_factor
+                    hcc_details[edf_var] = edf_factor
+                    components.append(
+                        ScoreComponent(
+                            component_type="edf",
+                            component_code=edf_var,
+                            description=(
+                                f"Enrollment Duration {enrollment_months} months, at least one HCC"
+                            ),
+                            coefficient=edf_factor,
+                            source_data=[
+                                f"enrollment_months={enrollment_months}",
+                                f"hcc_cnt={hcc_cnt}",
+                            ],
+                            table_references={
+                                "coefficient": "table_9",
+                                "model": model,
+                                "metal_level": member.metal_level,
+                            },
+                        )
+                    )
 
         # Step 8: RXC Scoring
         raw_rxcs = self._map_ndcs_to_rxcs(member.ndc_codes)
@@ -492,6 +539,7 @@ class ACACalculator:
                 components.append(ScoreComponent(
                     component_type='rxc',
                     component_code=var_name,
+                    description=self._rxc_labels.get(rxc),
                     coefficient=coef,
                     source_data=source_ndcs,
                     table_references={
@@ -520,6 +568,7 @@ class ACACalculator:
                 "age": age,
                 "gender": member.gender,
                 "metal_level": member.metal_level,
+                "enrollment_months": member.enrollment_months,
                 "demographic_variable": demo_var,
                 "demographic_factor": demographic_factor,
                 "raw_ccs": sorted(raw_ccs),
@@ -527,6 +576,9 @@ class ACACalculator:
                 "hccs_filtered": sorted(hccs_filtered),
                 "remaining_hccs": sorted(remaining_hccs),
                 "triggered_groups": sorted(triggered_groups),
+                "hcc_cnt": hcc_cnt,
+                "edf_variable": edf_var,
+                "edf_factor": edf_factor,
                 "hcc_coefficients": hcc_details,
                 "hcc_score": hcc_score,
                 "raw_rxcs": sorted(raw_rxcs),
