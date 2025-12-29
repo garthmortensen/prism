@@ -1,0 +1,80 @@
+version: 2
+
+models:
+  - name: int_risk_score_components
+    description: |
+      Normalized table storing each risk score component individually for full audit trail.
+      Each row represents a single component (demographic, HCC, RXC, or HCC group) with 
+      source data lineage and calculation metadata.
+      
+      This table enables:
+      - Granular analysis of score composition
+      - Tracking which diagnoses/NDCs contribute to scores
+      - Understanding hierarchy and grouping impacts
+      - Regulatory audit requirements
+      - Score change attribution
+    
+    columns:
+      - name: member_id
+        description: Unique member identifier
+        tests:
+          - not_null
+      
+      - name: run_timestamp
+        description: Timestamp identifying the scoring run
+        tests:
+          - not_null
+      
+      - name: calculator
+        description: Calculator used (e.g., 'aca_risk_score_calculator')
+      
+      - name: model_year
+        description: HHS-HCC model year (e.g., '2024')
+      
+      - name: risk_score
+        description: Total risk score for the member (same across all components for this member/run)
+      
+      - name: component_type
+        description: Type of score component
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['demographic', 'hcc', 'rxc', 'hcc_group']
+      
+      - name: component_code
+        description: Variable name for this component (e.g., 'MAGE_LAST_55_59', 'HHS_HCC019', 'RXC_01', 'G01')
+        tests:
+          - not_null
+      
+      - name: coefficient_value
+        description: Coefficient value applied for this component
+        tests:
+          - not_null
+      
+      - name: source_diagnoses_or_ndcs
+        description: |
+          JSON array of source ICD-10 codes (for HCCs) or NDC codes (for RXCs) 
+          that triggered this component
+      
+      - name: was_superseded_by
+        description: If this component was zeroed by hierarchy, the dominant component code
+      
+      - name: superseded_components
+        description: JSON array of component codes that this component superseded via hierarchy
+      
+      - name: is_part_of_group
+        description: If this HCC was grouped, the group variable name (e.g., 'G01')
+      
+      - name: model_type
+        description: Model type (Adult, Child, Infant)
+      
+      - name: metal_level
+        description: Plan metal level (platinum, gold, silver, bronze, catastrophic)
+      
+      - name: table_references
+        description: |
+          JSON object tracking which DIY tables were used in the calculation
+          (e.g., table_3 for ICD mapping, table_4 for hierarchy, table_9 for coefficients)
+      
+      - name: created_at
+        description: Timestamp when this record was created

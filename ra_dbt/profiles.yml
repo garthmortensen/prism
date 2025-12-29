@@ -3,6 +3,6 @@ prism:
   outputs:
     dev:
       type: duckdb
-      path: '../prism.duckdb'
+      path: '../risk_adjustment.duckdb'
       extensions: 
         - httpfs

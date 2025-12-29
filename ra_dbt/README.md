@@ -1,4 +1,4 @@
-# Prism dbt Project
+# ra_dbt
 
 This dbt project transforms raw enrollment and claims data into the input format required for the ACA Risk Calculator.
 
@@ -24,6 +24,34 @@ This dbt project transforms raw enrollment and claims data into the input format
     ```bash
     uv run dbt test
     ```
+
+```text
+                 (you)
+                  |
+                  v
+         ┌───────────────────┐
+         │  dbt project code  │
+         │  - models/ (*.sql) │
+         │  - seeds/ (*.csv)  │
+         │  - tests/          │
+         │  - snapshots/      │
+         └─────────┬─────────┘
+                   |
+                   v
+┌─────────────────────────────────────────────────────────┐
+│                         DATABASE                         │
+│                                                         │
+│   dbt seed  ───────►  raw-ish tables from /seeds CSVs    │
+│                     (loads CSVs into tables)             │
+│                                                         │
+│   dbt run   ───────►  models as views/tables             │
+│                     (creates/updates models only)        │
+│                                                         │
+│   dbt build ───────►  seed + run + tests (+ snapshots*)  │
+│                     (end-to-end “make it right”)         │
+│                                                         │
+└─────────────────────────────────────────────────────────┘
+```
 
 ## Warehouse Schemas
 
