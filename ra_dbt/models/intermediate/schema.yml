@@ -39,7 +39,8 @@ models:
         tests:
           - not_null
           - accepted_values:
-              values: ['demographic', 'hcc', 'rxc', 'hcc_group']
+              arguments:
+                values: ['demographic', 'hcc', 'rxc', 'hcc_group', 'edf']
       
       - name: component_code
         description: Variable name for this component (e.g., 'MAGE_LAST_55_59', 'HHS_HCC019', 'RXC_01', 'G01')

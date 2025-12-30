@@ -62,13 +62,13 @@ Note: DuckDB tooling may show `main_` prefixes because `main` is the default dat
 - `raw`: dbt seeds (e.g., `raw_claims`)
 - `staging`: dbt staging views (e.g., `stg_claims_dx`)
 - `intermediate`: dbt intermediate views (including `int_aca_risk_input`)
-- `main_meta` / `main_marts`: created and written by Dagster (run registry + scored outputs)
+- `main_runs` / `main_analytics`: created and written by Dagster (run artifacts + downstream analytics)
 
 ## Data dictionary (Dagster tables)
 
 Dagster-managed relations are documented in dbt via `sources` and `exposures`:
 
-- `models/dagster_sources.yml`: `main_meta.run_registry`, `main_marts.risk_scores`, `main_marts.run_comparison`, `main_marts.decomposition`
+- `models/dagster_sources.yml`: `main_runs.run_registry`, `main_runs.risk_scores`, `main_analytics.run_comparison`, `main_analytics.decomposition`
 - `models/dagster_exposures.yml`: high-level Dagster pipeline dependencies
 
 ## Output

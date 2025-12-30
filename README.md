@@ -62,8 +62,8 @@ This project documents *logical* layer names and maps them to the physical DuckD
 | `raw` | `main_raw` | `raw_claims`, `raw_members`, … |
 | `staging` | `main_staging` | `stg_claims_dx`, `stg_enrollment`, … |
 | `intermediate` | `main_intermediate` | `int_aca_risk_input`, … |
-| `meta` | `main_meta` | `run_registry` (Dagster-managed) |
-| `marts` | `main_marts` | `risk_scores`, `run_comparison`, `decomposition` (Dagster-managed) |
+| `runs` | `main_runs` | `run_registry`, `risk_scores` (Dagster-managed) |
+| `analytics` | `main_analytics` | `run_comparison`, `decomposition` (Dagster-managed) |
 
 #### dbt materializations
 
@@ -73,7 +73,7 @@ This project documents *logical* layer names and maps them to the physical DuckD
 | `staging` | view | Light transforms; always up-to-date. |
 | `intermediate` | view | Dagster reads from this; snapshot semantics are useful. |
 
-#### Meta schema 
+#### Runs schema 
 
 - `run_timestamp`: Go down to 4-digit microseconds (YYYYMMDDHHMMSSUUUU) to avoid collisions.
 - `run_id`: `SELECT MAX(group_id) + 1 FROM run_registry`
@@ -82,8 +82,8 @@ This project documents *logical* layer names and maps them to the physical DuckD
 - `git_commit` - for cloning point-in-time code
 - `git_commit_clean` - for confirming referenced commit is clean and reliable
 
-Implementation note: `main_meta.run_registry` is the source of truth for run metadata,
-and downstream tables live in `main_marts` (e.g., `main_marts.risk_scores`, `main_marts.run_comparison`, `main_marts.decomposition`).
+Implementation note: `main_runs.run_registry` is the source of truth for run metadata.
+Atomic run outputs live in `main_runs` (e.g., `main_runs.risk_scores`), and downstream derived tables live in `main_analytics` (e.g., `main_analytics.run_comparison`, `main_analytics.decomposition`).
 
 ### Schema features built-in reproducibility
 
@@ -95,7 +95,7 @@ dagster run show <run_id>
 dagster job execute -j scoring_job --config-from-run <run_id>
 
 # 2b. or manually with the stored config
-SELECT config_json FROM main_meta.run_registry 
+SELECT config_json FROM main_runs.run_registry 
 WHERE effective = '20251115120000';
 ```
 
@@ -272,7 +272,7 @@ make test     # Run tests
 
 ### Core Output Tables
 
-The three primary downstream tables from `main_meta.run_registry` have a dependency hierarchy:
+The three primary downstream tables from `main_runs.run_registry` have a dependency hierarchy:
 
 1. **RISK_SCORES** is the base output — must exist for anything else
 2. **RUN_COMPARISON** compares two RISK_SCORES runs (needs `comparison_run_timestamp` reference)
@@ -280,9 +280,9 @@ The three primary downstream tables from `main_meta.run_registry` have a depende
 
 | Table | Granularity | Purpose |
 |-------|-------------|----------|
-| `main_marts.risk_scores` | member × run_timestamp | Raw scoring output per run |
-| `main_marts.run_comparison` | member × run_timestamp_pair | Delta between two runs (FULL OUTER JOIN — includes members in A only, B only, or both) |
-| `main_marts.decomposition` | analysis_id | Aggregate 4-run attribution |
+| `main_runs.risk_scores` | member × run_timestamp | Raw scoring output per run |
+| `main_analytics.run_comparison` | member × run_timestamp_pair | Delta between two runs (FULL OUTER JOIN — includes members in A only, B only, or both) |
+| `main_analytics.decomposition` | analysis_id | Aggregate 4-run attribution |
 
 ### Run Comparison Membership Matching
 

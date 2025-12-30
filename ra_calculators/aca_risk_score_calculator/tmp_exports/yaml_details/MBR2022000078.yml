@@ -7,44 +7,12 @@ model_year: '2024'
 prediction_year: null
 benefit_year: 2024
 risk_score: 16.641000000000002
-input_icd10_codes:
-- E700
-- K5000
-- F842
-input_ndc_codes:
-- 00054047921
-- 00004040109
-hcc_pipeline:
-  raw_ccs:
-  - '103'
-  - '28'
-  - '48'
-  hccs_after_hierarchy:
-  - '103'
-  - '28'
-  - '48'
-  hccs_filtered:
-  - '103'
-  - '48'
-  remaining_hccs:
-  - '103'
-  - '48'
-  triggered_groups: []
-  hcc_cnt: 2
-rxc_pipeline:
-  raw_rxcs:
-  - '4'
-  - '8'
-  rxcs_after_hierarchy: &id001
-  - '4'
-  - '8'
-edf:
-  edf_variable: null
-  edf_factor: 0.0
 hcc_list:
 - '103'
 - '48'
-rxc_list: *id001
+rxc_list:
+- '4'
+- '8'
 components:
 - component_type: demographic
   component_code: FAGE_LAST_45_49
@@ -91,11 +59,11 @@ components:
     model: Adult
     metal_level: bronze
 - component_type: rxc
-  component_code: RXC_04
-  description: Phosphate Binders
-  coefficient: 1.295
+  component_code: RXC_08
+  description: Multiple Sclerosis Agents
+  coefficient: 14.547
   source_data:
-  - 00004040109
+  - 00054047921
   superseded_by: null
   supersedes: []
   grouped_into: null
@@ -106,11 +74,11 @@ components:
     model: Adult
     metal_level: bronze
 - component_type: rxc
-  component_code: RXC_08
-  description: Multiple Sclerosis Agents
-  coefficient: 14.547
+  component_code: RXC_04
+  description: Phosphate Binders
+  coefficient: 1.295
   source_data:
-  - 00054047921
+  - 00004040109
   superseded_by: null
   supersedes: []
   grouped_into: null

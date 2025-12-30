@@ -7,44 +7,12 @@ model_year: '2024'
 prediction_year: null
 benefit_year: 2024
 risk_score: 15.806666666666667
-input_icd10_codes:
-- K5000
-- F10131
-- K91850
-input_ndc_codes:
-- '00002140701'
-hcc_pipeline:
-  raw_ccs:
-  - '253'
-  - '48'
-  - '83'
-  hccs_after_hierarchy:
-  - '253'
-  - '48'
-  - '83'
-  hccs_filtered:
-  - '253'
-  - '48'
-  - '83'
-  remaining_hccs:
-  - '253'
-  - '48'
-  - '83'
-  triggered_groups: []
-  hcc_cnt: 3
-rxc_pipeline:
-  raw_rxcs:
-  - '3'
-  rxcs_after_hierarchy: &id001
-  - '3'
-edf:
-  edf_variable: null
-  edf_factor: 0.0
 hcc_list:
 - '253'
 - '48'
 - '83'
-rxc_list: *id001
+rxc_list:
+- '3'
 components:
 - component_type: demographic
   component_code: FAGE_LAST_5_9

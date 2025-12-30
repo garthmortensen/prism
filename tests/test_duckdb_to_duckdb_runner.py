@@ -1,17 +1,15 @@
 from __future__ import annotations
 
-import csv
 from datetime import date
 from pathlib import Path
 
 import duckdb
 
-from ra_calculators.aca_risk_score_calculator.duckdb_to_csv import score_from_duckdb_to_csv
+from ra_calculators.aca_risk_score_calculator.pipeline import export_duckdb_scores_to_table
 
 
-def test_duckdb_to_csv_runner_smoke(tmp_path: Path) -> None:
+def test_duckdb_to_duckdb_writer_replace(tmp_path: Path) -> None:
     duckdb_path = tmp_path / "risk_adjustment.duckdb"
-    out_csv = tmp_path / "scores.csv"
 
     con = duckdb.connect(str(duckdb_path))
     try:
@@ -56,37 +54,38 @@ def test_duckdb_to_csv_runner_smoke(tmp_path: Path) -> None:
     finally:
         con.close()
 
-    written = score_from_duckdb_to_csv(
+    written, stats = export_duckdb_scores_to_table(
         duckdb_path=str(duckdb_path),
-        output_csv_path=str(out_csv),
+        output_duckdb_path=str(duckdb_path),
+        input_schema="main_intermediate",
+        input_table="int_aca_risk_input",
+        output_schema="main_intermediate",
+        output_table="aca_risk_scores",
+        write_mode="replace",
         model_year="2024",
         prediction_year=None,
-        schema="main_intermediate",
-        table="int_aca_risk_input",
-        limit=None,
     )
 
+    assert stats.skipped == 0
     assert written == 2
-    assert out_csv.exists()
 
-    with out_csv.open(newline="", encoding="utf-8") as f:
-        rows = list(csv.DictReader(f))
+    con = duckdb.connect(str(duckdb_path))
+    try:
+        rows = con.execute(
+            "SELECT member_id, risk_score, hcc_list "
+            "FROM main_intermediate.aca_risk_scores "
+            "ORDER BY member_id"
+        ).fetchall()
+    finally:
+        con.close()
 
-    assert len(rows) == 2
-    assert {r["member_id"] for r in rows} == {"M1", "M2"}
-
-    # Column guarantee: details_json is not exported
-    assert "details_json" not in rows[0]
-
-    # Pipeline guarantee: risk_score is present and numeric-ish
-    for r in rows:
-        assert float(r["risk_score"]) > 0
-        assert r["hcc_list"] is not None
+    assert [r[0] for r in rows] == ["M1", "M2"]
+    assert all(float(r[1]) > 0 for r in rows)
+    assert all(r[2] is not None for r in rows)
 
 
-def test_duckdb_to_csv_runner_skips_invalid_gender(tmp_path: Path) -> None:
+def test_duckdb_to_duckdb_writer_skips_invalid_gender(tmp_path: Path) -> None:
     duckdb_path = tmp_path / "risk_adjustment.duckdb"
-    out_csv = tmp_path / "scores.csv"
 
     con = duckdb.connect(str(duckdb_path))
     try:
@@ -131,19 +130,23 @@ def test_duckdb_to_csv_runner_skips_invalid_gender(tmp_path: Path) -> None:
     finally:
         con.close()
 
-    written = score_from_duckdb_to_csv(
+    written, stats = export_duckdb_scores_to_table(
         duckdb_path=str(duckdb_path),
-        output_csv_path=str(out_csv),
+        output_duckdb_path=str(duckdb_path),
+        output_schema="main_intermediate",
+        output_table="aca_risk_scores",
+        write_mode="replace",
         model_year="2024",
         invalid_gender="skip",
     )
 
     assert written == 1
+    assert stats.skipped == 1
 
-    with out_csv.open(newline="", encoding="utf-8") as f:
-        rows = list(csv.DictReader(f))
+    con = duckdb.connect(str(duckdb_path))
+    try:
+        rows = con.execute("SELECT member_id FROM main_intermediate.aca_risk_scores").fetchall()
+    finally:
+        con.close()
 
-    assert [r["member_id"] for r in rows] == ["GOOD"]
-
-    # Column guarantee: details_json is not exported
-    assert "details_json" not in rows[0]
+    assert [r[0] for r in rows] == ["GOOD"]

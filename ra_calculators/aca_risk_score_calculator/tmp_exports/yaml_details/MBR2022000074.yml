@@ -7,59 +7,6 @@ model_year: '2024'
 prediction_year: null
 benefit_year: 2024
 risk_score: 21.391
-input_icd10_codes:
-- Q204
-- J410
-- A0101
-- Q351
-- E7871
-- F3010
-- A065
-input_ndc_codes:
-- '00002115201'
-hcc_pipeline:
-  raw_ccs:
-  - '137'
-  - '161_1'
-  - '163'
-  - '3'
-  - '63'
-  - '88'
-  - '97'
-  hccs_after_hierarchy:
-  - '137'
-  - '161_1'
-  - '163'
-  - '3'
-  - '63'
-  - '88'
-  - '97'
-  hccs_filtered:
-  - '137'
-  - '161_1'
-  - '163'
-  - '3'
-  - '63'
-  - '88'
-  - '97'
-  remaining_hccs:
-  - '163'
-  - '3'
-  - '63'
-  - '88'
-  - '97'
-  triggered_groups:
-  - G15A
-  - G21
-  hcc_cnt: 7
-rxc_pipeline:
-  raw_rxcs:
-  - '7'
-  rxcs_after_hierarchy: &id001
-  - '7'
-edf:
-  edf_variable: null
-  edf_factor: 0.0
 hcc_list:
 - '163'
 - '3'
@@ -68,7 +15,8 @@ hcc_list:
 - '97'
 - G15A
 - G21
-rxc_list: *id001
+rxc_list:
+- '7'
 components:
 - component_type: demographic
   component_code: MAGE_LAST_55_59
@@ -82,6 +30,21 @@ components:
   grouped_into: null
   table_references:
     table: table_9
+    model: Adult
+    metal_level: bronze
+- component_type: hcc
+  component_code: HHS_HCC088
+  description: Major Depressive Disorder, Severe, and Bipolar Disorders
+  coefficient: 0.752
+  source_data:
+  - F3010
+  superseded_by: null
+  supersedes: []
+  grouped_into: null
+  table_references:
+    icd_mapping: table_3
+    hierarchy: table_4
+    coefficient: table_9
     model: Adult
     metal_level: bronze
 - component_type: hcc
@@ -101,11 +64,11 @@ components:
     model: Adult
     metal_level: bronze
 - component_type: hcc
-  component_code: HHS_HCC003
-  description: Central Nervous System Infections, Except Viral Meningitis
-  coefficient: 8.678
+  component_code: HHS_HCC063
+  description: Cleft Lip/Cleft Palate
+  coefficient: 1.102
   source_data:
-  - A0101
+  - Q351
   superseded_by: null
   supersedes: []
   grouped_into: null
@@ -132,26 +95,11 @@ components:
     model: Adult
     metal_level: bronze
 - component_type: hcc
-  component_code: HHS_HCC088
-  description: Major Depressive Disorder, Severe, and Bipolar Disorders
-  coefficient: 0.752
+  component_code: HHS_HCC003
+  description: Central Nervous System Infections, Except Viral Meningitis
+  coefficient: 8.678
   source_data:
-  - F3010
-  superseded_by: null
-  supersedes: []
-  grouped_into: null
-  table_references:
-    icd_mapping: table_3
-    hierarchy: table_4
-    coefficient: table_9
-    model: Adult
-    metal_level: bronze
-- component_type: hcc
-  component_code: HHS_HCC063
-  description: Cleft Lip/Cleft Palate
-  coefficient: 1.102
-  source_data:
-  - Q351
+  - A0101
   superseded_by: null
   supersedes: []
   grouped_into: null

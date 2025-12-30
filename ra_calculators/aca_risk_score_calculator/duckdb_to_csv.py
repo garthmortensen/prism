@@ -161,7 +161,6 @@ def score_from_duckdb_to_csv(
             "prediction_year",
             "benefit_year",
             "risk_score",
-            "details_json",
             "hcc_list",
             "rxc_list",
         ]
@@ -214,7 +213,6 @@ def score_from_duckdb_to_csv(
                         "prediction_year": prediction_year,
                         "benefit_year": benefit_year,
                         "risk_score": score.risk_score,
-                        "details_json": json.dumps(score.details, default=str),
                         "hcc_list": json.dumps(score.hcc_list),
                         "rxc_list": json.dumps(rxc_list),
                     }

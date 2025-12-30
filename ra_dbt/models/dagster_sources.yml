@@ -1,9 +1,9 @@
 version: 2
 
 sources:
-  - name: dagster_meta
-    description: Dagster-managed operational metadata tables.
-    schema: main_meta
+  - name: dagster_runs
+    description: Dagster-managed run artifacts (registry + atomic outputs).
+    schema: main_runs
     tables:
       - name: run_registry
         description: Run metadata and lineage for Dagster executions.
@@ -30,9 +30,9 @@ sources:
           - name: created_at
           - name: updated_at
 
-  - name: dagster_marts
-    description: Dagster-managed analytics outputs.
-    schema: main_marts
+  - name: dagster_runs_outputs
+    description: Dagster-managed atomic run outputs.
+    schema: main_runs
     tables:
       - name: risk_scores
         description: Member-level risk scores output by Dagster.
@@ -52,6 +52,11 @@ sources:
           - name: details
           - name: created_at
 
+
+  - name: dagster_analytics
+    description: Dagster-managed downstream analytics outputs.
+    schema: main_analytics
+    tables:
       - name: run_comparison
         description: Member-level deltas between two runs.
         columns:

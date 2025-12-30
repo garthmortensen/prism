@@ -6,59 +6,7 @@ enrollment_months: 10
 model_year: '2024'
 prediction_year: null
 benefit_year: 2024
-risk_score: 25.891999999999996
-input_icd10_codes:
-- M726
-- Q351
-- I2601
-- G901
-- D600
-- I8500
-input_ndc_codes:
-- 00004040109
-hcc_pipeline:
-  raw_ccs:
-  - '114'
-  - '130'
-  - '156'
-  - '35_2'
-  - '54'
-  - '63'
-  - '68'
-  hccs_after_hierarchy:
-  - '114'
-  - '130'
-  - '156'
-  - '35_2'
-  - '54'
-  - '63'
-  - '68'
-  hccs_filtered:
-  - '114'
-  - '130'
-  - '156'
-  - '35_2'
-  - '54'
-  - '63'
-  - '68'
-  remaining_hccs:
-  - '114'
-  - '130'
-  - '156'
-  - '35_2'
-  - '54'
-  - '63'
-  - '68'
-  triggered_groups: []
-  hcc_cnt: 7
-rxc_pipeline:
-  raw_rxcs:
-  - '4'
-  rxcs_after_hierarchy: &id001
-  - '4'
-edf:
-  edf_variable: null
-  edf_factor: 0.0
+risk_score: 25.892000000000003
 hcc_list:
 - '114'
 - '130'
@@ -67,7 +15,8 @@ hcc_list:
 - '54'
 - '63'
 - '68'
-rxc_list: *id001
+rxc_list:
+- '4'
 components:
 - component_type: demographic
   component_code: FAGE_LAST_60_GT
@@ -114,26 +63,11 @@ components:
     model: Adult
     metal_level: gold
 - component_type: hcc
-  component_code: HHS_HCC035_2
-  description: Chronic Liver Failure/End-Stage Liver Disorders
-  coefficient: 2.315
+  component_code: HHS_HCC114
+  description: Spina Bifida and Other Brain/Spinal/Nervous System Congenital Anomalies
+  coefficient: 1.266
   source_data:
-  - I8500
-  superseded_by: null
-  supersedes: []
-  grouped_into: null
-  table_references:
-    icd_mapping: table_3
-    hierarchy: table_4
-    coefficient: table_9
-    model: Adult
-    metal_level: gold
-- component_type: hcc
-  component_code: HHS_HCC156
-  description: Pulmonary Embolism and Deep Vein Thrombosis
-  coefficient: 8.045
-  source_data:
-  - I2601
+  - G901
   superseded_by: null
   supersedes: []
   grouped_into: null
@@ -159,11 +93,26 @@ components:
     model: Adult
     metal_level: gold
 - component_type: hcc
-  component_code: HHS_HCC114
-  description: Spina Bifida and Other Brain/Spinal/Nervous System Congenital Anomalies
-  coefficient: 1.266
+  component_code: HHS_HCC035_2
+  description: Chronic Liver Failure/End-Stage Liver Disorders
+  coefficient: 2.315
   source_data:
-  - G901
+  - I8500
+  superseded_by: null
+  supersedes: []
+  grouped_into: null
+  table_references:
+    icd_mapping: table_3
+    hierarchy: table_4
+    coefficient: table_9
+    model: Adult
+    metal_level: gold
+- component_type: hcc
+  component_code: HHS_HCC156
+  description: Pulmonary Embolism and Deep Vein Thrombosis
+  coefficient: 8.045
+  source_data:
+  - I2601
   superseded_by: null
   supersedes: []
   grouped_into: null
