@@ -106,6 +106,10 @@ graph TB
 
 ## Installation & Setup
 
+### 0. Performance lesson
+
+Originally, scoring_job had a runtime of 16m50s. Incredibly, switching from pandas to polars and using pyarrow to allow duckdb to read directly from polars in-memory, runtime decreased to 37s (95% runtime reduction). Holy smokes.
+
 ### 1. Bootstrap the Database
 
 Before running any jobs, initialize the DuckDB warehouse:
