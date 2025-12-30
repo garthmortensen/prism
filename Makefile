@@ -48,6 +48,7 @@ help:
 	@echo ""
 	@echo "Services:"
 	@echo "  make dagster       Start Dagster dev server"
+	@echo "  make db-bootstrap  Initialize DuckDB warehouse schemas"
 	@echo "  make db-shell      Open DuckDB interactive shell"
 	@echo ""
 	@echo "Container:"
@@ -114,7 +115,10 @@ test-cov:
 # =============================================================================
 
 dagster:
-	uv run dagster dev -m ra_dagster.definitions
+	export DAGSTER_HOME=$$(pwd)/.dagster_home && uv run dagster dev -m ra_dagster.definitions
+
+db-bootstrap:
+	uv run python -m ra_dagster.cli db-bootstrap
 
 db-shell:
 	uv run duckdb data/risk_adjustment.duckdb

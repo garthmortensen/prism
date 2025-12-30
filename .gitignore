@@ -102,3 +102,4 @@ ra_calculators/aca_risk_score_calculator/tmp_exports/
 # Build artifacts
 *.manifest
 *.spec
+.dagster_home/

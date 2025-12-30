@@ -1,11 +1,10 @@
-from __future__ import annotations
-
+from enum import Enum
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 import duckdb
 import polars as pl
-from dagster import AssetExecutionContext, asset
+from dagster import AssetExecutionContext, Config, asset
 
 from ra_calculators.aca_risk_score_calculator import ACACalculator, MemberInput
 from ra_calculators.aca_risk_score_calculator.member_processing import rows_to_member_inputs
@@ -25,6 +24,36 @@ from ra_dagster.utils.run_ids import (
 )
 
 
+class InvalidGenderOption(str, Enum):
+    skip = "skip"
+    coerce = "coerce"
+    error = "error"
+
+
+class GenderOption(str, Enum):
+    male = "M"
+    female = "F"
+
+
+ModelYearOption = Enum(
+    "ModelYearOption",
+    {str(y): y for y in range(2021, 2026)},
+    type=int,
+)
+
+
+class ScoringConfig(Config):
+    model_year: ModelYearOption = ModelYearOption(2024)
+    prediction_year: Optional[str] = None
+    group_id: Optional[int] = None
+    group_description: Optional[str] = None
+    run_description: str = "ACA scoring run"
+    data_effective: Optional[str] = None
+    trigger_source: str = "dagster"
+    invalid_gender: InvalidGenderOption = InvalidGenderOption.skip
+    coerce_gender: Optional[GenderOption] = None
+
+
 def _read_member_inputs(con: duckdb.DuckDBPyConnection) -> list[dict[str, Any]]:
     # dbt materializes this as prism.main_intermediate.int_aca_risk_input
     return con.execute(
@@ -32,18 +61,20 @@ def _read_member_inputs(con: duckdb.DuckDBPyConnection) -> list[dict[str, Any]]:
         SELECT
             member_id,
             date_of_birth,
-            gender,
-            metal_level,
-            enrollment_months,
-            diagnoses,
-            ndc_codes
-        FROM main_intermediate.int_aca_risk_input
-        """
+    ensure_prism_warehouse(con)
+
+    model_year = config.model_year.value
+    prediction_year = config.prediction_year
+    benefit_year = (
+        int(prediction_year) if prediction_year is not None else int(model_year)
+    )   """
     ).fetchall()
 
 
 @asset
-def score_members_aca(context, duckdb: DuckDBResource) -> None:
+def score_members_aca(
+    context: AssetExecutionContext, config: ScoringConfig, duckdb: DuckDBResource
+) -> None:
     """Score members using the ACA HHS-HCC calculator and write to main_runs.risk_scores."""
 
     context.log.info(f"Connecting to DuckDB at: {duckdb.path}")
@@ -51,16 +82,17 @@ def score_members_aca(context, duckdb: DuckDBResource) -> None:
 
     ensure_prism_warehouse(con)
 
-    config = context.op_config or {}
-    model_year = str(config.get("model_year", "2024"))
-    prediction_year = config.get("prediction_year")
-    benefit_year = int(prediction_year) if prediction_year is not None else int(model_year)
+    model_year = config.model_year.value
+    prediction_year = config.prediction_year
+    benefit_year = (
+        int(prediction_year) if prediction_year is not None else int(model_year)
+    )
 
     run_id = generate_run_id()
     run_ts = generate_run_timestamp()
     git = get_git_provenance(cwd=str(Path(__file__).resolve().parents[2]))
 
-    group_id = config.get("group_id")
+    group_id = config.group_id
     if group_id is None:
         group_id = allocate_group_id(con)
 
@@ -68,21 +100,21 @@ def score_members_aca(context, duckdb: DuckDBResource) -> None:
         run_id=run_id,
         run_timestamp=run_ts,
         group_id=int(group_id),
-        group_description=config.get("group_description"),
-        run_description=config.get("run_description", "ACA scoring run"),
+        group_description=config.group_description,
+        run_description=config.run_description,
         analysis_type="scoring",
         calculator="aca_risk_score_calculator",
         model_version=f"hhs_{model_year}",
         benefit_year=benefit_year,
-        data_effective=config.get("data_effective"),
+        data_effective=config.data_effective,
         json_config={
             "model_year": model_year,
             "prediction_year": prediction_year,
-            **config,
+            **config.model_dump(),
         },
         git=git,
         status="started",
-        trigger_source=config.get("trigger_source", "dagster"),
+        trigger_source=config.trigger_source,
         created_at=now_utc(),
         updated_at=now_utc(),
     )
@@ -106,8 +138,11 @@ def score_members_aca(context, duckdb: DuckDBResource) -> None:
             """
         ).fetchall()
 
-        invalid_gender = config.get("invalid_gender", "skip")
-        coerce_gender = config.get("coerce_gender")
+        invalid_gender = config.invalid_gender.value
+        coerce_gender = config.coerce_gender.value if config.coerce_gender else None
+
+        if invalid_gender == "coerce" and coerce_gender is None:
+            coerce_gender = "M"
 
         members, stats = rows_to_member_inputs(
             rows,
