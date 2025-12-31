@@ -89,7 +89,7 @@ graph TB
         S[dagster job launch<br/>decomposition_job] --> T[decompose_runs]
         T --> U[Read 4 runs from<br/>main_runs.risk_scores]
         U --> V[Compute decomposition:<br/>pop, coeff, interaction]
-        V --> W[Write to main_analytics.decomposition]
+        V --> W[Write to main_analytics.decomposition_*]
         W --> X[Update run_registry<br/>status = completed]
     end
 
@@ -97,11 +97,110 @@ graph TB
     F -.-> G
     L -.-> M
     L -.-> S
+```
 
-    style A fill:#e1f5ff
-    style G fill:#fff4e1
-    style M fill:#ffe1f5
-    style S fill:#f5e1ff
+## Entity Relationship Diagram
+
+The following diagram illustrates how the scoring, comparison, and decomposition workflows interact through the database tables.
+
+```mermaid
+erDiagram
+    %% Central Registry
+    run_registry {
+        string run_id PK
+        string analysis_type
+        string blueprint_id
+        json blueprint_yml
+        string status
+    }
+
+    %% Scoring Output
+    run_registry ||--o{ risk_scores : "generates"
+    risk_scores {
+        string run_id FK
+        string member_id PK
+        double risk_score
+        json details
+        json components
+    }
+
+    %% Comparison Output
+    run_registry ||--o{ run_comparison : "tracks execution of"
+    risk_scores ||--o{ run_comparison : "source A"
+    risk_scores ||--o{ run_comparison : "source B"
+    run_comparison {
+        string batch_id FK
+        string run_id_a FK
+        string run_id_b FK
+        string member_id PK
+        double score_diff
+    }
+
+    %% Decomposition Output
+    run_registry ||--o{ decomposition_scenarios : "tracks execution of"
+    risk_scores ||--o{ decomposition_scenarios : "aggregated into"
+    decomposition_scenarios {
+        string batch_id FK
+        string driver_name
+        double impact_value
+        string run_id FK
+    }
+
+    %% Decomposition Metadata
+    decomposition_scenarios }|--|| decomposition_definitions : "defined by"
+    decomposition_definitions {
+        string batch_id FK
+        int step_index
+        string driver_name
+    }
+```
+
+## Schema Reference & Examples
+
+While the ERD shows structure, here is how the data actually looks for a decomposition analysis.
+
+### 1. Decomposition Definitions (`main_analytics.decomposition_definitions`)
+Defines the "Waterfall" steps for a specific analysis batch.
+
+| Field | Definition | Example Value |
+|-------|------------|---------------|
+| `batch_id` | Unique System ID (UUID) for the analysis run | `"a1b2-c3d4-..."` |
+| `step_index` | Order of this driver in the waterfall chart | `1` |
+| `driver_name` | Human-readable label for the effect | `"Population Mix"` |
+| `description` | Context for analysts | `"Impact of new members vs termed members"` |
+
+### 2. Decomposition Scenarios (`main_analytics.decomposition_scenarios`)
+Stores the actual calculated values for each driver.
+
+| Field | Definition | Example Value |
+|-------|------------|---------------|
+| `batch_id` | Link to the definition batch (UUID) | `"a1b2-c3d4-..."` |
+| `driver_name` | Must match a driver in definitions | `"Population Mix"` |
+| `impact_value` | The score change contributed by this driver | `0.045` (Score went up by 0.045) |
+| `run_id` | Link to the specific source run (e.g. pop_only run) | `"x9y8-z7w6-..."` |
+
+### Example Data Flow
+If we decompose a score change from **1.00** to **1.10** for batch "2024_Q4_Reconciliation":
+
+**Decomposition Table (`main_analytics.decomposition`):**
+| batch_id (UUID) | batch_name | total_change |
+|---|---|---|
+| a1b2-c3d4-... | 2024_Q4_Reconciliation | +0.10 |
+
+**Definitions Table:**
+| batch_id | step | driver_name |
+|---|---|---|
+| a1b2-c3d4-... | 1 | Population Mix |
+| a1b2-c3d4-... | 2 | Model Change |
+
+**Scenarios Table:**
+| batch_id | driver_name | impact_value |
+|---|---|---|
+| a1b2-c3d4-... | Population Mix | +0.08 |
+| a1b2-c3d4-... | Model Change | +0.02 |
+
+*Total Change (+0.10) = Pop (+0.08) + Model (+0.02)*
+
 ```
 
 ## Installation & Setup
@@ -210,7 +309,42 @@ dagster job launch comparison_job \
 4. Writes comparison to `main_analytics.run_comparison`
 5. Records comparison run in `run_registry`
 
-### Example 3: Decompose Risk Changes
+### Example 3: Decompose Risk Changes (N-way)
+
+**Using a YAML config file (Recommended):**
+
+Create a config file (e.g., `ra_dagster/configs/decomposition_example.yaml`):
+
+```yaml
+ops:
+  decompose_runs:
+    config:
+      run_id_baseline: "20251230_001234567890"
+      run_id_actual: "20251230_004567890123"
+      method: "sequential"
+      metric: "mean"
+      population_mode: "intersection"
+      run_description: "2024 vs 2025 Waterfall Analysis"
+      components:
+        - name: "Model Change"
+          run_id: "20251230_002345678901"
+          description: "Impact of 2025 coefficients"
+        
+        - name: "Population Mix"
+          run_id: "20251230_003456789012"
+          description: "Impact of new enrollment"
+          population_mode: "scenario_population"
+```
+
+Run the job:
+
+```bash
+dagster job launch decomposition_job \
+  -f ra_dagster/definitions.py \
+  -c ra_dagster/configs/decomposition_example.yaml
+```
+
+**Using inline JSON (Legacy):**
 
 ```bash
 dagster job launch decomposition_job \
@@ -220,11 +354,21 @@ dagster job launch decomposition_job \
       "decompose_runs": {
         "config": {
           "run_id_baseline": "20251230_001234567890",
-          "run_id_coeff_only": "20251230_002345678901",
-          "run_id_pop_only": "20251230_003456789012",
           "run_id_actual": "20251230_004567890123",
-          "analysis_id": "Q4_2024_decomp",
-          "run_description": "YoY risk decomposition"
+          "method": "sequential",
+          "components": [
+            {
+              "name": "Model Change",
+              "run_id": "20251230_002345678901",
+              "description": "Impact of 2025 coefficients"
+            },
+            {
+              "name": "Population Mix",
+              "run_id": "20251230_003456789012",
+              "description": "Impact of new enrollment"
+            }
+          ],
+          "run_description": "2024 vs 2025 Waterfall"
         }
       }
     }
@@ -232,12 +376,9 @@ dagster job launch decomposition_job \
 ```
 
 **What happens:**
-1. Reads scores from all 4 runs
-2. Computes:
-   - Population effect: `pop_only - baseline`
-   - Coefficient effect: `coeff_only - baseline`
-   - Interaction effect: `actual - pop_only - coeff_only + baseline`
-3. Writes decomposition to `main_analytics.decomposition`
+1. Reads scores from baseline, actual, and all component runs
+2. Computes effects based on `method` (sequential/waterfall or marginal)
+3. Writes decomposition to `main_analytics.decomposition_scenarios` and `main_analytics.decomposition_definitions`
 4. Records decomposition run in `run_registry`
 
 ## Configuration Reference
@@ -271,16 +412,89 @@ dagster job launch decomposition_job \
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `run_id_baseline` | str | Yes* | Baseline run (prior year, prior coeffs) |
-| `run_id_coeff_only` | str | Yes* | Current coeffs + prior population |
-| `run_id_pop_only` | str | Yes* | Current population + prior coeffs |
-| `run_id_actual` | str | Yes* | Current coeffs + current population |
-| `run_ts_*` | str | No | Legacy: timestamps instead of IDs |
-| `analysis_id` | str | No | Custom identifier for this decomposition |
+| `run_id_baseline` | str | Yes | Starting point for analysis |
+| `run_id_actual` | str | Yes | Ending point for analysis |
+| `components` | list | Yes | List of intermediate runs defining drivers |
+| `method` | str | No | `marginal` (default) or `sequential` |
+| `metric` | str | No | `mean` (default) or `sum` |
+| `population_mode` | str | No | `intersection` (default), `baseline_population`, or `scenario_population` |
 | `group_id` | int | No | Link to existing group |
 | `run_description` | str | No | Description of decomposition |
 
-*Either `run_id_*` (preferred) or `run_ts_*` (legacy) must be provided.
+**Component Object:**
+```json
+{
+  "name": "Driver Name",
+  "run_id": "uuid...",
+  "description": "Optional context",
+  "population_mode": "Optional override"
+}
+```
+
+## Decomposition Methodologies
+
+### 1. Sequential (Waterfall)
+Ideal for explaining year-over-year changes where updates happen in a logical order (e.g., Model Update → Data Update).
+
+```mermaid
+graph LR
+    B[Baseline] -->|Step 1| C1[Component 1]
+    C1 -->|Step 2| C2[Component 2]
+    C2 -->|Residual| A[Actual]
+    
+    style B fill:#f9f,stroke:#333,stroke-width:2px
+    style A fill:#9f9,stroke:#333,stroke-width:2px
+```
+
+*   **Step 1:** `Component 1 - Baseline`
+*   **Step 2:** `Component 2 - Component 1`
+*   **Interaction:** `Actual - Component 2`
+
+### 2. Marginal (Star)
+Ideal for sensitivity analysis where you want to isolate the independent effect of multiple factors against the same baseline.
+
+```mermaid
+graph TD
+    B[Baseline] -->|Effect 1| C1[Component 1]
+    B -->|Effect 2| C2[Component 2]
+    B -->|Total Change| A[Actual]
+    
+    style B fill:#f9f,stroke:#333,stroke-width:2px
+    style A fill:#9f9,stroke:#333,stroke-width:2px
+```
+
+*   **Effect 1:** `Component 1 - Baseline`
+*   **Effect 2:** `Component 2 - Baseline`
+*   **Interaction:** `Total Change - (Effect 1 + Effect 2)`
+
+### Choosing a Methodology: The "Ruler vs. Object" Analogy
+
+The "logical order" in a Waterfall (Sequential) approach is a **narrative device**. It is used to force the math to add up perfectly (Total Change = A + B + C) without a confusing "Interaction" term.
+
+**Why put Model Changes first?**
+Think of the Risk Model (Coefficients) as a **Ruler** and your Data (Population/Dx) as the **Object** being measured.
+
+1.  **Step 1: Change the Ruler (Model Impact).**
+    *   *Question:* "If our population (Object) hadn't changed at all, how much would our score change just because CMS changed the weights (Ruler)?"
+    *   *Why first?* This isolates the **regulatory impact**. It tells Finance: "Even if we do nothing, revenue drops 2% because of the new model."
+
+2.  **Step 2: Change the Object (Operational Impact).**
+    *   *Question:* "Now that we are using the new Ruler, how much did our score change because we added new members or found new diagnoses?"
+    *   *Why second?* This isolates **operational performance**. It measures your data changes *in the context of the new reality* (the new model).
+
+**Summary:**
+*   **Marginal (Star):** Scientifically purer. Calculates Model Impact and Data Impact independently. Leaves a leftover "Interaction" bucket.
+*   **Sequential (Waterfall):** Narrative-focused. Forces an order (e.g., External Factors → Internal Factors) so bars sum up perfectly to the Total Change. Executives often prefer this "Bridge" view.
+
+## Population Modes
+
+Control which members are included in the delta calculation:
+
+| Mode | Logic | Use Case |
+|------|-------|----------|
+| `intersection` | `INNER JOIN` | Compare only members present in both runs (pure score change) |
+| `baseline_population` | `LEFT JOIN` | Analyze impact on the starting population (lost members = score drop) |
+| `scenario_population` | `RIGHT JOIN` | Analyze impact on the ending population (new members = score gain) |
 
 ## Data Flow
 
@@ -301,7 +515,7 @@ dagster job launch decomposition_job \
 ┌──────────────────────────────────┐  ┌──────────────────────────────────┐
 │  Dagster Asset: compare_runs     │  │  Dagster Asset: decompose_runs   │
 │  Reads 2 runs → Computes deltas  │  │  Reads 4 runs → Decomposition    │
-│  → main_analytics.run_comparison │  │  → main_analytics.decomposition  │
+│  → main_analytics.run_comparison │  │  → main_analytics.decomposition_*│
 └──────────────────────────────────┘  └──────────────────────────────────┘
 ```
 

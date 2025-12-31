@@ -1,0 +1,8 @@
+ops:
+  compare_runs:
+    config:
+      run_id_a: "00ebabaf-c761-4e88-a1a1-a5fe6d7b0f1c"
+      run_id_b: "01d45526-3798-48f6-88e7-7699baccb287"
+      run_description: "Comparison of Baseline vs Actual"
+      metric: "mean" # mean, sum
+      population_mode: "intersection" # intersection, union, a_only, b_only

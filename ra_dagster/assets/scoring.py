@@ -50,6 +50,7 @@ class ScoringConfig(Config):
     run_description: str = "ACA scoring run"
     data_effective: Optional[str] = None
     trigger_source: str = "dagster"
+    blueprint_id: Optional[str] = None
     invalid_gender: InvalidGenderOption = InvalidGenderOption.skip
     coerce_gender: Optional[GenderOption] = None
 
@@ -88,7 +89,7 @@ def score_members_aca(
         int(prediction_year) if prediction_year is not None else int(model_year)
     )
 
-    run_id = generate_run_id()
+    run_id = context.run_id
     run_ts = generate_run_timestamp()
     git = get_git_provenance(cwd=str(Path(__file__).resolve().parents[2]))
 
@@ -107,7 +108,7 @@ def score_members_aca(
         model_version=f"hhs_{model_year}",
         benefit_year=benefit_year,
         data_effective=config.data_effective,
-        json_config={
+        blueprint_yml={
             "model_year": model_year,
             "prediction_year": prediction_year,
             **config.model_dump(),
@@ -115,6 +116,7 @@ def score_members_aca(
         git=git,
         status="started",
         trigger_source=config.trigger_source,
+        blueprint_id=config.blueprint_id,
         created_at=now_utc(),
         updated_at=now_utc(),
     )
@@ -170,21 +172,25 @@ def score_members_aca(
         # Columns must match main_runs.risk_scores definition order
         db_columns = [
             "run_id",
-            "run_timestamp",
             "member_id",
-            "calculator",
-            "model_version",
-            "model_year",
-            "benefit_year",
             "risk_score",
-            "demographic_score",
             "hcc_score",
             "rxc_score",
+            "demographic_score",
+            "model",
+            "gender",
+            "metal_level",
+            "enrollment_months",
+            "model_year",
+            "benefit_year",
+            "calculator",
+            "model_version",
+            "run_timestamp",
+            "created_at",
             "hcc_list",
             "rxc_list",
             "details",
             "components",
-            "created_at",
         ]
 
         def flush_batch(rows: list[dict[str, Any]]) -> None:
@@ -201,21 +207,25 @@ def score_members_aca(
             
             out_rows.append({
                 "run_id": run_id,
-                "run_timestamp": run_ts,
                 "member_id": str(member.member_id),
-                "calculator": record.calculator,
-                "model_version": record.model_version,
-                "model_year": model_year,
-                "benefit_year": benefit_year,
                 "risk_score": float(score.risk_score),
-                "demographic_score": float(details.get("demographic_factor", 0.0)),
                 "hcc_score": float(details.get("hcc_score", 0.0)),
                 "rxc_score": float(details.get("rxc_score", 0.0)),
+                "demographic_score": float(details.get("demographic_factor", 0.0)),
+                "model": details.get("model"),
+                "gender": member.gender,
+                "metal_level": member.metal_level,
+                "enrollment_months": member.enrollment_months,
+                "model_year": model_year,
+                "benefit_year": benefit_year,
+                "calculator": record.calculator,
+                "model_version": record.model_version,
+                "run_timestamp": run_ts,
+                "created_at": created_at,
                 "hcc_list": json_dumps(score.hcc_list),
                 "rxc_list": json_dumps(details.get("rxcs_after_hierarchy", [])),
                 "details": json_dumps(details),
                 "components": json_dumps(components),
-                "created_at": created_at,
             })
 
             if len(out_rows) >= batch_size:

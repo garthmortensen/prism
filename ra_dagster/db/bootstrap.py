@@ -25,13 +25,14 @@ def ensure_run_registry(con: duckdb.DuckDBPyConnection) -> None:
             model_version VARCHAR,
             benefit_year INTEGER,
             data_effective VARCHAR,
-            json_config VARCHAR,
+            blueprint_yml VARCHAR,
             git_branch VARCHAR,
             git_commit VARCHAR,
             git_commit_short VARCHAR,
             git_commit_clean BOOLEAN,
             status VARCHAR,
             trigger_source VARCHAR,
+            blueprint_id VARCHAR,
             created_at TIMESTAMP,
             updated_at TIMESTAMP
         )
@@ -49,21 +50,25 @@ def ensure_marts_tables(con: duckdb.DuckDBPyConnection) -> None:
         """
         CREATE TABLE IF NOT EXISTS main_runs.risk_scores (
             run_id VARCHAR,
-            run_timestamp VARCHAR,
             member_id VARCHAR,
-            calculator VARCHAR,
-            model_version VARCHAR,
-            model_year VARCHAR,
-            benefit_year INTEGER,
             risk_score DOUBLE,
-            demographic_score DOUBLE,
             hcc_score DOUBLE,
             rxc_score DOUBLE,
+            demographic_score DOUBLE,
+            model VARCHAR,
+            gender VARCHAR,
+            metal_level VARCHAR,
+            enrollment_months INTEGER,
+            model_year VARCHAR,
+            benefit_year INTEGER,
+            calculator VARCHAR,
+            model_version VARCHAR,
+            run_timestamp VARCHAR,
+            created_at TIMESTAMP,
             hcc_list JSON,
             rxc_list JSON,
             details JSON,
             components JSON,
-            created_at TIMESTAMP,
             PRIMARY KEY (run_id, member_id)
         )
         """
@@ -72,10 +77,32 @@ def ensure_marts_tables(con: duckdb.DuckDBPyConnection) -> None:
     # Backfill columns for warehouses created before these fields were added.
     con.execute("ALTER TABLE main_runs.risk_scores ADD COLUMN IF NOT EXISTS model_year VARCHAR")
     con.execute("ALTER TABLE main_runs.risk_scores ADD COLUMN IF NOT EXISTS components JSON")
+    con.execute("ALTER TABLE main_runs.risk_scores ADD COLUMN IF NOT EXISTS gender VARCHAR")
+    con.execute("ALTER TABLE main_runs.risk_scores ADD COLUMN IF NOT EXISTS model VARCHAR")
+    con.execute("ALTER TABLE main_runs.risk_scores ADD COLUMN IF NOT EXISTS metal_level VARCHAR")
+    con.execute("ALTER TABLE main_runs.risk_scores ADD COLUMN IF NOT EXISTS enrollment_months INTEGER")
 
     con.execute(
         """
         CREATE TABLE IF NOT EXISTS main_analytics.run_comparison (
+            batch_id VARCHAR,
+            run_id_a VARCHAR,
+            run_id_b VARCHAR,
+            member_id VARCHAR,
+            score_diff DOUBLE,
+            match_status VARCHAR,
+            score_a DOUBLE,
+            score_b DOUBLE,
+            created_at TIMESTAMP,
+            details JSON
+        )
+        """
+    )
+
+    con.execute(
+        """
+        CREATE TABLE IF NOT EXISTS main_analytics.run_comparison (
+            batch_id VARCHAR,
             run_id_a VARCHAR,
             run_id_b VARCHAR,
             member_id VARCHAR,
@@ -85,31 +112,33 @@ def ensure_marts_tables(con: duckdb.DuckDBPyConnection) -> None:
             score_diff DOUBLE,
             details JSON,
             created_at TIMESTAMP,
-            PRIMARY KEY (run_id_a, run_id_b, member_id)
+            PRIMARY KEY (batch_id, member_id)
         )
         """
     )
 
     con.execute(
         """
-        CREATE TABLE IF NOT EXISTS main_analytics.decomposition (
-            analysis_id VARCHAR,
-            run_id_baseline VARCHAR,
-            run_id_coeff_only VARCHAR,
-            run_id_pop_only VARCHAR,
-            run_id_actual VARCHAR,
-            prior_period VARCHAR,
-            current_period VARCHAR,
-            prior_model_version VARCHAR,
-            current_model_version VARCHAR,
-            aggregation_level VARCHAR,
-            dimensions JSON,
-            total_change DOUBLE,
-            pop_effect DOUBLE,
-            coeff_effect DOUBLE,
-            interaction_effect DOUBLE,
-            details JSON,
-            created_at TIMESTAMP
+        CREATE TABLE IF NOT EXISTS main_analytics.decomposition_scenarios (
+            batch_id VARCHAR,
+            driver_name VARCHAR,
+            impact_value DOUBLE,
+            run_id VARCHAR,
+            created_at TIMESTAMP,
+            PRIMARY KEY (batch_id, driver_name)
+        )
+        """
+    )
+
+    con.execute(
+        """
+        CREATE TABLE IF NOT EXISTS main_analytics.decomposition_definitions (
+            batch_id VARCHAR,
+            step_index INTEGER,
+            driver_name VARCHAR,
+            description VARCHAR,
+            created_at TIMESTAMP,
+            PRIMARY KEY (batch_id, step_index)
         )
         """
     )

@@ -22,50 +22,30 @@ from ra_dagster.utils.run_ids import (
 
 @asset
 def compare_runs(context, duckdb: DuckDBResource) -> None:
-    """Compute member-level deltas between two scoring runs into main_analytics.run_comparison."""
+    """
+    Compute member-level deltas between two scoring runs into main_analytics.run_comparison.
+
+    Config:
+        run_id_a: str
+        run_id_b: str
+        metric: str = "mean" | "sum" (default: "mean")
+        population_mode: str = "intersection" | "union" | "a_only" | "b_only" (default: "intersection")
+    """
 
     config = context.op_config or {}
     run_id_a = config.get("run_id_a")
     run_id_b = config.get("run_id_b")
-    run_timestamp_a = config.get("run_timestamp_a")
-    run_timestamp_b = config.get("run_timestamp_b")
+    metric = config.get("metric", "mean")
+    population_mode = config.get("population_mode", "intersection")
 
-    if not (run_id_a and run_id_b) and not (run_timestamp_a and run_timestamp_b):
-        raise ValueError(
-            "compare_runs requires op config: run_id_a/run_id_b (preferred) or "
-            "run_timestamp_a/run_timestamp_b (legacy)"
-        )
+    if not (run_id_a and run_id_b):
+        raise ValueError("compare_runs requires op config: run_id_a and run_id_b")
 
     con = duckdb.get_connection().connect()
 
     ensure_prism_warehouse(con)
 
-    if not (run_id_a and run_id_b):
-        ids_a = [
-            row[0]
-            for row in con.execute(
-                "SELECT DISTINCT run_id FROM main_runs.risk_scores WHERE run_timestamp = ?",
-                [run_timestamp_a],
-            ).fetchall()
-        ]
-        ids_b = [
-            row[0]
-            for row in con.execute(
-                "SELECT DISTINCT run_id FROM main_runs.risk_scores WHERE run_timestamp = ?",
-                [run_timestamp_b],
-            ).fetchall()
-        ]
-
-        if len(ids_a) != 1 or len(ids_b) != 1:
-            raise ValueError(
-                "run_timestamp_* must map to exactly one run_id. "
-                "Pass run_id_a/run_id_b to disambiguate."
-            )
-
-        run_id_a = ids_a[0]
-        run_id_b = ids_b[0]
-
-    run_id = generate_run_id()
+    run_id = context.run_id
     run_ts = generate_run_timestamp()
     git = get_git_provenance(cwd=str(Path(__file__).resolve().parents[2]))
 
@@ -80,21 +60,26 @@ def compare_runs(context, duckdb: DuckDBResource) -> None:
         group_description=config.get("group_description"),
         run_description=config.get(
             "run_description",
-            f"Compare runs {run_timestamp_a} vs {run_timestamp_b}",
+            f"Compare runs {run_id_a} vs {run_id_b}",
         ),
         analysis_type="comparison",
         calculator=None,
         model_version=None,
         benefit_year=None,
         data_effective=None,
-        json_config={
-            "run_timestamp_a": run_timestamp_a,
-            "run_timestamp_b": run_timestamp_b,
+        blueprint_yml={
+            "run_id_a": run_id_a,
+            "run_id_b": run_id_b,
+            "metric": metric,
+            "population_mode": population_mode,
             **config,
         },
         git=git,
         status="started",
         trigger_source=config.get("trigger_source", "dagster"),
+        blueprint_id=str(config.get("blueprint_id"))
+        if config.get("blueprint_id") is not None
+        else None,
         created_at=now_utc(),
         updated_at=now_utc(),
     )
@@ -102,65 +87,68 @@ def compare_runs(context, duckdb: DuckDBResource) -> None:
     insert_run(con, record)
 
     try:
-        created_at = now_utc()
+        # Determine Join Type based on population_mode
+        if population_mode == "intersection":
+            join_type = "INNER JOIN"
+        elif population_mode == "union":
+            join_type = "FULL OUTER JOIN"
+        elif population_mode == "a_only":
+            join_type = "LEFT JOIN"
+        elif population_mode == "b_only":
+            join_type = "RIGHT JOIN"
+        else:
+            raise ValueError(f"Unknown population_mode: {population_mode}")
+
+        # batch_id is the unique ID for this execution (using run_id)
+        batch_id = context.run_id
 
         con.execute(
-            """
+            f"""
             INSERT INTO main_analytics.run_comparison (
+                batch_id,
                 run_id_a,
                 run_id_b,
                 member_id,
+                score_diff,
                 match_status,
                 score_a,
                 score_b,
-                score_diff,
-                details,
-                created_at
+                created_at,
+                details
             )
+            WITH A AS (SELECT member_id, risk_score FROM main_runs.risk_scores WHERE run_id = ?),
+                 B AS (SELECT member_id, risk_score FROM main_runs.risk_scores WHERE run_id = ?)
             SELECT
                 ?,
                 ?,
-                COALESCE(a.member_id, b.member_id) AS member_id,
+                ?,
+                COALESCE(A.member_id, B.member_id) as member_id,
+                COALESCE(B.risk_score, 0.0) - COALESCE(A.risk_score, 0.0) as score_diff,
                 CASE
-                    WHEN a.member_id IS NOT NULL AND b.member_id IS NOT NULL THEN 'matched'
-                    WHEN a.member_id IS NOT NULL AND b.member_id IS NULL THEN 'a_only'
-                    ELSE 'b_only'
-                END AS match_status,
-                a.risk_score AS score_a,
-                b.risk_score AS score_b,
-                CASE
-                    WHEN a.risk_score IS NOT NULL AND b.risk_score IS NOT NULL THEN (
-                        b.risk_score - a.risk_score
-                    )
-                    ELSE NULL
-                END AS score_diff,
-                CAST(? AS JSON) AS details,
-                ?
-                FROM (
-                    SELECT * FROM main_runs.risk_scores WHERE run_id = ?
-                ) a
-                FULL OUTER JOIN (
-                    SELECT * FROM main_runs.risk_scores WHERE run_id = ?
-                ) b
-                  ON a.member_id = b.member_id
+                    WHEN A.member_id IS NOT NULL AND B.member_id IS NOT NULL THEN 'matched'
+                    WHEN A.member_id IS NOT NULL THEN 'a_only'
+                    WHEN B.member_id IS NOT NULL THEN 'b_only'
+                END as match_status,
+                COALESCE(A.risk_score, 0.0) as score_a,
+                COALESCE(B.risk_score, 0.0) as score_b,
+                ?,
+                CAST(? AS JSON) as details
+            FROM A
+            {join_type} B ON A.member_id = B.member_id
             """,
             [
-                str(run_id_a),
-                str(run_id_b),
-                json_dumps(
-                    {
-                        "run_id_a": run_id_a,
-                        "run_id_b": run_id_b,
-                    }
-                ),
-                created_at,
-                str(run_id_a),
-                str(run_id_b),
+                run_id_a,
+                run_id_b,
+                batch_id,
+                run_id_a,
+                run_id_b,
+                now_utc(),
+                json_dumps({}),
             ],
         )
 
         update_run_status(con, run_id=run_id, status="success")
-        context.log.info(f"Wrote run comparison for run_id_a={run_id_a}, run_id_b={run_id_b}")
+        context.log.info(f"Wrote main_analytics.run_comparison for batch_id={batch_id}")
 
     except Exception:
         update_run_status(con, run_id=run_id, status="failed")

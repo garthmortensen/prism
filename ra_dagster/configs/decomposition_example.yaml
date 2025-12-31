@@ -1,0 +1,22 @@
+ops:
+  decompose_runs:
+    config:
+      scenarios:
+        baseline_2024: "20251230_001234567890"
+        coeffs_2025:   "20251230_002345678901"
+        popmix_2025:   "20251230_003456789012"
+        actual_2025:   "20251230_004567890123"
+
+      analysis:
+        method: sequential
+        run_description: "2024 vs 2025 Waterfall Analysis"
+        metric: mean
+        population_mode: intersection
+        baseline: baseline_2024
+        actual: actual_2025
+        components:
+          - name: "Model Change"
+            scenario: coeffs_2025
+          - name: "Population Mix"
+            scenario: popmix_2025
+            population_mode: scenario_population

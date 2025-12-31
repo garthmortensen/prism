@@ -22,10 +22,11 @@ class RunRecord:
     model_version: str | None
     benefit_year: int | None
     data_effective: str | None
-    json_config: dict[str, Any]
+    blueprint_yml: dict[str, Any]
     git: GitProvenance
     status: str
     trigger_source: str | None
+    blueprint_id: str | None
     created_at: datetime
     updated_at: datetime
 
@@ -43,45 +44,47 @@ def insert_run(con: duckdb.DuckDBPyConnection, record: RunRecord) -> None:
         INSERT INTO main_runs.run_registry (
             run_id,
             run_timestamp,
+            status,
+            analysis_type,
+            run_description,
             group_id,
             group_description,
-            run_description,
-            analysis_type,
             calculator,
             model_version,
             benefit_year,
             data_effective,
-            json_config,
+            created_at,
+            updated_at,
+            trigger_source,
             git_branch,
             git_commit,
             git_commit_short,
             git_commit_clean,
-            status,
-            trigger_source,
-            created_at,
-            updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            blueprint_id,
+            blueprint_yml
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         [
             record.run_id,
             record.run_timestamp,
+            record.status,
+            record.analysis_type,
+            record.run_description,
             record.group_id,
             record.group_description,
-            record.run_description,
-            record.analysis_type,
             record.calculator,
             record.model_version,
             record.benefit_year,
             record.data_effective,
-            json_dumps(record.json_config),
+            record.created_at,
+            record.updated_at,
+            record.trigger_source,
             record.git.branch,
             record.git.commit,
             record.git.commit_short,
             record.git.clean,
-            record.status,
-            record.trigger_source,
-            record.created_at,
-            record.updated_at,
+            record.blueprint_id,
+            json_dumps(record.blueprint_yml),
         ],
     )
 
