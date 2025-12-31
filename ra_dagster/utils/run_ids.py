@@ -69,3 +69,35 @@ def get_git_provenance(cwd: str | None = None) -> GitProvenance:
 
 def json_dumps(obj: Any) -> str:
     return json.dumps(obj, separators=(",", ":"), default=str)
+
+
+def extract_launchpad_config(
+    *,
+    context: Any,
+    fallback: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Best-effort extraction of the Dagster Launchpad run config.
+
+    Dagster surfaces this in slightly different places depending on context type and version.
+    We try a few common attributes and fall back to a caller-provided dict.
+    """
+
+    dagster_run = getattr(context, "dagster_run", None)
+    if dagster_run is not None:
+        run_config = getattr(dagster_run, "run_config", None)
+        if isinstance(run_config, dict) and run_config:
+            return run_config
+
+        run_config_yaml = getattr(dagster_run, "run_config_yaml", None)
+        if isinstance(run_config_yaml, str) and run_config_yaml.strip():
+            return {"run_config_yaml": run_config_yaml}
+
+    run_config = getattr(context, "run_config", None)
+    if isinstance(run_config, dict) and run_config:
+        return run_config
+
+    op_config = getattr(context, "op_config", None)
+    if isinstance(op_config, dict) and op_config:
+        return {"op_config": op_config}
+
+    return fallback or {}

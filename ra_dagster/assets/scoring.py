@@ -17,6 +17,7 @@ from ra_dagster.db.run_registry import (
 )
 from ra_dagster.resources.duckdb_resource import DuckDBResource
 from ra_dagster.utils.run_ids import (
+    extract_launchpad_config,
     generate_run_timestamp,
     get_git_provenance,
     json_dumps,
@@ -105,6 +106,16 @@ def score_members_aca(
         model_version=f"hhs_{model_year}",
         benefit_year=benefit_year,
         data_effective=config.data_effective,
+        launchpad_config=extract_launchpad_config(
+            context=context,
+            fallback={
+                "ops": {
+                    "score_members_aca": {
+                        "config": config.model_dump(),
+                    }
+                }
+            },
+        ),
         blueprint_yml={
             "model_year": model_year,
             "prediction_year": prediction_year,

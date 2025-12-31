@@ -25,6 +25,7 @@ def ensure_run_registry(con: duckdb.DuckDBPyConnection) -> None:
             model_version VARCHAR,
             benefit_year INTEGER,
             data_effective VARCHAR,
+            launchpad_config VARCHAR,
             blueprint_yml VARCHAR,
             git_branch VARCHAR,
             git_commit VARCHAR,
@@ -37,6 +38,11 @@ def ensure_run_registry(con: duckdb.DuckDBPyConnection) -> None:
             updated_at TIMESTAMP
         )
         """
+    )
+
+    # Backfill columns for warehouses created before these fields were added.
+    con.execute(
+        "ALTER TABLE main_runs.run_registry ADD COLUMN IF NOT EXISTS launchpad_config VARCHAR"
     )
 
     # Add index on run_timestamp for sorting (not unique to allow sub-second collisions)

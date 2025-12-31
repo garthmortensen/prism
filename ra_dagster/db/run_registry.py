@@ -22,6 +22,7 @@ class RunRecord:
     model_version: str | None
     benefit_year: int | None
     data_effective: str | None
+    launchpad_config: dict[str, Any] | None
     blueprint_yml: dict[str, Any]
     git: GitProvenance
     status: str
@@ -53,6 +54,7 @@ def insert_run(con: duckdb.DuckDBPyConnection, record: RunRecord) -> None:
             model_version,
             benefit_year,
             data_effective,
+            launchpad_config,
             created_at,
             updated_at,
             trigger_source,
@@ -76,6 +78,7 @@ def insert_run(con: duckdb.DuckDBPyConnection, record: RunRecord) -> None:
             record.model_version,
             record.benefit_year,
             record.data_effective,
+            json_dumps(record.launchpad_config) if record.launchpad_config is not None else None,
             record.created_at,
             record.updated_at,
             record.trigger_source,

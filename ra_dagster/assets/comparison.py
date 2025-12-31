@@ -13,6 +13,7 @@ from ra_dagster.db.run_registry import (
 )
 from ra_dagster.resources.duckdb_resource import DuckDBResource
 from ra_dagster.utils.run_ids import (
+    extract_launchpad_config,
     generate_run_timestamp,
     get_git_provenance,
     json_dumps,
@@ -67,6 +68,7 @@ def compare_runs(context, duckdb: DuckDBResource) -> None:
         model_version=None,
         benefit_year=None,
         data_effective=None,
+        launchpad_config=extract_launchpad_config(context=context, fallback=config),
         blueprint_yml={
             "run_id_a": run_id_a,
             "run_id_b": run_id_b,

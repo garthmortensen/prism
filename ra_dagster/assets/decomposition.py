@@ -13,6 +13,7 @@ from ra_dagster.db.run_registry import (
 )
 from ra_dagster.resources.duckdb_resource import DuckDBResource
 from ra_dagster.utils.run_ids import (
+    extract_launchpad_config,
     generate_run_timestamp,
     get_git_provenance,
 )
@@ -127,6 +128,7 @@ def decompose_runs(context, duckdb: DuckDBResource) -> None:
             model_version=actual_model_version,
             benefit_year=actual_benefit_year,
             data_effective=actual_data_effective,
+            launchpad_config=extract_launchpad_config(context=context, fallback=config),
             blueprint_yml={
                 "run_id_baseline": run_id_baseline,
                 "run_id_actual": run_id_actual,
