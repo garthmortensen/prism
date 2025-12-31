@@ -5,6 +5,92 @@ from datetime import datetime
 import duckdb
 
 
+def _risk_scores_details_components_last(con: duckdb.DuckDBPyConnection) -> bool:
+    rows = con.execute("PRAGMA table_info('main_runs.risk_scores')").fetchall()
+    # PRAGMA table_info returns: (cid, name, type, notnull, dflt_value, pk)
+    cols = [r[1] for r in rows]
+    if len(cols) < 2:
+        return True
+    return cols[-2:] == ["details", "components"]
+
+
+def _recreate_risk_scores_with_details_components_last(con: duckdb.DuckDBPyConnection) -> None:
+    # Keep this migration narrow: only reorder when details/components aren't last.
+    if _risk_scores_details_components_last(con):
+        return
+
+    tmp = "main_runs.risk_scores__tmp_reorder"
+
+    # Desired physical order (details/components at end)
+    ordered_cols = [
+        "run_id",
+        "member_id",
+        "risk_score",
+        "hcc_score",
+        "rxc_score",
+        "demographic_score",
+        "model",
+        "gender",
+        "metal_level",
+        "enrollment_months",
+        "model_year",
+        "benefit_year",
+        "calculator",
+        "model_version",
+        "run_timestamp",
+        "created_at",
+        "hcc_list",
+        "rxc_list",
+        "details",
+        "components",
+    ]
+
+    con.execute("BEGIN TRANSACTION")
+    try:
+        con.execute(f"DROP TABLE IF EXISTS {tmp}")
+        con.execute(
+            f"""
+            CREATE TABLE {tmp} (
+                run_id VARCHAR,
+                member_id VARCHAR,
+                risk_score DOUBLE,
+                hcc_score DOUBLE,
+                rxc_score DOUBLE,
+                demographic_score DOUBLE,
+                model VARCHAR,
+                gender VARCHAR,
+                metal_level VARCHAR,
+                enrollment_months INTEGER,
+                model_year VARCHAR,
+                benefit_year INTEGER,
+                calculator VARCHAR,
+                model_version VARCHAR,
+                run_timestamp VARCHAR,
+                created_at TIMESTAMP,
+                hcc_list JSON,
+                rxc_list JSON,
+                details JSON,
+                components JSON,
+                PRIMARY KEY (run_id, member_id)
+            )
+            """
+        )
+
+        cols_sql = ", ".join(ordered_cols)
+        con.execute(
+            f"INSERT INTO {tmp} ({cols_sql}) "
+            f"SELECT {cols_sql} FROM main_runs.risk_scores"
+        )
+
+        con.execute("DROP TABLE main_runs.risk_scores")
+        con.execute("ALTER TABLE main_runs.risk_scores__tmp_reorder RENAME TO risk_scores")
+
+        con.execute("COMMIT")
+    except Exception:
+        con.execute("ROLLBACK")
+        raise
+
+
 def ensure_core_schemas(con: duckdb.DuckDBPyConnection) -> None:
     con.execute("CREATE SCHEMA IF NOT EXISTS main_intermediate")
     con.execute("CREATE SCHEMA IF NOT EXISTS main_runs")
@@ -90,6 +176,10 @@ def ensure_marts_tables(con: duckdb.DuckDBPyConnection) -> None:
     con.execute(
         "ALTER TABLE main_runs.risk_scores ADD COLUMN IF NOT EXISTS enrollment_months INTEGER"
     )
+
+    # If this warehouse existed before we standardized column ordering,
+    # details/components may not be physically last. Recreate table once to reorder.
+    _recreate_risk_scores_with_details_components_last(con)
 
     con.execute(
         """

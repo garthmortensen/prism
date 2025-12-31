@@ -1,6 +1,7 @@
 from enum import Enum
 from pathlib import Path
 from typing import Any
+import re
 
 import duckdb
 import polars as pl
@@ -54,22 +55,185 @@ class ScoringConfig(Config):
     invalid_gender: InvalidGenderOption = InvalidGenderOption.skip
     coerce_gender: GenderOption | None = None
 
+    # Optional: parameterize which raw views feed scoring inputs.
+    # If any are set, all three must be set.
+    claims_view: str | None = None
+    enrollments_view: str | None = None
+    members_view: str | None = None
 
-def _read_member_inputs(con: duckdb.DuckDBPyConnection) -> list[dict[str, Any]]:
-    # dbt materializes this as prism.main_intermediate.int_aca_risk_input
-    return con.execute(
+
+_RELATION_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*){0,2}$")
+
+
+def _validate_relation_name(relation: str) -> str:
+    """Allow only simple identifiers like schema.table (or db.schema.table)."""
+    if not _RELATION_RE.fullmatch(relation):
+        raise ValueError(
+            "Invalid relation name. Expected like 'schema.table' (letters/numbers/_ only). "
+            f"Got: {relation!r}"
+        )
+    return relation
+
+
+def _maybe_build_member_input_view(
+    *,
+    con: duckdb.DuckDBPyConnection,
+    claims_view: str | None,
+    enrollments_view: str | None,
+    members_view: str | None,
+) -> str:
+    """Return the relation to read member inputs from.
+
+    - Default: use dbt-produced `main_intermediate.int_aca_risk_input`.
+    - If views are provided: build a TEMP view `int_aca_risk_input` from those sources.
+    """
+
+    any_set = any(v is not None for v in (claims_view, enrollments_view, members_view))
+    if not any_set:
+        return "main_intermediate.int_aca_risk_input"
+
+    if not all(v is not None for v in (claims_view, enrollments_view, members_view)):
+        raise ValueError(
+            "If overriding sources, you must set claims_view, enrollments_view, and members_view."
+        )
+
+    claims_view = _validate_relation_name(claims_view)
+    enrollments_view = _validate_relation_name(enrollments_view)
+    members_view = _validate_relation_name(members_view)
+
+    # Create temp aliases matching dbt seed names so the downstream SQL is identical.
+    con.execute(f"CREATE OR REPLACE TEMP VIEW raw_claims AS SELECT * FROM {claims_view}")
+    con.execute(
+        f"CREATE OR REPLACE TEMP VIEW raw_enrollments AS SELECT * FROM {enrollments_view}"
+    )
+    con.execute(f"CREATE OR REPLACE TEMP VIEW raw_members AS SELECT * FROM {members_view}")
+
+    # Mirror dbt models (staging -> intermediate -> int_aca_risk_input), but as TEMP views.
+    con.execute(
         """
+        CREATE OR REPLACE TEMP VIEW stg_claims_dx AS
+        WITH source AS (
+            SELECT * FROM raw_claims
+        )
+        SELECT
+            claim_id,
+            member_id,
+            CAST(service_date AS DATE) AS service_date,
+            REPLACE(diagnosis_code, '.', '') AS diagnosis_code
+        FROM source
+        WHERE diagnosis_code IS NOT NULL
+          AND claim_type != 'RX'
+        """
+    )
+
+    con.execute(
+        """
+        CREATE OR REPLACE TEMP VIEW stg_claims_rx AS
+        WITH source AS (
+            SELECT * FROM raw_claims
+        )
+        SELECT
+            claim_id,
+            member_id,
+            CAST(service_date AS DATE) AS fill_date,
+            drug AS ndc_code
+        FROM source
+        WHERE claim_type = 'RX'
+        """
+    )
+
+    con.execute(
+        """
+        CREATE OR REPLACE TEMP VIEW stg_enrollment AS
+        WITH enrollments AS (
+            SELECT * FROM raw_enrollments
+        ),
+        members AS (
+            SELECT * FROM raw_members
+        )
+        SELECT
+            e.member_id,
+            CAST(e.start_date AS DATE) AS start_date,
+            CAST(e.end_date AS DATE) AS end_date,
+            m.gender,
+            LOWER(m.plan_metal) AS metal_level,
+            CAST(m.dob AS DATE) AS date_of_birth
+        FROM enrollments e
+        LEFT JOIN members m ON e.member_id = m.member_id
+        """
+    )
+
+    con.execute(
+        """
+        CREATE OR REPLACE TEMP VIEW int_member_months AS
+        WITH enrollment AS (
+            SELECT * FROM stg_enrollment
+        )
         SELECT
             member_id,
-            date_of_birth,
-    ensure_prism_warehouse(con)
+            LEAST(12, GREATEST(1, DATE_DIFF('month', start_date, end_date) + 1)) AS enrollment_months,
+            gender,
+            metal_level,
+            date_of_birth
+        FROM enrollment
+        """
+    )
 
-    model_year = config.model_year.value
-    prediction_year = config.prediction_year
-    benefit_year = (
-        int(prediction_year) if prediction_year is not None else int(model_year)
-    )   """
-    ).fetchall()
+    con.execute(
+        """
+        CREATE OR REPLACE TEMP VIEW int_member_diagnoses AS
+        WITH diagnoses AS (
+            SELECT * FROM stg_claims_dx
+        )
+        SELECT
+            member_id,
+            LIST(DISTINCT diagnosis_code) AS diagnosis_list
+        FROM diagnoses
+        GROUP BY member_id
+        """
+    )
+
+    con.execute(
+        """
+        CREATE OR REPLACE TEMP VIEW int_member_rx AS
+        WITH rx AS (
+            SELECT * FROM stg_claims_rx
+        )
+        SELECT
+            member_id,
+            LIST(DISTINCT ndc_code) AS ndc_list
+        FROM rx
+        GROUP BY member_id
+        """
+    )
+
+    con.execute(
+        """
+        CREATE OR REPLACE TEMP VIEW int_aca_risk_input AS
+        WITH members AS (
+            SELECT * FROM int_member_months
+        ),
+        diagnoses AS (
+            SELECT * FROM int_member_diagnoses
+        ),
+        rx AS (
+            SELECT * FROM int_member_rx
+        )
+        SELECT
+            m.member_id,
+            m.enrollment_months,
+            m.gender,
+            m.metal_level,
+            m.date_of_birth,
+            COALESCE(d.diagnosis_list, []) AS diagnoses,
+            COALESCE(r.ndc_list, []) AS ndc_codes
+        FROM members m
+        LEFT JOIN diagnoses d ON m.member_id = d.member_id
+        LEFT JOIN rx r ON m.member_id = r.member_id
+        """
+    )
+
+    return "int_aca_risk_input"
 
 
 @asset
@@ -82,6 +246,13 @@ def score_members_aca(
     con = duckdb.get_connection().connect()
 
     ensure_prism_warehouse(con)
+
+    input_relation = _maybe_build_member_input_view(
+        con=con,
+        claims_view=config.claims_view,
+        enrollments_view=config.enrollments_view,
+        members_view=config.members_view,
+    )
 
     model_year = config.model_year.value
     prediction_year = config.prediction_year
@@ -135,7 +306,7 @@ def score_members_aca(
         calculator = ACACalculator(model_year=model_year)
 
         rows = con.execute(
-            """
+            f"""
             SELECT
                 member_id,
                 date_of_birth,
@@ -144,7 +315,7 @@ def score_members_aca(
                 enrollment_months,
                 diagnoses,
                 ndc_codes
-            FROM main_intermediate.int_aca_risk_input
+            FROM {input_relation}
             """
         ).fetchall()
 
@@ -207,9 +378,12 @@ def score_members_aca(
                 return
             df = pl.DataFrame(rows).select(db_columns)
             con.register("df_view", df)
-            con.execute("INSERT OR REPLACE INTO main_runs.risk_scores SELECT * FROM df_view")
+            cols_sql = ", ".join(db_columns)
+            con.execute(
+                f"INSERT OR REPLACE INTO main_runs.risk_scores ({cols_sql}) "
+                f"SELECT {cols_sql} FROM df_view"
+            )
             con.unregister("df_view")
-            con.execute("INSERT OR REPLACE INTO main_runs.risk_scores SELECT * FROM df")
 
         for member in members:
             score = calculator.score(member, prediction_year=prediction_year)

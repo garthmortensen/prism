@@ -26,6 +26,10 @@ models:
     # Config for all models
     materialized: view
 
+    raw_views:
+      materialized: view
+      schema: main_raw
+
     staging:
       materialized: view
       schema: staging
@@ -33,4 +37,5 @@ models:
     intermediate:
       materialized: view
       schema: intermediate
+
 

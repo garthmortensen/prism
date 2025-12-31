@@ -394,6 +394,9 @@ dagster job launch decomposition_job \
 | `run_description` | str | No | Description of this specific run |
 | `data_effective` | str | No | Effective date of input data |
 | `trigger_source` | str | No | Who/what triggered the run (defaults to "dagster") |
+| `claims_view` | str | No | Optional fully-qualified view to source claims from (e.g., `main_raw.raw_claims_2024`). If set, you must also set `enrollments_view` and `members_view`. |
+| `enrollments_view` | str | No | Optional fully-qualified view to source enrollments from (e.g., `main_raw.raw_enrollments_2024`). |
+| `members_view` | str | No | Optional fully-qualified view to source members from (e.g., `main_raw.raw_members_2024`). |
 
 ### `compare_runs` Config
 
