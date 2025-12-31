@@ -28,7 +28,10 @@ scoring_job = define_asset_job(
     3. Writes results to `main_runs.risk_scores`
     """,
     tags={"team": "analytics", "priority": "high"},
-    metadata={"owner": "Garth Mortensen", "docs": "https://github.com/garthmortensen/prism/ra_dagster"},
+    metadata={
+        "owner": "Garth Mortensen",
+        "docs": "https://github.com/garthmortensen/prism/ra_dagster",
+    },
     config={
         "ops": {
             "score_members_aca": {

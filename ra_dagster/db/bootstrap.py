@@ -80,7 +80,9 @@ def ensure_marts_tables(con: duckdb.DuckDBPyConnection) -> None:
     con.execute("ALTER TABLE main_runs.risk_scores ADD COLUMN IF NOT EXISTS gender VARCHAR")
     con.execute("ALTER TABLE main_runs.risk_scores ADD COLUMN IF NOT EXISTS model VARCHAR")
     con.execute("ALTER TABLE main_runs.risk_scores ADD COLUMN IF NOT EXISTS metal_level VARCHAR")
-    con.execute("ALTER TABLE main_runs.risk_scores ADD COLUMN IF NOT EXISTS enrollment_months INTEGER")
+    con.execute(
+        "ALTER TABLE main_runs.risk_scores ADD COLUMN IF NOT EXISTS enrollment_months INTEGER"
+    )
 
     con.execute(
         """

@@ -9,7 +9,9 @@ from ra_dagster.resources.duckdb_resource import DuckDBResource
 
 app = typer.Typer(no_args_is_help=True, help="Prism CLI - Database and orchestration utilities")
 
-DEFAULT_DUCKDB_PATH = str((Path(__file__).resolve().parents[2] / "risk_adjustment.duckdb").resolve())
+DEFAULT_DUCKDB_PATH = str(
+    (Path(__file__).resolve().parents[2] / "risk_adjustment.duckdb").resolve()
+)
 
 
 @app.command(name="db-bootstrap")

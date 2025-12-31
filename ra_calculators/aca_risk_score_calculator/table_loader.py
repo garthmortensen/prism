@@ -182,11 +182,11 @@ def load_hcc_groups(model_year: str = "2024", model: str = "Adult") -> dict[str,
         definition = item.get("definition", "")
         if "= 0" in definition:
             is_replacement = True
-        
+
         for cont in item.get("continuation", []):
             if "= 0" in cont.get("definition", ""):
                 is_replacement = True
-        
+
         if not is_replacement:
             continue
 
@@ -364,7 +364,7 @@ def load_hcc_labels(model_year: str = "2024") -> dict[str, str]:
 
     # Determine HCC column name
     hcc_col = next((col for col in df.columns if col.endswith("_hcc")), "v07_hcc")
-    
+
     # Determine label column
     label_col = next((col for col in df.columns if "label" in col.lower()), "hcc_label")
 
@@ -397,13 +397,15 @@ def load_rxc_labels(model_year: str = "2024") -> dict[str, str]:
     df = pl.read_parquet(tables_dir / "table_10a.parquet")
 
     # Identify columns
-    rxc_col = next((col for col in df.columns if "rxc" in col.lower() and "label" not in col.lower()), "rxc")
+    rxc_col = next(
+        (col for col in df.columns if "rxc" in col.lower() and "label" not in col.lower()), "rxc"
+    )
     label_col = next((col for col in df.columns if "label" in col.lower()), "rxc_label")
 
     for row in df.iter_rows(named=True):
         rxc = str(row[rxc_col]).strip()
         label = str(row.get(label_col, "")).strip()
-        
+
         if rxc and label:
             labels[rxc] = label
 

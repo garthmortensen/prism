@@ -70,13 +70,9 @@ def decompose_runs(context, duckdb: DuckDBResource) -> None:
         run_id_actual = scenarios.get(actual_key)
 
         if not run_id_baseline:
-            raise ValueError(
-                f"Baseline scenario '{baseline_key}' not found in scenarios."
-            )
+            raise ValueError(f"Baseline scenario '{baseline_key}' not found in scenarios.")
         if not run_id_actual:
-            raise ValueError(
-                f"Actual scenario '{actual_key}' not found in scenarios."
-            )
+            raise ValueError(f"Actual scenario '{actual_key}' not found in scenarios.")
 
         method = analysis.get("method", "marginal")
         metric = analysis.get("metric", "mean")
@@ -87,9 +83,7 @@ def decompose_runs(context, duckdb: DuckDBResource) -> None:
             key = comp.get("scenario")
             rid = scenarios.get(key)
             if not rid:
-                raise ValueError(
-                    f"Component scenario '{key}' not found in scenarios."
-                )
+                raise ValueError(f"Component scenario '{key}' not found in scenarios.")
 
             # Copy component config and inject resolved run_id
             c = comp.copy()
@@ -127,9 +121,7 @@ def decompose_runs(context, duckdb: DuckDBResource) -> None:
             run_timestamp=run_ts,
             group_id=int(group_id),
             group_description=config.get("group_description"),
-            run_description=config.get(
-                "run_description", f"N-way decomposition ({method})"
-            ),
+            run_description=config.get("run_description", f"N-way decomposition ({method})"),
             analysis_type="decomposition",
             calculator=None,
             model_version=actual_model_version,
@@ -199,9 +191,7 @@ def decompose_runs(context, duckdb: DuckDBResource) -> None:
             return float(res[0]) if res and res[0] is not None else 0.0
 
         # Calculate Total Change
-        total_change = calculate_impact(
-            run_id_baseline, run_id_actual, global_pop_mode
-        )
+        total_change = calculate_impact(run_id_baseline, run_id_actual, global_pop_mode)
 
         definitions = []
         scenarios = []
@@ -235,9 +225,7 @@ def decompose_runs(context, duckdb: DuckDBResource) -> None:
         # Interaction (Residual)
         if method == "sequential":
             # In sequential, residual is the gap between the last step and the actual run
-            interaction_effect = calculate_impact(
-                previous_run_id, run_id_actual, global_pop_mode
-            )
+            interaction_effect = calculate_impact(previous_run_id, run_id_actual, global_pop_mode)
         else:
             # In marginal, residual is total change minus sum of partial effects
             interaction_effect = total_change - sum_effects
@@ -252,9 +240,7 @@ def decompose_runs(context, duckdb: DuckDBResource) -> None:
                 else "Residual difference to actual",
             )
         )
-        scenarios.append(
-            (batch_id, "Interaction", interaction_effect, str(run_id_actual))
-        )
+        scenarios.append((batch_id, "Interaction", interaction_effect, str(run_id_actual)))
 
         # 6. Insert Results
         con.executemany(
@@ -268,9 +254,7 @@ def decompose_runs(context, duckdb: DuckDBResource) -> None:
         )
 
         update_run_status(con, run_id=run_id, status="success")
-        context.log.info(
-            f"Wrote decomposition definitions and scenarios for batch_id={batch_id}"
-        )
+        context.log.info(f"Wrote decomposition definitions and scenarios for batch_id={batch_id}")
 
     except Exception:
         # If run_id was created, mark it failed

@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field
 
 class ScoreComponent(BaseModel):
     """Individual score component for audit trail.
-    
+
     Attributes:
         component_type: Type of component ('demographic', 'hcc', 'rxc', 'hcc_group')
         component_code: Variable name (e.g., 'MAGE_LAST_55_59', 'HHS_HCC019', 'RXC_01', 'G01')
@@ -18,7 +18,7 @@ class ScoreComponent(BaseModel):
         grouped_into: If this HCC was grouped (e.g., into 'G01'), the group variable name
         table_references: Dictionary tracking which DIY tables were used
     """
-    
+
     component_type: str = Field(..., pattern="^(demographic|hcc|rxc|hcc_group|edf)$")
     component_code: str
     description: str | None = None

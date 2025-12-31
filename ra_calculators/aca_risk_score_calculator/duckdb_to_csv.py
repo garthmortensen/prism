@@ -101,10 +101,10 @@ def score_from_duckdb_to_csv(
 
             for i, member in enumerate(members):
                 score = calculator.score(member, prediction_year=prediction_year)
-                
+
                 # Convert components to JSON-serializable format
                 components_data = [comp.model_dump() for comp in score.components]
-                
+
                 # Extract RXC list from details for backward compatibility with existing queries
                 rxc_list = score.details.get("rxcs_after_hierarchy", [])
 
@@ -121,7 +121,7 @@ def score_from_duckdb_to_csv(
                         "risk_score": score.risk_score,
                         "hcc_list": score.hcc_list,
                         "rxc_list": rxc_list,
-                        "components": components_data
+                        "components": components_data,
                     }
                     with (yaml_dir / f"{member.member_id}.yml").open("w", encoding="utf-8") as yf:
                         yaml.dump(yaml_data, yf, sort_keys=False)

@@ -40,7 +40,7 @@ def rows_to_member_inputs(
 ) -> tuple[list[MemberInput], dict[str, Any]]:
     """
     Convert raw database rows into MemberInput objects with validation.
-    
+
     Expected row format:
     (member_id, date_of_birth, gender, metal_level, enrollment_months, diagnoses, ndc_codes)
     """

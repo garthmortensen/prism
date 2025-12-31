@@ -85,9 +85,7 @@ def score_members_aca(
 
     model_year = config.model_year.value
     prediction_year = config.prediction_year
-    benefit_year = (
-        int(prediction_year) if prediction_year is not None else int(model_year)
-    )
+    benefit_year = int(prediction_year) if prediction_year is not None else int(model_year)
 
     run_id = context.run_id
     run_ts = generate_run_timestamp()
@@ -204,29 +202,31 @@ def score_members_aca(
 
             details = score.details
             components = [comp.model_dump() for comp in score.components]
-            
-            out_rows.append({
-                "run_id": run_id,
-                "member_id": str(member.member_id),
-                "risk_score": float(score.risk_score),
-                "hcc_score": float(details.get("hcc_score", 0.0)),
-                "rxc_score": float(details.get("rxc_score", 0.0)),
-                "demographic_score": float(details.get("demographic_factor", 0.0)),
-                "model": details.get("model"),
-                "gender": member.gender,
-                "metal_level": member.metal_level,
-                "enrollment_months": member.enrollment_months,
-                "model_year": model_year,
-                "benefit_year": benefit_year,
-                "calculator": record.calculator,
-                "model_version": record.model_version,
-                "run_timestamp": run_ts,
-                "created_at": created_at,
-                "hcc_list": json_dumps(score.hcc_list),
-                "rxc_list": json_dumps(details.get("rxcs_after_hierarchy", [])),
-                "details": json_dumps(details),
-                "components": json_dumps(components),
-            })
+
+            out_rows.append(
+                {
+                    "run_id": run_id,
+                    "member_id": str(member.member_id),
+                    "risk_score": float(score.risk_score),
+                    "hcc_score": float(details.get("hcc_score", 0.0)),
+                    "rxc_score": float(details.get("rxc_score", 0.0)),
+                    "demographic_score": float(details.get("demographic_factor", 0.0)),
+                    "model": details.get("model"),
+                    "gender": member.gender,
+                    "metal_level": member.metal_level,
+                    "enrollment_months": member.enrollment_months,
+                    "model_year": model_year,
+                    "benefit_year": benefit_year,
+                    "calculator": record.calculator,
+                    "model_version": record.model_version,
+                    "run_timestamp": run_ts,
+                    "created_at": created_at,
+                    "hcc_list": json_dumps(score.hcc_list),
+                    "rxc_list": json_dumps(details.get("rxcs_after_hierarchy", [])),
+                    "details": json_dumps(details),
+                    "components": json_dumps(components),
+                }
+            )
 
             if len(out_rows) >= batch_size:
                 flush_batch(out_rows)
