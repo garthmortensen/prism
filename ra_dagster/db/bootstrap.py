@@ -41,7 +41,8 @@ def ensure_run_registry(con: duckdb.DuckDBPyConnection) -> None:
 
     # Add index on run_timestamp for sorting (not unique to allow sub-second collisions)
     con.execute(
-        "CREATE INDEX IF NOT EXISTS idx_run_registry_timestamp ON main_runs.run_registry (run_timestamp)"
+        "CREATE INDEX IF NOT EXISTS idx_run_registry_timestamp ON main_runs.run_registry "
+        "(run_timestamp)"
     )
 
 

@@ -1,12 +1,12 @@
 from enum import Enum
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import duckdb
 import polars as pl
 from dagster import AssetExecutionContext, Config, asset
 
-from ra_calculators.aca_risk_score_calculator import ACACalculator, MemberInput
+from ra_calculators.aca_risk_score_calculator import ACACalculator
 from ra_calculators.aca_risk_score_calculator.member_processing import rows_to_member_inputs
 from ra_dagster.db.bootstrap import ensure_prism_warehouse, now_utc
 from ra_dagster.db.run_registry import (
@@ -17,7 +17,6 @@ from ra_dagster.db.run_registry import (
 )
 from ra_dagster.resources.duckdb_resource import DuckDBResource
 from ra_dagster.utils.run_ids import (
-    generate_run_id,
     generate_run_timestamp,
     get_git_provenance,
     json_dumps,
@@ -44,15 +43,15 @@ ModelYearOption = Enum(
 
 class ScoringConfig(Config):
     model_year: ModelYearOption = ModelYearOption(2024)
-    prediction_year: Optional[str] = None
-    group_id: Optional[int] = None
-    group_description: Optional[str] = None
+    prediction_year: str | None = None
+    group_id: int | None = None
+    group_description: str | None = None
     run_description: str = "ACA scoring run"
-    data_effective: Optional[str] = None
+    data_effective: str | None = None
     trigger_source: str = "dagster"
-    blueprint_id: Optional[str] = None
+    blueprint_id: str | None = None
     invalid_gender: InvalidGenderOption = InvalidGenderOption.skip
-    coerce_gender: Optional[GenderOption] = None
+    coerce_gender: GenderOption | None = None
 
 
 def _read_member_inputs(con: duckdb.DuckDBPyConnection) -> list[dict[str, Any]]:
@@ -159,7 +158,8 @@ def score_members_aca(
 
         # Performance Note:
         # This asset writes full calculation details (JSON) and component breakdowns to the DB.
-        # This is significantly more I/O intensive than the CSV export which only writes summary scores.
+        # This is significantly more I/O intensive than the CSV export which only writes summary
+        # scores.
         # We use Polars for bulk insertion to minimize overhead.
 
         batch_size = 10000
@@ -195,6 +195,9 @@ def score_members_aca(
             if not rows:
                 return
             df = pl.DataFrame(rows).select(db_columns)
+            con.register("df_view", df)
+            con.execute("INSERT OR REPLACE INTO main_runs.risk_scores SELECT * FROM df_view")
+            con.unregister("df_view")
             con.execute("INSERT OR REPLACE INTO main_runs.risk_scores SELECT * FROM df")
 
         for member in members:

@@ -1,7 +1,8 @@
-import polars as pl
 import json
-from pathlib import Path
 import re
+from pathlib import Path
+
+import polars as pl
 
 
 def generate_scenarios():
@@ -38,7 +39,7 @@ def generate_scenarios():
             if val:
                 # val is like "19.0" or "35.1"
                 # Normalize to "019" or "035_1" style for matching?
-                # Let's normalize to "19", "35_1", "135" (no leading zeros, underscores for decimals)
+                # Normalize to "19", "35_1", "135" (no leading zeros, underscores for decimals)
                 val_str = str(val).strip()
                 if val_str.endswith(".0"):
                     norm = val_str[:-2]
@@ -124,7 +125,9 @@ def generate_scenarios():
                         {
                             "name": f"Generated: {var} ({lookup_key})",
                             "specialty": "Pharmacy",
-                            "diagnoses": [],  # RXCs don't strictly require dx for the score component itself (though interactions do)
+                            # RXCs don't strictly require dx for the score component itself
+                            # (though interactions do)
+                            "diagnoses": [],
                             "procedures": [],
                             "drugs": [ndc_example],
                             "service_category": "Pharmacy",

@@ -12,7 +12,8 @@ class ScoreComponent(BaseModel):
         component_type: Type of component ('demographic', 'hcc', 'rxc', 'hcc_group')
         component_code: Variable name (e.g., 'MAGE_LAST_55_59', 'HHS_HCC019', 'RXC_01', 'G01')
         coefficient: Coefficient value for this component
-        source_data: Source ICD-10 codes (for HCCs) or NDC codes (for RXCs) that triggered this component
+        source_data: Source ICD-10 codes (for HCCs) or NDC codes (for RXCs) that triggered
+            this component
         superseded_by: If this component was zeroed out by hierarchy, the dominant component code
         supersedes: List of component codes that this component superseded via hierarchy
         grouped_into: If this HCC was grouped (e.g., into 'G01'), the group variable name

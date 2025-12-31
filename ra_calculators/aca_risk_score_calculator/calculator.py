@@ -399,9 +399,9 @@ class ACACalculator:
         hcc_details: dict[str, float] = {}
 
         # Track which HCCs were superseded by hierarchy
-        superseded_hccs = set(raw_ccs) - set(hccs_after_hierarchy)
+        # superseded_hccs = set(raw_ccs) - set(hccs_after_hierarchy)
         # Track which HCCs were filtered by model exclusions
-        model_excluded_hccs = set(hccs_after_hierarchy) - set(hccs_filtered)
+        # model_excluded_hccs = set(hccs_after_hierarchy) - set(hccs_filtered)
         # Track which HCCs were grouped
         grouped_hccs = set(hccs_filtered) - set(remaining_hccs)
 
@@ -519,7 +519,7 @@ class ACACalculator:
         rxcs_after_hierarchy = self._apply_rxc_hierarchies(raw_rxcs)
 
         # Track which RXCs were superseded by hierarchy
-        superseded_rxcs = raw_rxcs - rxcs_after_hierarchy
+        # superseded_rxcs = raw_rxcs - rxcs_after_hierarchy
 
         rxc_score = 0.0
         rxc_details: dict[str, float] = {}

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from dagster import AssetExecutionContext, asset
+from dagster import asset
 
 from ra_dagster.db.bootstrap import ensure_prism_warehouse, now_utc
 from ra_dagster.db.run_registry import (
@@ -13,10 +13,8 @@ from ra_dagster.db.run_registry import (
 )
 from ra_dagster.resources.duckdb_resource import DuckDBResource
 from ra_dagster.utils.run_ids import (
-    generate_run_id,
     generate_run_timestamp,
     get_git_provenance,
-    json_dumps,
 )
 
 
@@ -32,14 +30,16 @@ def decompose_runs(context, duckdb: DuckDBResource) -> None:
     1. "marginal" (default): Calculates each component's effect independently against the baseline.
        Interaction is the residual difference.
     2. "sequential": Calculates effects as a stepwise path (waterfall) from baseline to actual.
-       Component N is compared to Component N-1. Interaction is the residual from the last component to actual.
+       Component N is compared to Component N-1. Interaction is the residual from the last
+       component to actual.
 
     Config:
         run_id_baseline: str
         run_id_actual: str
         method: str = "marginal" | "sequential"
         metric: str = "mean" | "sum" (default: "mean")
-        population_mode: str = "intersection" | "baseline_population" | "scenario_population" (default: "intersection")
+        population_mode: str = "intersection" | "baseline_population" | "scenario_population"
+            (default: "intersection")
         components: List[Dict]
             name: str
             run_id: str
@@ -158,8 +158,10 @@ def decompose_runs(context, duckdb: DuckDBResource) -> None:
             agg_func = "SUM" if metric == "sum" else "AVG"
 
             cte_sql = """
-                WITH A AS (SELECT member_id, risk_score FROM main_runs.risk_scores WHERE run_id = ?),
-                     B AS (SELECT member_id, risk_score FROM main_runs.risk_scores WHERE run_id = ?)
+                WITH A AS (SELECT member_id, risk_score FROM main_runs.risk_scores
+                           WHERE run_id = ?),
+                     B AS (SELECT member_id, risk_score FROM main_runs.risk_scores
+                           WHERE run_id = ?)
             """
 
             if mode == "intersection":
@@ -240,16 +242,15 @@ def decompose_runs(context, duckdb: DuckDBResource) -> None:
                 else "Residual difference to actual",
             )
         )
-        scenarios.append((batch_id, "Interaction", interaction_effect, str(run_id_actual)))
-
-        # 6. Insert Results
         con.executemany(
-            "INSERT INTO main_analytics.decomposition_definitions (batch_id, step_index, driver_name, description, created_at) VALUES (?, ?, ?, ?, ?)",
+            "INSERT INTO main_analytics.decomposition_definitions "
+            "(batch_id, step_index, driver_name, description, created_at) VALUES (?, ?, ?, ?, ?)",
             [(*d, now_utc()) for d in definitions],
         )
 
         con.executemany(
-            "INSERT INTO main_analytics.decomposition_scenarios (batch_id, driver_name, impact_value, run_id, created_at) VALUES (?, ?, ?, ?, ?)",
+            "INSERT INTO main_analytics.decomposition_scenarios "
+            "(batch_id, driver_name, impact_value, run_id, created_at) VALUES (?, ?, ?, ?, ?)",
             [(*s, now_utc()) for s in scenarios],
         )
 

@@ -4,7 +4,6 @@ from datetime import date
 from pathlib import Path
 
 import duckdb
-
 from ra_calculators.aca_risk_score_calculator.pipeline import export_duckdb_scores_to_table
 
 

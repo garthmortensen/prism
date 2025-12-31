@@ -4,15 +4,13 @@ import argparse
 import csv
 import json
 import os
-import yaml
-from collections.abc import Iterable
-from datetime import date, datetime
+from datetime import datetime
 from pathlib import Path
-from typing import Any
 
 import duckdb
+import yaml
 
-from ra_calculators.aca_risk_score_calculator import ACACalculator, MemberInput
+from ra_calculators.aca_risk_score_calculator import ACACalculator
 from ra_calculators.aca_risk_score_calculator.member_processing import rows_to_member_inputs
 
 
@@ -149,7 +147,8 @@ def score_from_duckdb_to_csv(
             invalids = stats.get("invalid_gender_values", {})
             invalids_str = ", ".join(f"{k}={v}" for k, v in sorted(invalids.items()))
             print(
-                f"Skipped {skipped}/{total_rows} ({pct:.2f}%) rows due to invalid gender values: {invalids_str}"
+                f"Skipped {skipped}/{total_rows} ({pct:.2f}%) rows due to invalid gender values: "
+                f"{invalids_str}"
             )
 
         return len(members)
@@ -223,10 +222,8 @@ def main(argv: list[str] | None = None) -> int:
     output_csv = args.output_csv
     if not output_csv:
         # Format: YYYYMMDD_HHMMSSssss_aca_scores_out.csv
-        # Note: %f gives microseconds (6 digits), user asked for ssss (4 digits?) or just milliseconds?
-        # Usually ssss implies milliseconds or similar. I'll use microseconds and truncate or just use standard format.
-        # User asked for YYYYMMDD_HHMMSSssss. Let's assume they want microseconds or similar unique string.
-        # Let's use %f which is microseconds (000000).
+        # Note: %f gives microseconds (6 digits).
+        # User asked for YYYYMMDD_HHMMSSssss. Let's assume they want microseconds.
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S%f")
         # Write to tmp_exports relative to this script
         output_csv = str(Path(__file__).parent / "tmp_exports" / f"{timestamp}_aca_scores_out.csv")

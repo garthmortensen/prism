@@ -7,11 +7,11 @@ from ra_dagster.assets.scoring import score_members_aca
 from ra_dagster.resources.duckdb_resource import DuckDBResource
 
 # Load default decomposition config
-with open("ra_dagster/configs/decomposition_example.yaml", "r") as f:
+with open("ra_dagster/configs/decomposition_example.yaml") as f:
     default_decomp_config = yaml.safe_load(f)
 
 # Load default comparison config
-with open("ra_dagster/configs/comparison_example.yaml", "r") as f:
+with open("ra_dagster/configs/comparison_example.yaml") as f:
     default_comp_config = yaml.safe_load(f)
 
 scoring_job = define_asset_job(

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from dagster import AssetExecutionContext, asset
+from dagster import asset
 
 from ra_dagster.db.bootstrap import ensure_prism_warehouse, now_utc
 from ra_dagster.db.run_registry import (
@@ -13,7 +13,6 @@ from ra_dagster.db.run_registry import (
 )
 from ra_dagster.resources.duckdb_resource import DuckDBResource
 from ra_dagster.utils.run_ids import (
-    generate_run_id,
     generate_run_timestamp,
     get_git_provenance,
     json_dumps,
@@ -29,9 +28,10 @@ def compare_runs(context, duckdb: DuckDBResource) -> None:
         run_id_a: str
         run_id_b: str
         metric: str = "mean" | "sum" (default: "mean")
-        population_mode: str = "intersection" | "union" | "a_only" | "b_only" (default: "intersection")
+        metric: str = "mean" | "sum" (default: "mean")
+        population_mode: str = "intersection" | "union" | "a_only" | "b_only"
+            (default: "intersection")
     """
-
     config = context.op_config or {}
     run_id_a = config.get("run_id_a")
     run_id_b = config.get("run_id_b")
