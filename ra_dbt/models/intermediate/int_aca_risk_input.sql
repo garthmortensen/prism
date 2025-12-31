@@ -12,10 +12,10 @@ rx as (
 
 select
     m.member_id,
-    m.date_of_birth,
+    m.enrollment_months,
     m.gender,
     m.metal_level,
-    m.enrollment_months,
+    m.date_of_birth,
     coalesce(d.diagnosis_list, []) as diagnoses,
     coalesce(r.ndc_list, []) as ndc_codes
 from members m

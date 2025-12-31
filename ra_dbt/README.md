@@ -68,7 +68,7 @@ Note: DuckDB tooling may show `main_` prefixes because `main` is the default dat
 
 Dagster-managed relations are documented in dbt via `sources` and `exposures`:
 
-- `models/dagster_sources.yml`: `main_runs.run_registry`, `main_runs.risk_scores`, `main_analytics.run_comparison`, `main_analytics.decomposition`
+- `models/dagster_sources.yml`: `main_runs.run_registry`, `main_runs.risk_scores`, `main_analytics.run_comparison`, `main_analytics.decomposition_scenarios`, `main_analytics.decomposition_definitions`
 - `models/dagster_exposures.yml`: high-level Dagster pipeline dependencies
 
 ## Output

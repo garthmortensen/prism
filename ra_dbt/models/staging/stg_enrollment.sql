@@ -8,10 +8,10 @@ members as (
 
 select
     e.member_id,
-    cast(m.dob as date) as date_of_birth,
+    cast(e.start_date as date) as start_date,
+    cast(e.end_date as date) as end_date,
     m.gender,
     lower(m.plan_metal) as metal_level,
-    cast(e.start_date as date) as start_date,
-    cast(e.end_date as date) as end_date
+    cast(m.dob as date) as date_of_birth
 from enrollments e
 left join members m on e.member_id = m.member_id

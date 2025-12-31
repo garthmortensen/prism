@@ -33,4 +33,5 @@ exposures:
     description: Dagster asset that computes a 4-run decomposition into total/pop/coeff/interaction effects.
     depends_on:
       - source('dagster_runs_outputs', 'risk_scores')
-      - source('dagster_analytics', 'decomposition')
+      - source('dagster_analytics', 'decomposition_scenarios')
+      - source('dagster_analytics', 'decomposition_definitions')

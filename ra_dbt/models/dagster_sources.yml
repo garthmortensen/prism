@@ -60,6 +60,7 @@ sources:
       - name: run_comparison
         description: Member-level deltas between two runs.
         columns:
+          - name: batch_id
           - name: run_id_a
           - name: run_id_b
           - name: member_id
@@ -70,23 +71,20 @@ sources:
           - name: details
           - name: created_at
 
-      - name: decomposition
-        description: Aggregate 4-run decomposition results.
+      - name: decomposition_scenarios
+        description: Detailed driver-level impact values for decomposition scenarios.
         columns:
-          - name: analysis_id
-          - name: run_id_baseline
-          - name: run_id_coeff_only
-          - name: run_id_pop_only
-          - name: run_id_actual
-          - name: prior_period
-          - name: current_period
-          - name: prior_model_version
-          - name: current_model_version
-          - name: aggregation_level
-          - name: dimensions
-          - name: total_change
-          - name: pop_effect
-          - name: coeff_effect
-          - name: interaction_effect
-          - name: details
+          - name: batch_id
+          - name: driver_name
+          - name: impact_value
+          - name: run_id
+          - name: created_at
+
+      - name: decomposition_definitions
+        description: Metadata definitions for decomposition drivers.
+        columns:
+          - name: batch_id
+          - name: step_index
+          - name: driver_name
+          - name: description
           - name: created_at
