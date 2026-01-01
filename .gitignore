@@ -92,12 +92,23 @@ Desktop.ini
 *.log
 logs/
 
+# Dagster compute logs (local run artifacts)
+compute_logs/
+
 # Temporary files
 tmp/
 temp/
 *.tmp
 *.bak
 ra_calculators/aca_risk_score_calculator/tmp_exports/
+
+# Local scratch docs / transcripts
+chat.json
+chat_ongoing.json
+
+# Local one-off scripts
+inspect_schemas.py
+inspect_tables.py
 
 # Build artifacts
 *.manifest

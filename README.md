@@ -14,23 +14,16 @@
 Member data in, decomposed risks out.
 
 - **1. Calculate member risk scores**  
-  Diagnoses → Map ICDs to HCCs → Apply hierarchies → Find interactions →  
-  Count durations → Sum coefficients → Member-level risk scores
+  Prepare `int_aca_risk_input` (dbt) → Score members (Python) → Persist to `main_runs.risk_scores`
 
-- **1. Register runs**  
-  Member-level risk scores → Register runs (timestamp + metadata)
+- **2. Register runs**  
+  Each execution is registered in `main_runs.run_registry` with provenance + config snapshot
 
-- **1. Compare runs**  
-  Prior run (A) ↔ Current run (B) → Compute differences
+- **3. Compare runs**  
+  Compare two scoring runs (A vs B) → write deltas to `main_analytics.run_comparison`
 
-- **1. Run quartet**  
-  Baseline → Coeff-only → Pop-only → Actual, providing full delta
-
-- **1. Decompose changes**  
-  Decompose total change into population, coefficient, and interaction effects
-
-- **1. Agent-assisted interpretation**  
-  Generate narratives & visualizations
+- **4. Decompose changes**  
+  Multi-scenario decomposition → write steps to `main_analytics.decomposition_definitions` and values to `main_analytics.decomposition_scenarios`
 
 ## Executive Summary
 
@@ -55,15 +48,15 @@ Member data in, decomposed risks out.
 #### Data Mart Schema Organization
 
 DuckDB tooling shows the `main_` prefix because `main` is the default database.
-This project documents *logical* layer names and maps them to the physical DuckDB schema.
+This project documents *logical* layer names and treats `main_` prefixing as an implementation detail.
 
-| Logical Layer | DuckDB Schema | Contents |
+| Logical Layer | DuckDB Schema(s) you may see | Contents |
 | ------------- | ------------- | -------- |
-| `raw` | `main_raw` | `raw_claims`, `raw_members`, … |
-| `staging` | `main_staging` | `stg_claims_dx`, `stg_enrollment`, … |
-| `intermediate` | `main_intermediate` | `int_aca_risk_input`, … |
+| `raw` | `raw` / `main_raw` | seeds + views over raw sources |
+| `staging` | `staging` / `main_staging` | cleaned/typed views |
+| `intermediate` | `intermediate` / `main_intermediate` | `int_aca_risk_input`, … |
 | `runs` | `main_runs` | `run_registry`, `risk_scores` (Dagster-managed) |
-| `analytics` | `main_analytics` | `run_comparison`, `decomposition` (Dagster-managed) |
+| `analytics` | `main_analytics` | `run_comparison`, `decomposition_*` (Dagster-managed) |
 
 #### dbt materializations
 
@@ -75,28 +68,34 @@ This project documents *logical* layer names and maps them to the physical DuckD
 
 #### Runs schema 
 
-- `run_timestamp`: Go down to 4-digit microseconds (YYYYMMDDHHMMSSUUUU) to avoid collisions.
-- `run_id`: `SELECT MAX(group_id) + 1 FROM run_registry`
-- `run_description`
-- `json_config`: field contains entire configuration in string(?) format for direct referencing
-- `git_commit` - for cloning point-in-time code
-- `git_commit_clean` - for confirming referenced commit is clean and reliable
+- `run_id`: Dagster run UUID (`context.run_id`) — the primary identifier used across tables
+- `run_timestamp`: sortable timestamp string generated at runtime (separate from Dagster run_id)
+- `group_id`: an integer allocated as `MAX(group_id)+1` (used to group related runs)
+- `launchpad_config` / `blueprint_yml`: config snapshots persisted for reproducibility
+- `git_*`: git provenance
 
 Implementation note: `main_runs.run_registry` is the source of truth for run metadata.
-Atomic run outputs live in `main_runs` (e.g., `main_runs.risk_scores`), and downstream derived tables live in `main_analytics` (e.g., `main_analytics.run_comparison`, `main_analytics.decomposition`).
+Atomic run outputs live in `main_runs` (e.g., `main_runs.risk_scores`), and downstream derived tables live in `main_analytics` (e.g., `main_analytics.run_comparison`, `main_analytics.decomposition_definitions`, `main_analytics.decomposition_scenarios`).
 
 ### Schema features built-in reproducibility
 
 ```bash
-# 1. find the run config
-dagster run show <run_id>
+# Find runs and pull stored config/provenance
+# (Use the Dagster UI for re-running; the warehouse persists snapshots for audit.)
+```
 
-# 2a. re-execute with same config
-dagster job execute -j scoring_job --config-from-run <run_id>
-
-# 2b. or manually with the stored config
-SELECT config_json FROM main_runs.run_registry 
-WHERE effective = '20251115120000';
+```sql
+SELECT
+  run_id,
+  run_timestamp,
+  analysis_type,
+  status,
+  git_commit_short,
+  launchpad_config,
+  blueprint_yml
+FROM main_runs.run_registry
+ORDER BY created_at DESC
+LIMIT 20;
 ```
 
 #### Key User Stories
@@ -116,131 +115,11 @@ Only flag discrepancies above a tolerance threshold (e.g., >0.01). Don't apply r
 
 ## Project Structure
 
-Use **four repositories** with clear separation of concerns:
+This repository contains three main packages:
 
-```mermaid
-flowchart TB
-    subgraph "Repo 1: ra_platform"
-        DAGSTER[Dagster Orchestration]
-        CONFIG[Config YAML]
-    end
-
-    subgraph "Repo 2: ra_dbt"
-        SEEDS[Seeds / Coefficients]
-        MODELS[dbt Models]
-    end
-
-    subgraph "Repo 3: ra_calculators"
-        HCCPY[hccpy wrapper]
-        SQL_CALC[HHS_HCC_SQL wrapper]
-    end
-
-    subgraph "Repo 4: ra_agents"
-        NARRATOR[Decomposition Narrator]
-        FASTAPI[FastAPI Service]
-    end
-
-    DAGSTER -->|"triggers via CLI"| MODELS
-    DAGSTER -->|"imports as package"| HCCPY
-    DAGSTER -->|"HTTP calls"| FASTAPI
-```
-
-#### Proposed Directory Structure
-
-Each repository has its own focused structure:
-
-```
-prism/
-├── .github/
-│   └── workflows/
-│       └── cicd.yml                  # Build & push container
-├── calculators/
-│   ├── __init__.py
-│   ├── py.typed
-│   ├── base.py                         # Abstract calculator interface
-│   ├── registry.py                     # Calculator factory
-│   ├── hccpy_wrapper/
-│   │   ├── __init__.py
-│   │   ├── calculator.py
-│   │   ├── mapper.py
-│   │   └── config.py
-│   └── hhs_hcc_sql/                    # Phase 4
-│       ├── __init__.py
-│       ├── calculator.py
-│       └── scripts/
-├── dbt/
-│   ├── dbt_project.yml
-│   ├── profiles.yml                    # DuckDB profile (templated)
-│   ├── packages.yml
-│   ├── seeds/
-│   │   ├── hhs_2024/
-│   │   │   ├── icd_cc_map.csv
-│   │   │   ├── cc_hierarchy.csv
-│   │   │   └── coefficients/
-│   │   └── hhs_2025/
-│   ├── models/
-│   │   ├── staging/
-│   │   ├── intermediate/
-│   │   └── marts/
-│   ├── macros/
-│   └── tests/
-├── platform/
-│   ├── __init__.py
-│   ├── definitions.py                  # Dagster entry point
-│   ├── assets/
-│   │   ├── __init__.py
-│   │   ├── ingestion.py
-│   │   ├── scoring.py
-│   │   └── analytics.py
-│   ├── jobs/
-│   │   ├── __init__.py
-│   │   ├── scoring_job.py
-│   │   └── decomposition_job.py
-│   ├── resources/
-│   │   ├── __init__.py
-│   │   ├── coordination.py             # run_timestamp management
-│   │   └── warehouse.py                # DuckDB connection
-│   └── config/
-│       ├── run_config.yaml
-│       └── decomposition/
-│           └── annual_2025.yaml
-├── tests/
-│   ├── __init__.py
-│   ├── conftest.py
-│   ├── calculators/
-│   │   ├── test_hccpy_wrapper.py
-│   │   └── test_cross_validation.py    # Phase 4
-│   ├── platform/
-│   │   ├── test_assets.py
-│   │   └── test_jobs.py
-│   └── fixtures/
-│       ├── sample_members.csv
-│       └── expected_scores.csv
-├── pyproject.toml                      # Unified deps
-├── uv.lock
-├── Makefile
-├── Dockerfile                          # Phase 4
-├── docker-compose.yml                  # Phase 4
-├── .pre-commit-config.yaml
-├── README.md
-├── ADR.md
-└── implementation_plan.md
-```
-
-#### Workspace Layout
-
-When developing locally, clone all repos into a parent workspace:
-
-```
-~/workspace/risk_adjustment/
-├── ra_platform/                        # git repo
-├── ra_dbt/                             # git repo
-├── ra_calculators/                     # git repo
-├── ra_agents/                          # git repo
-├── docker-compose.override.yml         # Local overrides
-├── Makefile                            # Workspace-level commands
-└── .env                                # Shared environment variables
-```
+- `ra_dagster`: orchestration + warehouse tables for scoring/comparison/decomposition
+- `ra_dbt`: dbt project for `int_aca_risk_input` and supporting models
+- `ra_calculators`: the Python ACA HHS-HCC calculator + utilities
 
 ## Streamlined setup
 

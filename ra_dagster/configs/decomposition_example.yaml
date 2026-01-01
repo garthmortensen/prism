@@ -2,10 +2,10 @@ ops:
   decompose_runs:
     config:
       scenarios:
-        baseline_2024: "20251230_001234567890"
-        coeffs_2025:   "20251230_002345678901"
-        popmix_2025:   "20251230_003456789012"
-        actual_2025:   "20251230_004567890123"
+        baseline_2024: "00ebabaf-c761-4e88-a1a1-a5fe6d7b0f1c"
+        coeffs_2025:   "01d45526-3798-48f6-88e7-7699baccb287"
+        popmix_2025:   "12a11736-c06b-4f72-9a28-937423b6c03f"
+        actual_2025:   "2db22e4a-a787-4132-bea8-3e5f4226066d"
 
       analysis:
         method: sequential

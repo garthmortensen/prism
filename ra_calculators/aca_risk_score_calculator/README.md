@@ -1,9 +1,5 @@
 # aca_risk_score_calculator
 
-TODO: implement table 12 exclusions (and check other json mappings).
-
-TODO: implement interaction effect (gross)
-
 A production-ready HHS-HCC (Hierarchical Condition Category) risk score calculator for the Affordable Care Act (ACA) individual and small group markets.
 
 ## Overview
@@ -23,19 +19,25 @@ This calculator implements the CMS HHS-HCC risk adjustment model used to calcula
 You can run the calculator directly from the command line to process data from DuckDB and export scores to CSV:
 
 ```bash
-python -m ra_calculators.aca_risk_score_calculator.duckdb_to_csv \
+uv run python -m ra_calculators.aca_risk_score_calculator.duckdb_to_csv \
   --model-year 2024
 ```
 
-This will output a file to `tmp_exports/YYYYMMDD_HHMMSSssss_aca_scores_out.csv`. You can also specify a custom output path:
+By default, this writes to `ra_calculators/aca_risk_score_calculator/tmp_exports/YYYYMMDD_HHMMSSssss_aca_scores_out.csv`.
+You can also specify a custom output path:
 
 ```bash
-python -m ra_calculators.aca_risk_score_calculator.duckdb_to_csv \
+uv run python -m ra_calculators.aca_risk_score_calculator.duckdb_to_csv \
   --output-csv scores.csv \
   --model-year 2024
 ```
 
-See `python -m ra_calculators.aca_risk_score_calculator.duckdb_to_csv --help` for all available options.
+Defaults:
+- DuckDB path comes from `DUCKDB_PATH` if set, otherwise `risk_adjustment.duckdb` at repo root.
+- Input relation defaults to `main_intermediate.int_aca_risk_input` (override with `--schema` / `--table`).
+- For the first 20 members, per-member YAML detail files are written under `yaml_details/` next to the output CSV.
+
+See `uv run python -m ra_calculators.aca_risk_score_calculator.duckdb_to_csv --help` for all available options.
 
 ## Data Sources
 

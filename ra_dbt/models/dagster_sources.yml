@@ -8,10 +8,10 @@ sources:
       - name: run_registry
         description: Run metadata and lineage for Dagster executions.
         columns:
-          - name: run_timestamp
-            description: Run timestamp key (YYYYMMDDHHMMSSUUUU).
           - name: run_id
             description: UUID for the run.
+          - name: run_timestamp
+            description: Run timestamp key (YYYYMMDDHHMMSSUUUU).
           - name: group_id
           - name: group_description
           - name: run_description
@@ -20,15 +20,19 @@ sources:
           - name: model_version
           - name: benefit_year
           - name: data_effective
-          - name: json_config
+          - name: blueprint_yml
+            description: Serialized config/blueprint captured for the run.
           - name: git_branch
           - name: git_commit
           - name: git_commit_short
           - name: git_commit_clean
           - name: status
           - name: trigger_source
+          - name: blueprint_id
           - name: created_at
           - name: updated_at
+          - name: launchpad_config
+            description: Serialized Dagster Launchpad config (when available).
 
   - name: dagster_runs_outputs
     description: Dagster-managed atomic run outputs.
@@ -37,19 +41,25 @@ sources:
       - name: risk_scores
         description: Member-level risk scores output by Dagster.
         columns:
-          - name: run_timestamp
           - name: run_id
           - name: member_id
+          - name: run_timestamp
           - name: calculator
           - name: model_version
           - name: benefit_year
+          - name: model_year
+          - name: model
           - name: risk_score
           - name: demographic_score
           - name: hcc_score
           - name: rxc_score
+          - name: gender
+          - name: metal_level
+          - name: enrollment_months
           - name: hcc_list
           - name: rxc_list
           - name: details
+          - name: components
           - name: created_at
 
 

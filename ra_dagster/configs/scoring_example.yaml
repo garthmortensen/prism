@@ -7,7 +7,8 @@ ops:
       enrollments_view: main_raw.raw_enrollments_2024
       members_view: main_raw.raw_members_2024
       invalid_gender: skip
-      model_year: "2024"
+      diy_model_year: "2024"
+      member_age_basis_year: "2024"
       run_description: "ACA scoring run"
 
 resources:

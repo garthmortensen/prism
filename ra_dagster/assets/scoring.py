@@ -1,6 +1,7 @@
 from enum import Enum
 from pathlib import Path
 from typing import Any
+import json
 import re
 
 import duckdb
@@ -44,12 +45,18 @@ ModelYearOption = Enum(
 
 
 class ScoringConfig(Config):
-    model_year: ModelYearOption = ModelYearOption(2024)
+    # DIY tables year (controls coefficients/mappings/hierarchies/etc.).
+    diy_model_year: ModelYearOption = ModelYearOption(2024)
+    # Backwards-compatible alias for diy_model_year.
+    model_year: ModelYearOption | None = None
+    # Year used for DOB-based age calculation (age as-of 12/31 of this year).
+    # Preferred name; replaces prediction_year.
+    member_age_basis_year: str | None = None
+    # Legacy alias for member_age_basis_year.
     prediction_year: str | None = None
     group_id: int | None = None
     group_description: str | None = None
     run_description: str = "ACA scoring run"
-    data_effective: str | None = None
     trigger_source: str = "dagster"
     blueprint_id: str | None = None
     invalid_gender: InvalidGenderOption = InvalidGenderOption.skip
@@ -75,6 +82,90 @@ def _validate_relation_name(relation: str) -> str:
     return relation
 
 
+def _relation_exists(con: duckdb.DuckDBPyConnection, relation: str) -> bool:
+    parts = relation.split(".")
+    if len(parts) == 1:
+        (table,) = parts
+        row = con.execute(
+            """
+            SELECT 1
+            FROM information_schema.tables
+            WHERE table_name = ?
+            LIMIT 1
+            """,
+            [table],
+        ).fetchone()
+        return row is not None
+
+    if len(parts) == 2:
+        schema, table = parts
+        row = con.execute(
+            """
+            SELECT 1
+            FROM information_schema.tables
+            WHERE table_schema = ?
+              AND table_name = ?
+            LIMIT 1
+            """,
+            [schema, table],
+        ).fetchone()
+        return row is not None
+
+    # For db.schema.table (or similar), try existence via a cheap query.
+    try:
+        con.execute(f"SELECT 1 FROM {relation} LIMIT 0")
+        return True
+    except Exception:
+        return False
+
+
+def _resolve_relation(con: duckdb.DuckDBPyConnection, relation: str) -> str:
+    """Resolve a relation name against DuckDB, handling common dbt/DuckDB prefixing.
+
+    DuckDB + dbt sometimes materialize a configured schema like `main_raw` as
+    `main_main_raw` (database+schema concatenation). If the user provides
+    `main_raw.table`, we try that first, then fall back to `main_main_raw.table`.
+    """
+    relation = _validate_relation_name(relation)
+
+    if _relation_exists(con, relation):
+        return relation
+
+    parts = relation.split(".")
+    if len(parts) == 2:
+        schema, table = parts
+
+        # Common fallback: prefix schema with "main_".
+        if not schema.startswith("main_"):
+            alt = f"main_{schema}.{table}"
+            if _relation_exists(con, alt):
+                return alt
+
+        # Also try stripping a leading "main_" if present.
+        if schema.startswith("main_"):
+            alt = f"{schema.removeprefix('main_')}.{table}"
+            if _relation_exists(con, alt):
+                return alt
+
+        # As a last resort, try to locate it by table name.
+        rows = con.execute(
+            """
+            SELECT table_schema
+            FROM information_schema.tables
+            WHERE table_name = ?
+            ORDER BY table_schema
+            """,
+            [table],
+        ).fetchall()
+        if len(rows) == 1:
+            return f"{rows[0][0]}.{table}"
+
+    raise ValueError(
+        f"DuckDB relation not found: {relation!r}. "
+        "Check that dbt has been run and that the schema/table name is correct."
+    )
+
+
 def _maybe_build_member_input_view(
     *,
     con: duckdb.DuckDBPyConnection,
@@ -97,9 +188,9 @@ def _maybe_build_member_input_view(
             "If overriding sources, you must set claims_view, enrollments_view, and members_view."
         )
 
-    claims_view = _validate_relation_name(claims_view)
-    enrollments_view = _validate_relation_name(enrollments_view)
-    members_view = _validate_relation_name(members_view)
+    claims_view = _resolve_relation(con, claims_view)
+    enrollments_view = _resolve_relation(con, enrollments_view)
+    members_view = _resolve_relation(con, members_view)
 
     # Create temp aliases matching dbt seed names so the downstream SQL is identical.
     con.execute(f"CREATE OR REPLACE TEMP VIEW raw_claims AS SELECT * FROM {claims_view}")
@@ -247,16 +338,58 @@ def score_members_aca(
 
     ensure_prism_warehouse(con)
 
-    input_relation = _maybe_build_member_input_view(
-        con=con,
-        claims_view=config.claims_view,
-        enrollments_view=config.enrollments_view,
-        members_view=config.members_view,
+    diy_model_year = (
+        config.model_year.value if config.model_year is not None else config.diy_model_year.value
+    )
+    member_age_basis_year = config.member_age_basis_year or config.prediction_year
+    benefit_year = (
+        int(member_age_basis_year)
+        if member_age_basis_year is not None
+        else int(diy_model_year)
     )
 
-    model_year = config.model_year.value
-    prediction_year = config.prediction_year
-    benefit_year = int(prediction_year) if prediction_year is not None else int(model_year)
+    resolved_claims_view = (
+        _resolve_relation(con, config.claims_view) if config.claims_view is not None else None
+    )
+    resolved_enrollments_view = (
+        _resolve_relation(con, config.enrollments_view)
+        if config.enrollments_view is not None
+        else None
+    )
+    resolved_members_view = (
+        _resolve_relation(con, config.members_view) if config.members_view is not None else None
+    )
+
+    context.log.info(
+        "Effective scoring config (including resolved sources):\n"
+        + json.dumps(
+            {
+                "config": config.model_dump(),
+                "effective": {
+                    "diy_model_year": int(diy_model_year),
+                    "member_age_basis_year": int(member_age_basis_year)
+                    if member_age_basis_year is not None
+                    else None,
+                    "benefit_year": int(benefit_year),
+                },
+                "resolved_sources": {
+                    "claims_view": resolved_claims_view,
+                    "enrollments_view": resolved_enrollments_view,
+                    "members_view": resolved_members_view,
+                },
+            },
+            indent=2,
+            sort_keys=True,
+            default=str,
+        )
+    )
+
+    input_relation = _maybe_build_member_input_view(
+        con=con,
+        claims_view=resolved_claims_view,
+        enrollments_view=resolved_enrollments_view,
+        members_view=resolved_members_view,
+    )
 
     run_id = context.run_id
     run_ts = generate_run_timestamp()
@@ -274,9 +407,8 @@ def score_members_aca(
         run_description=config.run_description,
         analysis_type="scoring",
         calculator="aca_risk_score_calculator",
-        model_version=f"hhs_{model_year}",
+        model_version=f"hhs_{diy_model_year}",
         benefit_year=benefit_year,
-        data_effective=config.data_effective,
         launchpad_config=extract_launchpad_config(
             context=context,
             fallback={
@@ -288,8 +420,8 @@ def score_members_aca(
             },
         ),
         blueprint_yml={
-            "model_year": model_year,
-            "prediction_year": prediction_year,
+            "diy_model_year": diy_model_year,
+            "member_age_basis_year": member_age_basis_year,
             **config.model_dump(),
         },
         git=git,
@@ -303,7 +435,7 @@ def score_members_aca(
     insert_run(con, record)
 
     try:
-        calculator = ACACalculator(model_year=model_year)
+        calculator = ACACalculator(model_year=str(diy_model_year))
 
         rows = con.execute(
             f"""
@@ -386,7 +518,12 @@ def score_members_aca(
             con.unregister("df_view")
 
         for member in members:
-            score = calculator.score(member, prediction_year=prediction_year)
+            score = calculator.score(
+                member,
+                prediction_year=int(member_age_basis_year)
+                if member_age_basis_year is not None
+                else None,
+            )
 
             details = score.details
             components = [comp.model_dump() for comp in score.components]
@@ -403,7 +540,7 @@ def score_members_aca(
                     "gender": member.gender,
                     "metal_level": member.metal_level,
                     "enrollment_months": member.enrollment_months,
-                    "model_year": model_year,
+                    "model_year": int(diy_model_year),
                     "benefit_year": benefit_year,
                     "calculator": record.calculator,
                     "model_version": record.model_version,

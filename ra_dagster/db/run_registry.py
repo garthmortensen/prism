@@ -21,7 +21,6 @@ class RunRecord:
     calculator: str | None
     model_version: str | None
     benefit_year: int | None
-    data_effective: str | None
     launchpad_config: dict[str, Any] | None
     blueprint_yml: dict[str, Any]
     git: GitProvenance
@@ -53,7 +52,6 @@ def insert_run(con: duckdb.DuckDBPyConnection, record: RunRecord) -> None:
             calculator,
             model_version,
             benefit_year,
-            data_effective,
             launchpad_config,
             created_at,
             updated_at,
@@ -64,7 +62,7 @@ def insert_run(con: duckdb.DuckDBPyConnection, record: RunRecord) -> None:
             git_commit_clean,
             blueprint_id,
             blueprint_yml
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         [
             record.run_id,
@@ -77,7 +75,6 @@ def insert_run(con: duckdb.DuckDBPyConnection, record: RunRecord) -> None:
             record.calculator,
             record.model_version,
             record.benefit_year,
-            record.data_effective,
             json_dumps(record.launchpad_config) if record.launchpad_config is not None else None,
             record.created_at,
             record.updated_at,

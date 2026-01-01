@@ -67,7 +67,6 @@ def compare_runs(context, duckdb: DuckDBResource) -> None:
         calculator=None,
         model_version=None,
         benefit_year=None,
-        data_effective=None,
         launchpad_config=extract_launchpad_config(context=context, fallback=config),
         blueprint_yml={
             "run_id_a": run_id_a,

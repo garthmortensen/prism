@@ -82,21 +82,27 @@ def extract_launchpad_config(
     We try a few common attributes and fall back to a caller-provided dict.
     """
 
-    dagster_run = getattr(context, "dagster_run", None)
+    def _safe_getattr(obj: Any, name: str) -> Any:
+        try:
+            return getattr(obj, name)
+        except Exception:
+            return None
+
+    dagster_run = _safe_getattr(context, "dagster_run")
     if dagster_run is not None:
-        run_config = getattr(dagster_run, "run_config", None)
+        run_config = _safe_getattr(dagster_run, "run_config")
         if isinstance(run_config, dict) and run_config:
             return run_config
 
-        run_config_yaml = getattr(dagster_run, "run_config_yaml", None)
+        run_config_yaml = _safe_getattr(dagster_run, "run_config_yaml")
         if isinstance(run_config_yaml, str) and run_config_yaml.strip():
             return {"run_config_yaml": run_config_yaml}
 
-    run_config = getattr(context, "run_config", None)
+    run_config = _safe_getattr(context, "run_config")
     if isinstance(run_config, dict) and run_config:
         return run_config
 
-    op_config = getattr(context, "op_config", None)
+    op_config = _safe_getattr(context, "op_config")
     if isinstance(op_config, dict) and op_config:
         return {"op_config": op_config}
 

@@ -97,8 +97,8 @@ def decompose_runs(context, duckdb: DuckDBResource) -> None:
         # 3. Fetch Metadata from Actual Run for RunRecord
         meta_row = con.execute(
             """
-            SELECT model_version, benefit_year, data_effective 
-            FROM main_runs.run_registry 
+            SELECT model_version, benefit_year
+            FROM main_runs.run_registry
             WHERE run_id = ?
             """,
             [run_id_actual],
@@ -106,7 +106,6 @@ def decompose_runs(context, duckdb: DuckDBResource) -> None:
 
         actual_model_version = meta_row[0] if meta_row else None
         actual_benefit_year = meta_row[1] if meta_row else None
-        actual_data_effective = meta_row[2] if meta_row else None
 
         # 4. Create Run Record
         run_id = context.run_id
@@ -127,7 +126,6 @@ def decompose_runs(context, duckdb: DuckDBResource) -> None:
             calculator=None,
             model_version=actual_model_version,
             benefit_year=actual_benefit_year,
-            data_effective=actual_data_effective,
             launchpad_config=extract_launchpad_config(context=context, fallback=config),
             blueprint_yml={
                 "run_id_baseline": run_id_baseline,
@@ -242,6 +240,15 @@ def decompose_runs(context, duckdb: DuckDBResource) -> None:
                 "Combined interaction effect of all factors"
                 if method == "marginal"
                 else "Residual difference to actual",
+            )
+        )
+
+        scenarios.append(
+            (
+                batch_id,
+                "Interaction",
+                float(interaction_effect),
+                str(run_id_actual),
             )
         )
         con.executemany(
