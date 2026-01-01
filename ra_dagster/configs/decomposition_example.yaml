@@ -1,22 +1,26 @@
 ops:
   decompose_runs:
     config:
-      scenarios:
-        baseline_2024: "00ebabaf-c761-4e88-a1a1-a5fe6d7b0f1c"
-        coeffs_2025:   "01d45526-3798-48f6-88e7-7699baccb287"
-        popmix_2025:   "12a11736-c06b-4f72-9a28-937423b6c03f"
-        actual_2025:   "2db22e4a-a787-4132-bea8-3e5f4226066d"
+      # 1. The Bookends
+      baseline_run_id: "00ebabaf-c761-4e88-a1a1-a5fe6d7b0f1c" # 2024 Data / 2024 Model
+      actual_run_id:   "2db22e4a-a787-4132-bea8-3e5f4226066d" # 2025 Data / 2025 Model
+      
+      # 2. Analysis Settings
+      run_description: "2024 vs 2025 Marginal Analysis"
+      population_mode: intersection # Enforced for marginal method
 
-      analysis:
-        method: marginal
-        run_description: "2024 vs 2025 Marginal Analysis"
-        metric: mean
-        population_mode: intersection
-        baseline: baseline_2024
-        actual: actual_2025
-        components:
-          - name: "Model Change"
-            scenario: coeffs_2025
-          - name: "Population Mix"
-            scenario: popmix_2025
-            population_mode: scenario_population
+      # 3. The Drivers
+      components:
+        # Driver A: Model Change
+        # Logic: Compare Baseline vs (24 Data / 25 Model)
+        # Mode: intersection (Compare same members to isolate model effect)
+        - name: "Model Change"
+          run_id: "01d45526-3798-48f6-88e7-7699baccb287"
+          population_mode: intersection
+
+        # Driver B: Population Mix
+        # Logic: Compare Baseline vs (25 Data / 24 Model)
+        # Mode: scenario_population (Use the new population to capture churn/mix)
+        - name: "Population Mix"
+          run_id: "12a11736-c06b-4f72-9a28-937423b6c03f"
+          population_mode: scenario_population

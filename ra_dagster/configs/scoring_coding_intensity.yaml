@@ -1,0 +1,17 @@
+ops:
+  score_members_aca:
+    config:
+      # Scenario: Coding Intensity / Chart Review Impact
+      # Using an enhanced claims view with simulated added diagnoses
+      claims_view: main_raw.raw_claims_2024_enhanced
+      enrollments_view: main_raw.raw_enrollments_2024
+      members_view: main_raw.raw_members_2024
+      invalid_gender: skip
+      diy_model_year: "2024"
+      member_age_basis_year: "2024"
+      run_description: "Coding Intensity Simulation (Enhanced Claims)"
+
+resources:
+  duckdb:
+    config:
+      path: /home/garth/garage/prism/risk_adjustment.duckdb

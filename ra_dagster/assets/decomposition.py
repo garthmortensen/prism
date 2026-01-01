@@ -28,14 +28,12 @@ def decompose_runs(context, duckdb: DuckDBResource) -> None:
     specific component effects defined by intermediate runs.
 
     Supports one methodology:
-    1. "marginal" (default): Calculates each component's effect independently against the baseline.
+    1. "marginal": Calculates each component's effect independently against the baseline.
        Interaction is the residual difference.
 
     Config:
         run_id_baseline: str
         run_id_actual: str
-        method: str = "marginal" (default: "marginal")
-        metric: str = "mean" | "sum" (default: "mean")
         population_mode: str = "intersection" | "baseline_population" | "scenario_population"
             (default: "intersection")
         components: List[Dict]
@@ -52,44 +50,31 @@ def decompose_runs(context, duckdb: DuckDBResource) -> None:
         ensure_prism_warehouse(con)
 
         # Handle configuration
-        if "scenarios" not in config or "analysis" not in config:
-            raise ValueError(
-                "decompose_runs requires 'scenarios' and 'analysis' sections in config."
-            )
-
-        # New Schema: Scenarios + Analysis
-        scenarios = config["scenarios"]
-        analysis = config["analysis"]
-
-        baseline_key = analysis.get("baseline")
-        actual_key = analysis.get("actual")
-
-        run_id_baseline = scenarios.get(baseline_key)
-        run_id_actual = scenarios.get(actual_key)
+        run_id_baseline = config.get("baseline_run_id")
+        run_id_actual = config.get("actual_run_id")
 
         if not run_id_baseline:
-            raise ValueError(f"Baseline scenario '{baseline_key}' not found in scenarios.")
+            raise ValueError("decompose_runs config requires 'baseline_run_id'.")
         if not run_id_actual:
-            raise ValueError(f"Actual scenario '{actual_key}' not found in scenarios.")
+            raise ValueError("decompose_runs config requires 'actual_run_id'.")
 
-        method = analysis.get("method", "marginal")
-        metric = analysis.get("metric", "mean")
-        global_pop_mode = analysis.get("population_mode", "intersection")
+        # Hardcoded constants
+        method = "marginal"
+        metric = "mean"
+        global_pop_mode = config.get("population_mode", "intersection")
 
-        components = []
-        for comp in analysis.get("components", []):
-            key = comp.get("scenario")
-            rid = scenarios.get(key)
-            if not rid:
-                raise ValueError(f"Component scenario '{key}' not found in scenarios.")
+        if global_pop_mode != "intersection":
+            raise ValueError(
+                "Global population_mode must be 'intersection' for marginal decomposition. "
+                f"Got '{global_pop_mode}'."
+            )
 
-            # Copy component config and inject resolved run_id
-            c = comp.copy()
-            c["run_id"] = rid
-            components.append(c)
-
-        # Merge analysis config for metadata (run_description, etc.)
-        config.update(analysis)
+        components = config.get("components", [])
+        for comp in components:
+            if "run_id" not in comp:
+                raise ValueError(f"Component '{comp.get('name', 'unnamed')}' requires a 'run_id'.")
+            if "name" not in comp:
+                raise ValueError("Component requires a 'name'.")
 
         # 3. Fetch Metadata from Actual Run for RunRecord
         meta_row = con.execute(
@@ -147,12 +132,10 @@ def decompose_runs(context, duckdb: DuckDBResource) -> None:
 
         # 5. Calculate Effects
         batch_id = context.run_id
-
         def calculate_impact(run_a, run_b, mode):
             # mode: intersection, baseline_population, scenario_population
-            # metric: mean, sum (from outer scope)
-
-            agg_func = "SUM" if metric == "sum" else "AVG"
+            
+            agg_func = "AVG"
 
             cte_sql = """
                 WITH A AS (SELECT member_id, risk_score FROM main_runs.risk_scores
@@ -195,7 +178,6 @@ def decompose_runs(context, duckdb: DuckDBResource) -> None:
         definitions = []
         scenarios = []
 
-        previous_run_id = run_id_baseline
         sum_effects = 0.0
 
         for i, comp in enumerate(components):

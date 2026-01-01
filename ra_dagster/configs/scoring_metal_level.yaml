@@ -1,0 +1,17 @@
+ops:
+  score_members_aca:
+    config:
+      # Scenario: Benefit Design Impact (Metal Level)
+      # Using a member view where all members are simulated as Silver plan
+      claims_view: main_raw.raw_claims_2024
+      enrollments_view: main_raw.raw_enrollments_2024
+      members_view: main_raw.members_simulated_silver
+      invalid_gender: skip
+      diy_model_year: "2024"
+      member_age_basis_year: "2024"
+      run_description: "Metal Level Sim (All Silver)"
+
+resources:
+  duckdb:
+    config:
+      path: /home/garth/garage/prism/risk_adjustment.duckdb

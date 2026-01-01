@@ -1,0 +1,17 @@
+ops:
+  score_members_aca:
+    config:
+      # Scenario: Truncation / Audit Risk
+      # Using a claims view filtered to high-confidence providers only
+      claims_view: main_raw.high_confidence_claims
+      enrollments_view: main_raw.raw_enrollments_2024
+      members_view: main_raw.raw_members_2024
+      invalid_gender: skip
+      diy_model_year: "2024"
+      member_age_basis_year: "2024"
+      run_description: "Audit Risk (High Confidence Claims Only)"
+
+resources:
+  duckdb:
+    config:
+      path: /home/garth/garage/prism/risk_adjustment.duckdb
