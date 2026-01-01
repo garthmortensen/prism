@@ -8,8 +8,8 @@ ops:
         actual_2025:   "2db22e4a-a787-4132-bea8-3e5f4226066d"
 
       analysis:
-        method: sequential
-        run_description: "2024 vs 2025 Waterfall Analysis"
+        method: marginal
+        run_description: "2024 vs 2025 Marginal Analysis"
         metric: mean
         population_mode: intersection
         baseline: baseline_2024

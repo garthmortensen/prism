@@ -179,12 +179,12 @@ erDiagram
 While the ERD shows structure, here is how the data actually looks for a decomposition analysis.
 
 ### 1. Decomposition Definitions (`main_analytics.decomposition_definitions`)
-Defines the "Waterfall" steps for a specific analysis batch.
+Defines the steps for a specific analysis batch.
 
 | Field | Definition | Example Value |
 |-------|------------|---------------|
 | `batch_id` | Unique System ID (UUID) for the analysis run | `"a1b2-c3d4-..."` |
-| `step_index` | Order of this driver in the waterfall chart | `1` |
+| `step_index` | Order of this driver | `1` |
 | `driver_name` | Human-readable label for the effect | `"Population Mix"` |
 | `description` | Context for analysts | `"Impact of new members vs termed members"` |
 
@@ -353,8 +353,8 @@ ops:
         actual_2025:   "2db22e4a-a787-4132-bea8-3e5f4226066d"
 
       analysis:
-        method: sequential
-        run_description: "2024 vs 2025 Waterfall Analysis"
+        method: marginal
+        run_description: "2024 vs 2025 Marginal Analysis"
         metric: mean
         population_mode: intersection
         baseline: baseline_2024
@@ -379,7 +379,7 @@ dagster job launch decomposition_job \
 
 **What happens:**
 1. Reads scores from baseline, actual, and all component runs
-2. Computes effects based on `method` (sequential/waterfall or marginal)
+2. Computes effects based on `method` (marginal)
 3. Writes decomposition to `main_analytics.decomposition_scenarios` and `main_analytics.decomposition_definitions`
 4. Records decomposition run in `run_registry`
 
@@ -421,24 +421,7 @@ dagster job launch decomposition_job \
 
 ## Decomposition Methodologies
 
-### 1. Sequential (Waterfall)
-Ideal for explaining year-over-year changes where updates happen in a logical order (e.g., Model Update → Data Update).
-
-```mermaid
-graph LR
-    B[Baseline] -->|Step 1| C1[Component 1]
-    C1 -->|Step 2| C2[Component 2]
-    C2 -->|Residual| A[Actual]
-    
-    style B fill:#f9f,stroke:#333,stroke-width:2px
-    style A fill:#9f9,stroke:#333,stroke-width:2px
-```
-
-*   **Step 1:** `Component 1 - Baseline`
-*   **Step 2:** `Component 2 - Component 1`
-*   **Interaction:** `Actual - Component 2`
-
-### 2. Marginal (Star)
+### Marginal (Star)
 Ideal for sensitivity analysis where you want to isolate the independent effect of multiple factors against the same baseline.
 
 ```mermaid
@@ -454,25 +437,6 @@ graph TD
 *   **Effect 1:** `Component 1 - Baseline`
 *   **Effect 2:** `Component 2 - Baseline`
 *   **Interaction:** `Total Change - (Effect 1 + Effect 2)`
-
-### Choosing a Methodology: The "Ruler vs. Object" Analogy
-
-The "logical order" in a Waterfall (Sequential) approach is a **narrative device**. It is used to force the math to add up perfectly (Total Change = A + B + C) without a confusing "Interaction" term.
-
-**Why put Model Changes first?**
-Think of the Risk Model (Coefficients) as a **Ruler** and your Data (Population/Dx) as the **Object** being measured.
-
-1.  **Step 1: Change the Ruler (Model Impact).**
-    *   *Question:* "If our population (Object) hadn't changed at all, how much would our score change just because CMS changed the weights (Ruler)?"
-    *   *Why first?* This isolates the **regulatory impact**. It tells Finance: "Even if we do nothing, revenue drops 2% because of the new model."
-
-2.  **Step 2: Change the Object (Operational Impact).**
-    *   *Question:* "Now that we are using the new Ruler, how much did our score change because we added new members or found new diagnoses?"
-    *   *Why second?* This isolates **operational performance**. It measures your data changes *in the context of the new reality* (the new model).
-
-**Summary:**
-*   **Marginal (Star):** Scientifically purer. Calculates Model Impact and Data Impact independently. Leaves a leftover "Interaction" bucket.
-*   **Sequential (Waterfall):** Narrative-focused. Forces an order (e.g., External Factors → Internal Factors) so bars sum up perfectly to the Total Change. Executives often prefer this "Bridge" view.
 
 ## Population Modes
 

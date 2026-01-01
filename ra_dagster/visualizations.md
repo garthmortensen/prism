@@ -18,35 +18,7 @@ Derived:
 - **Total Δ (sum of impacts)** = `13.3860` (rounded)
 - **Total Δ (actual − baseline)** should match (or flag data quality)
 
-## 1) Sequential waterfall (cumulative path)
-
-Use this when your decomposition method is **sequential** (a real stepwise path).
-
-```mermaid
-flowchart LR
-  B["Baseline - reference"]
-  M["After Model Change (delta = -0.6564)"]
-  P["After Population Mix (delta = 14.0347)"]
-  A["Final - Actual (delta = 13.3860)"]
-
-  B -- "Model Change: -0.6564" --> M
-  M -- "Population Mix: +14.6911" --> P
-  P -- "Residual/Interaction: -0.6487" --> A
-```
-
-Notes:
-- This is a decomposition of the *change* between runs (Δ), not absolute risk scores.
-- For `method: marginal`, do not use a cumulative path; use the “Marginal contribution” visual below.
-
-### Bridge table (pairs well with the waterfall)
-
-| Step (driver_name) | Impact | Cumulative |
-|---|---:|---:|
-| Model Change | -0.6564 | -0.6564 |
-| Population Mix | +14.6911 | +14.0347 |
-| Interaction (residual) | -0.6487 | +13.3860 |
-
-## 2) Marginal contribution (signed impacts + residual)
+## 1) Marginal contribution (signed impacts + residual)
 
 Use this for **marginal** decompositions (no implied ordering).
 
@@ -176,26 +148,7 @@ SELECT
   END AS n_compared;
 ```
 
-```sql
--- Resolve the last component run_id (step before Interaction) for sequential decompositions.
--- Note: run_id is stored on decomposition_scenarios but step_index is stored on definitions,
--- so this join uses driver_name; keep driver_name stable.
-WITH defs AS (
-  SELECT step_index, driver_name
-  FROM main_analytics.decomposition_definitions
-  WHERE batch_id = '92c6a354-b9af-494f-a97c-d6ee4b3b17c9'
-)
-SELECT s.run_id AS last_component_run_id
-FROM defs d
-JOIN main_analytics.decomposition_scenarios s
-  ON s.batch_id = '92c6a354-b9af-494f-a97c-d6ee4b3b17c9'
- AND s.driver_name = d.driver_name
-WHERE d.driver_name <> 'Interaction'
-ORDER BY d.step_index DESC
-LIMIT 1;
-```
-
-```sql
+sql
 -- K3: % members changed between last component and actual (intersection)
 -- (Uses epsilon to avoid float noise counting as a change.)
 WITH A AS (

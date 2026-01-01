@@ -186,7 +186,6 @@ flowchart LR
 - Total change (mean) is `Delta = s_bar_actual - s_bar_baseline` under the chosen population mode.
 - Decomposition is additive:
 
-  - Sequential: `Delta = impact_1 + impact_2 + ... + residual`.
   - Marginal: each impact is measured vs baseline and the residual makes it sum to `Delta`.
 
 ```mermaid

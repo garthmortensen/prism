@@ -27,17 +27,14 @@ def decompose_runs(context, duckdb: DuckDBResource) -> None:
     Decomposes the difference between a baseline run and an actual run into
     specific component effects defined by intermediate runs.
 
-    Supports two methodologies:
+    Supports one methodology:
     1. "marginal" (default): Calculates each component's effect independently against the baseline.
        Interaction is the residual difference.
-    2. "sequential": Calculates effects as a stepwise path (waterfall) from baseline to actual.
-       Component N is compared to Component N-1. Interaction is the residual from the last
-       component to actual.
 
     Config:
         run_id_baseline: str
         run_id_actual: str
-        method: str = "marginal" | "sequential"
+        method: str = "marginal" (default: "marginal")
         metric: str = "mean" | "sum" (default: "mean")
         population_mode: str = "intersection" | "baseline_population" | "scenario_population"
             (default: "intersection")
@@ -205,12 +202,8 @@ def decompose_runs(context, duckdb: DuckDBResource) -> None:
             rid = comp["run_id"]
             pop_mode = comp.get("population_mode", global_pop_mode)
 
-            if method == "sequential":
-                effect = calculate_impact(previous_run_id, rid, pop_mode)
-                previous_run_id = rid
-            else:
-                # marginal
-                effect = calculate_impact(run_id_baseline, rid, pop_mode)
+            # marginal
+            effect = calculate_impact(run_id_baseline, rid, pop_mode)
 
             sum_effects += effect
 
@@ -225,24 +218,17 @@ def decompose_runs(context, duckdb: DuckDBResource) -> None:
             scenarios.append((batch_id, comp["name"], effect, str(rid)))
 
         # Interaction (Residual)
-        if method == "sequential":
-            # In sequential, residual is the gap between the last step and the actual run
-            interaction_effect = calculate_impact(previous_run_id, run_id_actual, global_pop_mode)
-        else:
-            # In marginal, residual is total change minus sum of partial effects
-            interaction_effect = total_change - sum_effects
+        # In marginal, residual is total change minus sum of partial effects
+        interaction_effect = total_change - sum_effects
 
         definitions.append(
             (
                 batch_id,
                 len(components) + 1,
                 "Interaction",
-                "Combined interaction effect of all factors"
-                if method == "marginal"
-                else "Residual difference to actual",
+                "Combined interaction effect of all factors",
             )
         )
-
         scenarios.append(
             (
                 batch_id,

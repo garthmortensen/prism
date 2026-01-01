@@ -71,7 +71,7 @@ decomposition_job = define_asset_job(
 
     **Steps:**
     1. Reads scenario run scores from `main_runs.risk_scores`
-    2. Applies the configured decomposition method (e.g., sequential)
+    2. Applies the configured decomposition method (marginal)
     3. Writes results to `main_analytics.decomposition_definitions` + `main_analytics.decomposition_scenarios`
     """,
     tags={"team": "analytics", "priority": "high"},
