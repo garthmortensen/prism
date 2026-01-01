@@ -1,0 +1,13 @@
+ops:
+  compare_runs:
+    config:
+      run_id_a: "RUN_ID_BASELINE_2024"
+      run_id_b: "RUN_ID_ENHANCED_CLAIMS"
+      run_description: "Coding Intensity Impact Analysis"
+      metric: "mean"
+      population_mode: "intersection"
+
+resources:
+  duckdb:
+    config:
+      path: /home/garth/garage/prism/risk_adjustment.duckdb

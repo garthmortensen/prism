@@ -58,3 +58,58 @@ Analyze the impact of regulatory model changes (e.g., V24 to V28).
 *   **The Comparison:** Run the *exact same 2024 data* through `diy_model_year: "2023"` (V24) and `diy_model_year: "2024"` (V28).
 *   **The Insight:** "The transition to V28 is causing a 4% drop in scores specifically due to the removal of HCC 47 (Diabetes w/o complications). We need a clinical program to address specificity."
 *   **Config Change:** `diy_model_year`
+
+## 6. Monte Carlo RADV Simulation
+Quantify uncertainty by simulating the probability of claim rejection during an audit (RADV).
+
+*   **The Setup:**
+    1.  Create a "Stacked" view (`claims_monte_carlo_radv`) that replicates the population $N$ times (e.g., 50 simulations).
+    2.  Assign a confidence score to each claim type (e.g., Inpatient=0.98, Telehealth=0.60).
+    3.  In each simulation, randomly drop claims based on their confidence score.
+    4.  Create matching stacked views for members and enrollments to ensure join keys match (`member_id + '_sim_' + sim_id`).
+
+    **Example SQL for Claims View:**
+    ```sql
+    with raw_claims as (
+        select *,
+            -- Assign confidence based on claim type (simplified logic)
+            case 
+                when claim_type = 'inpatient' then 0.98
+                when claim_type = 'professional' then 0.85
+                else 0.70 
+            end as audit_confidence
+        from {{ ref('raw_claims') }}
+    ),
+    simulations as (
+        -- Generate 50 simulation IDs
+        select unnest(generate_series(1, 50)) as sim_id
+    )
+    select 
+        -- Create unique member IDs for each simulation so the scorer treats them as distinct
+        c.member_id || '_sim_' || s.sim_id as member_id,
+        c.claim_id,
+        c.diagnosis_code,
+        c.claim_type,
+        c.clean_claim_out,
+        s.sim_id
+    from raw_claims c
+    cross join simulations s
+    -- The Monte Carlo Step: Keep claim if random roll is less than confidence
+    where random() < c.audit_confidence
+    ```
+
+    **Example SQL for Members View:**
+    ```sql
+    select 
+        m.member_id || '_sim_' || s.sim_id as member_id,
+        m.gender,
+        m.dob,
+        s.sim_id
+    from {{ ref('raw_members') }} m
+    cross join (select unnest(generate_series(1, 50)) as sim_id) s
+    ```
+
+*   **The Execution:** Run a single scoring job on this "exploded" population.
+*   **The Analysis:** Group the results by `sim_id` to generate a distribution of RAF scores (Mean, P5, P95).
+*   **The Insight:** "Our raw score is 1.25, but after accounting for audit risk, our P95 floor is 1.18."
+*   **Config Change:** `claims_view`, `members_view`, `enrollments_view`
