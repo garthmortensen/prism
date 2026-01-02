@@ -5,6 +5,7 @@ description = "Risk adjustment analytics lab for decomposing the risk spectrum"
 requires-python = ">=3.11"
 readme = "README.md"
 dependencies = [
+    "altair>=6.0.0",
     "dagster",
     "dagster-dbt",
     "dagster-webserver",
