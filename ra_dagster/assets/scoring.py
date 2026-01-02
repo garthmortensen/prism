@@ -135,6 +135,11 @@ def _resolve_relation(con: duckdb.DuckDBPyConnection, relation: str) -> str:
     if len(parts) == 2:
         schema, table = parts
 
+        # Common fallback: dbt may materialize `main_raw` as `main_main_raw`.
+        alt = f"main_{schema}.{table}"
+        if _relation_exists(con, alt):
+            return alt
+
         # Common fallback: prefix schema with "main_".
         if not schema.startswith("main_"):
             alt = f"main_{schema}.{table}"

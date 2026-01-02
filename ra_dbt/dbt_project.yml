@@ -28,7 +28,7 @@ models:
 
     raw_views:
       materialized: view
-      schema: main_raw
+      schema: raw
 
     staging:
       materialized: view

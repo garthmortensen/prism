@@ -115,7 +115,7 @@ test-cov:
 # =============================================================================
 
 dagster:
-	export DAGSTER_HOME=$$(pwd)/.dagster_home && (uv run dg dev -m ra_dagster.definitions || uv run dagster dev -m ra_dagster.definitions)
+	export DAGSTER_HOME=$$(pwd)/.dagster_home && uv run dagster dev -m ra_dagster.definitions
 
 db-bootstrap:
 	uv run python -m ra_dagster.cli db-bootstrap

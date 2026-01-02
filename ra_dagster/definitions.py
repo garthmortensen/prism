@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import yaml
 from dagster import Definitions, define_asset_job
 
@@ -6,16 +8,16 @@ from ra_dagster.assets.decomposition import decompose_runs
 from ra_dagster.assets.scoring import score_members_aca
 from ra_dagster.resources.duckdb_resource import DuckDBResource
 
-# Load default decomposition config
-with open("ra_dagster/configs/decomposition_example.yaml") as f:
+CONFIGS_DIR = Path(__file__).resolve().parent / "configs"
+
+# Load default configs (used as job defaults when launching from the UI/CLI)
+with open(CONFIGS_DIR / "decomposition" / "decomposition_example.yaml", encoding="utf-8") as f:
     default_decomp_config = yaml.safe_load(f)
 
-# Load default comparison config
-with open("ra_dagster/configs/comparison_example.yaml") as f:
+with open(CONFIGS_DIR / "comparison" / "comparison_example.yaml", encoding="utf-8") as f:
     default_comp_config = yaml.safe_load(f)
 
-# Load default scoring config
-with open("ra_dagster/configs/scoring_example.yaml") as f:
+with open(CONFIGS_DIR / "scoring" / "scoring_example.yaml", encoding="utf-8") as f:
     default_scoring_config = yaml.safe_load(f)
 
 scoring_job = define_asset_job(

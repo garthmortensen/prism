@@ -114,3 +114,7 @@ inspect_tables.py
 *.manifest
 *.spec
 .dagster_home/
+dagster_home/
+
+# Dagster
+dagster_home/

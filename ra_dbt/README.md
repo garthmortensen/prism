@@ -62,10 +62,10 @@ Note: DuckDB tooling may show `main_` prefixes because `main` is the default dat
 - `raw`: dbt seeds (e.g., `raw_claims`)
 - `staging`: dbt staging views (e.g., `stg_claims_dx`)
 - `intermediate`: dbt intermediate views (including `int_aca_risk_input`)
-- `main_raw`: special schema for `models/raw_views/*` (configured in `ra_dbt/dbt_project.yml`)
+- `main_raw`: year-filtered and scenario views from `models/raw_views/*`
 - `main_runs` / `main_analytics`: created and written by Dagster (run artifacts + downstream analytics)
 
-Depending on your DuckDB client, you may see these as `raw`/`staging`/`intermediate` or as `main_raw`/`main_staging`/`main_intermediate`. For `raw_views`, dbt is configured to use `main_raw`, and DuckDB+dbt can sometimes display this as `main_main_raw`.
+Depending on your DuckDB client, you may see these as `raw`/`staging`/`intermediate` or as `main_raw`/`main_staging`/`main_intermediate`.
 
 ## Data dictionary (Dagster tables)
 
