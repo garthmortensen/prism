@@ -1,8 +1,8 @@
 ops:
   compare_runs:
     config:
-      run_id_a: "RUN_ID_BASELINE_2024"
-      run_id_b: "RUN_ID_ENHANCED_CLAIMS"
+      run_id_a: "5b7e3047-0779-4281-a1d5-fe18b5c54d2a"
+      run_id_b: "fa10d412-90aa-4da5-82d7-052e55876ed7"
       run_description: "Coding Intensity Impact Analysis"
       metric: "mean"
       population_mode: "intersection"

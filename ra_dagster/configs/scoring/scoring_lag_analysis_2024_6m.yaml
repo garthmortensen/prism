@@ -1,0 +1,15 @@
+ops:
+  score_members_aca:
+    config:
+      claims_view: main_raw.claims_2024_6months
+      enrollments_view: main_raw.raw_enrollments_2024
+      members_view: main_raw.raw_members_2024
+      invalid_gender: skip
+      diy_model_year: "2024"
+      member_age_basis_year: "2024"
+      run_description: "Lag Analysis 2024 (6-month runout)"
+
+resources:
+  duckdb:
+    config:
+      path: /home/garth/garage/prism/risk_adjustment.duckdb

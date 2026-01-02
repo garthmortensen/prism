@@ -1,8 +1,8 @@
 ops:
   compare_runs:
     config:
-      run_id_a: "RUN_ID_V24_2023"
-      run_id_b: "RUN_ID_BASELINE_2024"
+      run_id_a: "9f776552-0171-4fc1-ada3-a2d8e39976a5"
+      run_id_b: "5b7e3047-0779-4281-a1d5-fe18b5c54d2a"
       run_description: "Regulatory Cliff Analysis (V24 -> V28)"
       metric: "mean"
       population_mode: "intersection"

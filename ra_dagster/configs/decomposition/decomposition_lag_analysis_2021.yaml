@@ -4,11 +4,11 @@ ops:
       # 1. The Bookends
       # Baseline: Start of year (or very early runout, e.g. 3 months)
       # Actual: Full year runout (Final)
-      baseline_run_id: "RUN_ID_3_MONTHS" 
-      actual_run_id:   "RUN_ID_FINAL" 
+      baseline_run_id: "17616a87-2a89-4373-81fe-ceb3f23923d3" 
+      actual_run_id:   "f18737b8-1103-4c75-9448-13b34f1da4b1" 
       
       # 2. Analysis Settings
-      run_description: "2024 Lag/Runout Decomposition (3mo -> Final)"
+      run_description: "2021 Lag/Runout Decomposition (3mo -> Final)"
       population_mode: intersection # Compare same members as claims mature
 
       # 3. The Drivers (Sequential accumulation of runout)
@@ -16,16 +16,13 @@ ops:
         # Driver A: Impact of Q2 Runout (Moving from 3mo -> 6mo)
         # Logic: Compare 3mo vs 6mo
         - name: "Q2 Runout (Apr-Jun)"
-          run_id: "2cc0144c-448e-4b00-a65b-bf446add2e6e"
+          run_id: "a5df0ad4-3d32-410d-9b98-016f8d33786d"
           population_mode: intersection
 
         # Driver B: Impact of Q3 Runout (Moving from 6mo -> 9mo)
-        # Logic: Compare 3mo vs 9mo (Marginal method calculates each against baseline)
-        # Note: In marginal mode, this shows the CUMULATIVE impact of 9mo vs 3mo.
-        # If you want strictly incremental (6->9), you'd need a sequential method, 
-        # but marginal is fine for showing "Contribution of 9mo state".
+        # Logic: Compare 6mo vs 9mo
         - name: "Q3 Runout (Jul-Sep)"
-          run_id: "RUN_ID_9_MONTHS"
+          run_id: "205ce808-3c93-4807-b9bf-81580a922ab9"
           population_mode: intersection
 
 resources:

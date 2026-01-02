@@ -1,0 +1,15 @@
+ops:
+  score_members_aca:
+    config:
+      claims_view: main_raw.raw_claims_2025
+      enrollments_view: main_raw.raw_enrollments_2025
+      members_view: main_raw.raw_members_2025
+      invalid_gender: skip
+      diy_model_year: "2025"
+      member_age_basis_year: "2025"
+      run_description: "ACA scoring run 2025"
+
+resources:
+  duckdb:
+    config:
+      path: /home/garth/garage/prism/risk_adjustment.duckdb

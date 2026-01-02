@@ -25,18 +25,21 @@ python ra_dagster/automated_execution/launch_analyses.py comparison
 python ra_dagster/automated_execution/launch_analyses.py all
 ```
 
-### Prerequisites (DuckDB + dbt)
+### Finding results
 
-The scoring configs reference dbt-created views like `main_raw.raw_claims_2024` (DuckDB/dbt may display these as `main_main_raw.*`). Make sure seeds + models are built before launching runs:
+Past hour results via:
 
-```bash
-# One-time: create schemas (if needed)
-make db-bootstrap
-
-# Load seed tables and build views/models
-cd ra_dbt
-uv run dbt seed
-uv run dbt run
+```sql
+SELECT 
+    run_id, 
+    run_description, 
+    status, 
+    created_at, 
+    trigger_source
+FROM main_runs.run_registry
+WHERE created_at > now() - INTERVAL 30 MINUTE
+  AND analysis_type = 'scoring'
+ORDER BY created_at DESC;
 ```
 
 ### Viewing Runs In The Dagster UI
@@ -67,3 +70,4 @@ The script expects the following configuration structure:
 - `ra_dagster/configs/scoring/` -> `scoring_job`
 - `ra_dagster/configs/decomposition/` -> `decomposition_job`
 - `ra_dagster/configs/comparison/` -> `comparison_job`
+
