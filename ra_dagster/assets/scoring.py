@@ -1,8 +1,8 @@
+import json
+import re
 from enum import Enum
 from pathlib import Path
 from typing import Any
-import json
-import re
 
 import duckdb
 import polars as pl
@@ -199,9 +199,7 @@ def _maybe_build_member_input_view(
 
     # Create temp aliases matching dbt seed names so the downstream SQL is identical.
     con.execute(f"CREATE OR REPLACE TEMP VIEW raw_claims AS SELECT * FROM {claims_view}")
-    con.execute(
-        f"CREATE OR REPLACE TEMP VIEW raw_enrollments AS SELECT * FROM {enrollments_view}"
-    )
+    con.execute(f"CREATE OR REPLACE TEMP VIEW raw_enrollments AS SELECT * FROM {enrollments_view}")
     con.execute(f"CREATE OR REPLACE TEMP VIEW raw_members AS SELECT * FROM {members_view}")
 
     # Mirror dbt models (staging -> intermediate -> int_aca_risk_input), but as TEMP views.
@@ -267,7 +265,9 @@ def _maybe_build_member_input_view(
         )
         SELECT
             member_id,
-            LEAST(12, GREATEST(1, DATE_DIFF('month', start_date, end_date) + 1)) AS enrollment_months,
+            LEAST(
+                12, GREATEST(1, DATE_DIFF('month', start_date, end_date) + 1)
+            ) AS enrollment_months,
             gender,
             metal_level,
             date_of_birth
@@ -348,9 +348,7 @@ def score_members_aca(
     )
     member_age_basis_year = config.member_age_basis_year or config.prediction_year
     benefit_year = (
-        int(member_age_basis_year)
-        if member_age_basis_year is not None
-        else int(diy_model_year)
+        int(member_age_basis_year) if member_age_basis_year is not None else int(diy_model_year)
     )
 
     resolved_claims_view = (

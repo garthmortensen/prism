@@ -77,10 +77,7 @@ def _recreate_risk_scores_with_details_components_last(con: duckdb.DuckDBPyConne
         )
 
         cols_sql = ", ".join(ordered_cols)
-        con.execute(
-            f"INSERT INTO {tmp} ({cols_sql}) "
-            f"SELECT {cols_sql} FROM main_runs.risk_scores"
-        )
+        con.execute(f"INSERT INTO {tmp} ({cols_sql}) SELECT {cols_sql} FROM main_runs.risk_scores")
 
         con.execute("DROP TABLE main_runs.risk_scores")
         con.execute("ALTER TABLE main_runs.risk_scores__tmp_reorder RENAME TO risk_scores")

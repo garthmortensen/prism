@@ -4,15 +4,15 @@ import yaml
 from dagster import Definitions, define_asset_job
 
 from ra_dagster.assets.comparison import compare_runs
+from ra_dagster.assets.dashboard import dashboard_html, dashboard_metrics
 from ra_dagster.assets.decomposition import decompose_runs
 from ra_dagster.assets.scoring import score_members_aca
 from ra_dagster.assets.visualizations import (
-    scoring_visualizations,
     comparison_visualizations,
     decomposition_visualizations,
     lag_trend_visualizations,
+    scoring_visualizations,
 )
-from ra_dagster.assets.dashboard import dashboard_metrics, dashboard_html
 from ra_dagster.resources.duckdb_resource import DuckDBResource
 
 CONFIGS_DIR = Path(__file__).resolve().parent / "configs"
@@ -84,7 +84,8 @@ decomposition_job = define_asset_job(
     **Steps:**
     1. Reads scenario run scores from `main_runs.risk_scores`
     2. Applies the configured decomposition method (marginal)
-    3. Writes results to `main_analytics.decomposition_definitions` + `main_analytics.decomposition_scenarios`
+    3. Writes results to `main_analytics.decomposition_definitions`
+       + `main_analytics.decomposition_scenarios`
     """,
     tags={"team": "analytics", "priority": "high"},
     metadata={
