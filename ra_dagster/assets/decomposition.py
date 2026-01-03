@@ -43,7 +43,7 @@ def decompose_runs(context, duckdb: DuckDBResource) -> None:
             population_mode: str (optional override)
     """
 
-    config = context.op_config or {}
+    config = context.op_execution_context.op_config or {}
     con = duckdb.get_connection().connect()
 
     try:

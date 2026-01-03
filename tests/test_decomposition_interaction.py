@@ -48,23 +48,13 @@ def test_decomposition_writes_interaction_row(tmp_path: Path) -> None:
         con.close()
 
     cfg = {
-        "scenarios": {
-            "baseline": "BASE",
-            "actual": "ACTUAL",
-            "model": "MODEL",
-            "pop": "POP",
-        },
-        "analysis": {
-            "baseline": "baseline",
-            "actual": "actual",
-            "method": "marginal",
-            "metric": "mean",
-            "population_mode": "intersection",
-            "components": [
-                {"name": "Model Change", "scenario": "model"},
-                {"name": "Population Mix", "scenario": "pop"},
-            ],
-        },
+        "baseline_run_id": "BASE",
+        "actual_run_id": "ACTUAL",
+        "population_mode": "intersection",
+        "components": [
+            {"name": "Model Change", "run_id": "MODEL"},
+            {"name": "Population Mix", "run_id": "POP"},
+        ],
     }
 
     ctx = build_asset_context(asset_config=cfg)
