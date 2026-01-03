@@ -1,4 +1,6 @@
-# Prism Risk Adjustment Analytics Platform
+***Estimated read time: 5 minutes***
+
+# Prism: Risk Adjustment Analytics Platform
 
 ```text
          ____   ____(_)_______   __ .................
@@ -9,280 +11,228 @@
                 -decompose the risk spectrum.........
 ```
 
-## Summary: Risk Scoring & Decomposition Workflow
+## Overview
 
-Member data in, decomposed risks out.
+**Prism is a proof-of-concept platform** that modernizes Risk Adjustment operations by replacing opaque "black box" legacy tools with a transparent, code-first architecture. It treats Risk Adjustment as a software engineering problem, ensuring usability, accuracy, auditability, and rapid scenario planning.
 
-- **1. Calculate member risk scores**  
-  Prepare `int_aca_risk_input` (dbt) → Score members (Python) → Persist to `main_runs.risk_scores`
+### Problem & Solution
 
-- **2. Register runs**  
-  Each execution is registered in `main_runs.run_registry` with provenance + config snapshot
+Traditional risk adjustment tools are often opaque, fragile, and slow, making it difficult to answer "why did risk scores (revenue) change?".
 
-- **3. Compare runs**  
-  Compare two scoring runs (A vs B) → write deltas to `main_analytics.run_comparison`
+Prism solves this with:
+*   **"Glass box" transparency**: All logic is defined in **Python** + **SQL**, and entirely **Git** version-controlled.
+*   **Reproducibility**: Every run is logged with a unique ID.
+*   **Advanced analytics**: Automatically diffs runs to pinpoint changes and decomposes them into drivers like "Population Mix" or "Model Changes".
+*   **3-Part stack**: Uses **Python**, **dbt** for SQL transformations, and **Dagster** for job orchestration.
 
-- **4. Decompose changes**  
-  Multi-scenario decomposition → write steps to `main_analytics.decomposition_definitions` and values to `main_analytics.decomposition_scenarios`
+<details>
+<summary><strong>Deep Dive: Core Components & Developer Interface</strong></summary>
 
-## Executive Summary
+### 1. data build tool (`ra_dbt/`)
+Handles all SQL transformations within the warehouse. It cleans raw claims data and prepares the standardized inputs (`int_aca_risk_input`) for risk scoring calculators.
 
-| Goal | Solution |
-|------|----------|
-| **Easy to run** | config-driven operation + single execution command |
-| **Easy to understand** | Clear 3-layer architecture with documented data flow |
-| **Easy to compare** | Built-in run comparison and decomposition analytics |
-| **Easy to extend** | Add new model versions via CSV seeds, not code changes |
-| **Easy to audit** | Every output traceable via `run_timestamp` lineage |
-
-### Features
-
-- **Full data provenance**: Track everything
-- **Immutability**: Don't overwrite data
-- **Idempotency**: Run once or many times, same result
-- **Cross-validation**: Ensure parity between different calculators
-- **Run comparison**: Compare outputs over time
-- **Change decomposition**: Attribute changes to factors, visualized with mermaid Sankey chart.
-- **Lightweight**: Configuration-driven
-
-#### Data Mart Schema Organization
-
-DuckDB tooling shows the `main_` prefix because `main` is the default database.
-This project documents *logical* layer names and treats `main_` prefixing as an implementation detail.
-
-| Logical Layer | DuckDB Schema(s) you may see | Contents |
-| ------------- | ------------- | -------- |
-| `raw` | `raw` / `main_raw` | seeds + views over raw sources |
-| `staging` | `staging` / `main_staging` | cleaned/typed views |
-| `intermediate` | `intermediate` / `main_intermediate` | `int_aca_risk_input`, … |
-| `runs` | `main_runs` | `run_registry`, `risk_scores` (Dagster-managed) |
-| `analytics` | `main_analytics` | `run_comparison`, `decomposition_*` (Dagster-managed) |
-
-#### dbt materializations
-
-| Layer | Materialization | Why |
-| ----- | --------------- | --- |
-| `raw` | table (seeds) | Source of truth; rarely rebuilt. |
-| `staging` | view | Light transforms; always up-to-date. |
-| `intermediate` | view | Dagster reads from this; snapshot semantics are useful. |
-
-#### Runs schema 
-
-- `run_id`: Dagster run UUID (`context.run_id`) — the primary identifier used across tables
-- `run_timestamp`: sortable timestamp string generated at runtime (separate from Dagster run_id)
-- `group_id`: an integer allocated as `MAX(group_id)+1` (used to group related runs)
-- `launchpad_config` / `blueprint_yml`: config snapshots persisted for reproducibility
-- `git_*`: git provenance
-
-Implementation note: `main_runs.run_registry` is the source of truth for run metadata.
-Atomic run outputs live in `main_runs` (e.g., `main_runs.risk_scores`), and downstream derived tables live in `main_analytics` (e.g., `main_analytics.run_comparison`, `main_analytics.decomposition_definitions`, `main_analytics.decomposition_scenarios`).
-
-### Schema features built-in reproducibility
-
-```bash
-# Find runs and pull stored config/provenance
-# (Use the Dagster UI for re-running; the warehouse persists snapshots for audit.)
+```shell
+dbt build  # Runs all dbt models and executes data quality tests
 ```
 
-```sql
-SELECT
-  run_id,
-  run_timestamp,
-  analysis_type,
-  status,
-  git_commit_short,
-  launchpad_config,
-  blueprint_yml
-FROM main_runs.run_registry
-ORDER BY created_at DESC
-LIMIT 20;
+### 2. scoring calculators (`ra_calculators/`)
+Contains the demo python risk score calculators. This logic is isolated from the orchestration layer to ensure its unit-testable.
+### 3. job orchestration (`ra_dagster/`)
+**Role**: Dagster manages the dependency graph, triggers dbt jobs, executes the Python scoring logic, and runs the downstream comparison/decomposition analytics. It also maintains the databased `run_registry` for audit trails.
+
+```shell
+make dagster  # Launches the Dagster UI (localhost:3000) to visualize pipelines and trigger runs
 ```
 
-#### Key User Stories
+</details>
 
-1. Run decomposition analysis (2024 vs 2025)
-1. Configure via `decomp_config.yaml`
-1. Score sample populations with new coefficients before go-live
-1. Trace member scores back to dx codes
-1. Set up new calculator versions
-1. Add new risk models
-1. Debug/cross-validate discrepancies between calculators
-1. Average across runs (calculators, coefficients, etc)
+## System Architecture
 
-### Cross-Validation Threshold
-
-Only flag discrepancies above a tolerance threshold (e.g., >0.01). Don't apply rounding until sign-posts (e.g., final member scores) to avoid masking issues.
-
-## Project Structure
-
-This repository contains three main packages:
-
-- `ra_dagster`: orchestration + warehouse tables for scoring/comparison/decomposition
-- `ra_dbt`: dbt project for `int_aca_risk_input` and supporting models
-- `ra_calculators`: the Python ACA HHS-HCC calculator + utilities
-
-## Streamlined setup
-
-Using Makefile, we can reduce all setup operations to a handful of commands.
-
-**Usage:**
-
-```bash
-# Initial setup
-mkdir -p ~/workspace/risk_adjustment && cd ~/workspace/risk_adjustment
-# (copy Makefile to this directory)
-make setup
-
-# Daily workflow
-make dev      # Start Dagster
-make pull     # Update all repos
-make status   # Check git status across repos
-make test     # Run tests
-```
-
-#### Consequences
-
-- Clear ownership boundaries
-- Independent versioning (calculators pinned for audit)
-- More complex local setup
-- Cross-repo coordination for major features
-
-## Data Lineage & Reproducibility
-
-### Core Output Tables
-
-The three primary downstream tables from `main_runs.run_registry` have a dependency hierarchy:
-
-1. **RISK_SCORES** is the base output — must exist for anything else
-2. **RUN_COMPARISON** compares two RISK_SCORES runs (needs `comparison_run_timestamp` reference)
-3. **DECOMPOSITION** consumes four RISK_SCORES runs (baseline, coeff_only, pop_only, actual)
-
-| Table | Granularity | Purpose |
-|-------|-------------|----------|
-| `main_runs.risk_scores` | member × run_timestamp | Raw scoring output per run |
-| `main_analytics.run_comparison` | member × run_timestamp_pair | Delta between two runs (FULL OUTER JOIN — includes members in A only, B only, or both) |
-| `main_analytics.decomposition` | analysis_id | Aggregate 4-run attribution |
-
-### Run Comparison Membership Matching
-
-When comparing two runs, use a FULL OUTER JOIN to capture all membership scenarios:
-
-| `match_status` | In Run A | In Run B | Interpretation |
-|----------------|----------|----------|----------------|
-| `matched` | ✓ | ✓ | Continuing member — compare scores |
-| `a_only` | ✓ | ✗ | Member termed or aged out |
-| `b_only` | ✗ | ✓ | New member entered population |
-
-## Decomposition Workflow
-
-### The Four-Run Pattern
-
-To decompose year-over-year score changes, we run the model 4 times with different combinations of population data (P) and coefficients (C):
-
-| Run       | Population | Coefficients | Purpose                 |
-| --------- | ---------- | ------------ | ----------------------- |
-| S(P₀, C₀) | Year T-1   | Year T-1     | Baseline                |
-| S(P₀, C₁) | Year T-1   | Year T       | Coefficient-only impact |
-| S(P₁, C₀) | Year T     | Year T-1     | Population-only impact  |
-| S(P₁, C₁) | Year T     | Year T       | Actual new score        |
-
-### Decomposition Config Example
-
-```yaml
-# config/decomposition_2025.yaml
-
-prior_year: 2024
-current_year: 2025
-prior_data_effective: "20241231235959"  # Dec 31 snapshot
-current_data_effective: "20251231235959"
-calculator: hccpy
-model_version: hhs_v07
-
-# Optional: Drill-down dimensions
-aggregation_levels:
-  - total
-  - by_plan
-  - by_metal_level
-  - by_age_band
-
-# Optional: Additional decomposition layers
-detailed_analysis:
-  separate_churn: true  # New members vs. continuing
-  separate_rx_medical: true  # RXC vs HCC contribution
-```
-
-### Additional Analyses (Similar Shape)
-
-| Analysis | Granularity | Input | Output |
-|----------|-------------|-------|--------|
-| **CALCULATOR_COMPARISON** | member × run_timestamp | Two calculators, same data | Which members differ between hccpy vs SQL |
-| **MODEL_VERSION_COMPARISON** | member × run_timestamp | Same calculator, two model years | Impact of coefficient updates |
-| **SEGMENT_SUMMARY** | segment × run_timestamp | RISK_SCORES aggregated | Avg score by metal level, age band, plan |
-| **HCC_PREVALENCE** | hcc × run_timestamp | RISK_SCORES exploded | How common each HCC is per run |
-| **CHURN_ANALYSIS** | member × run_timestamp_pair | Two RISK_SCORES | New members, termed members, continuing |
-
-### Additional Analyses (Different Shape)
-
-| Analysis | Shape | Notes |
-|----------|-------|-------|
-| **ANOMALY_FLAGS** | member × run_timestamp | Binary flags for outliers (big delta, missing HCCs, etc.) |
-| **NARRATIVE_LOG** | run_timestamp × agent | LLM-generated text, metadata about prompts |
-| **AUDIT_TRAIL** | event log | Who ran what, when, config used |
-| **COEFFICIENT_DIFF** | hcc × model_year_pair | Not member-level — comparing model versions |
-
-### Data Model
+Prism transforms raw claims into actionable intelligence through three primary stages: Scoring, Comparison, and Decomposition.
 
 ```mermaid
-erDiagram
-    RUN_REGISTRY ||--o{ RISK_SCORES : "produces"
-    RUN_REGISTRY }o--o{ RUN_COMPARISON : "compares pair"
-    RUN_REGISTRY }o--o{ DECOMPOSITION : "combines 4 runs"
-    
-    RUN_REGISTRY {
-        int group_id PK
-        string run_timestamp PK
-        string calculator
-        string model_version
-        string benefit_year
-        string status
-        json config_json
-        string comparison_run_timestamp FK
-    }
-    
-    RISK_SCORES {
-        string member_id PK
-        string run_timestamp PK
-        string calculator
-        float risk_score
-        json hcc_list
-        json details
-    }
-    
-    RUN_COMPARISON {
-        string member_id PK
-        string run_timestamp_a PK
-        string run_timestamp_b PK
-        string match_status
-        float score_a
-        float score_b
-        float score_diff
-        json hcc_added
-        json hcc_removed
-    }
-    
-    DECOMPOSITION {
-        string analysis_id PK
-        string prior_period
-        string current_period
-        string prior_model_version
-        string current_model_version
-        string run_ts_baseline FK
-        string run_ts_coeff_only FK
-        string run_ts_pop_only FK
-        string run_ts_actual FK
-        float total_change
-        float pop_effect
-        float coeff_effect
-        float interaction
-    }
+flowchart LR
+  A[("source tables")]
+  S[["score_members_aca"]]
+  RS[("runs.risk_scores")]
+  C[["compare_runs"]]
+  RC[("analytics.run_comparison")]
+  D[["decompose_runs"]]
+  RD[("analytics.decomposition_scenarios")]
+  
+  VS[["scoring_visualizations"]]
+  VC[["comparison_visualizations"]]
+  VD[["decomposition_visualizations"]]
+  DASH[["dashboard_html"]]
+
+  A --> S --> RS
+  RS --> C --> RC
+  RS --> D --> RD
+  
+  RS --> VS
+  RS --> DASH
+  RC --> VC
+  RD --> VD
 ```
+
+### Core Workflows
+
+1.  **Single Risk Score Run**: The foundation. Uses config-driven logic to produce member-level scores traceable back to source claims.
+    *   *Input*: YAML configuration defining data sources and model years.
+    *   *Output*: Detailed SQL tables with risk scores and component breakdowns.
+
+    <details>
+    <summary><strong>View Configuration & Output Example</strong></summary>
+
+    ### Setup
+
+    ```yaml
+    ops:
+      score_members_aca:
+        config:
+          claims_view: main_raw.claims_2025_9months
+          enrollments_view: main_raw.raw_enrollments_2025
+          members_view: main_raw.raw_members_2025
+          invalid_gender: coerce
+          diy_model_year: "2024"
+          member_age_basis_year: "2025"
+          run_description: "Lag Analysis using 2024 DIY coefficients and 2025 data (w/9-month runout)"
+    ```
+
+    ### Output
+
+    ```sql
+    select 
+        run_id               -- acedd1d5-3fcc-4613-ae55-51a96d0f8627
+      , member_id            -- MBR2024000109
+      , risk_score           -- 12.508
+      , hcc_score            -- 4.024
+      , rxc_score            -- 8.116
+      , demographic_score    -- 0.368
+      , model                -- Adult
+      , gender               -- F
+      , metal_level          -- gold
+      , enrollment_months    -- 5
+      , model_year           -- 2024
+      , benefit_year         -- 2,024
+      , calculator           -- aca_risk_score_calculator
+      , model_version        -- hhs_2024
+      , run_timestamp        -- 202601021150552495
+      , created_at           -- 2026-01-02 11:50:56.070
+      , hcc_list             -- ["209"]
+      , rxc_list             -- ["2"]
+      , details              -- {..."hcc_cnt":1,"edf_variable":"HCC_ED5","edf_factor":1.339,"hcc_coefficients":...}
+      , components           -- [...{"component_type":"demographic","component_code":"FAGE_LAST_45_49"...}
+    from risk_adjustment.main_runs.risk_scores
+    where run_id = 'acedd1d5-3fcc-4613-ae55-51a96d0f8627'
+    and member_id = 'MBR2024000109';
+    ```
+    </details>
+
+2.  **Two Score Comparison Run**: Automatically calculates deltas between any two runs (e.g., "Production vs. Simulation") to analyze impact.
+
+    <details>
+    <summary><strong>View Comparison Charts</strong></summary>
+
+    ```mermaid
+    flowchart LR
+      A[("runs.risk_scores (run A)")]
+      J[["compare_runs"]]
+      B[("runs.risk_scores (run B)")]
+      O[("analytics.run_comparison")]
+      VIS[["comparison_visualizations"]]
+    
+      A --> J
+      B --> J
+      J --> O
+      O --> VIS
+    ```
+
+    ```mermaid
+    xychart-beta
+      title "Member-level Δ risk score distribution (A→B)"
+      x-axis ["<-5","-5..-2","-2..-1","-1..0","0..1","1..2","2..5",">5"]
+      y-axis "Members" 0 --> 16000
+      bar [1582, 1127, 1323, 6942, 14568, 4821, 2565, 350]
+    ```
+
+    </details>
+    
+3.  **N-Score Decomposition Run**: Decomposes total score changes into specific drivers (e.g., Model Change, Population Mix) for complex scenarios.
+
+    <details>
+    <summary><strong>View Decomposition Charts</strong></summary>
+
+    ```mermaid
+    flowchart LR
+      R1[("run 1")]
+      R2[("run 2")]
+      R3[("run 3")]
+      R4[("run 4")]
+      D[["decompose_runs"]]
+      O[("analytics.decomposition_scenarios")]
+      VIS[["decomposition_visualizations"]]
+    
+      R1 --> D
+      R2 --> D
+      R3 --> D
+      R4 --> D
+      D --> O
+      O --> VIS
+    ```
+
+    ```mermaid
+    xychart-beta
+      title "Marginal contributions (impacts sum to total)"
+      x-axis ["Model Change", "Population Mix", "Interaction", "Total"]
+      y-axis "Impact" -1 --> 16
+      bar [-0.6564, 14.6911, -0.6487, 13.3860]
+    ```
+    </details>
+
+## Sample Analyses
+
+Prism enables rapid execution of complex scenarios by simply adjusting configurations:
+
+<details>
+<summary><strong>Expand for Analysis Details & Examples</strong></summary>
+
+### Population Health Dashboard
+A risk score run specific view of the population's demographics, disease burden, and risk profile.
+
+![dashboard](./images/dashboard.png)
+
+*   **Configuration:** [dashboard_2024.yaml](configs/dashboard/dashboard_2024.yaml)
+*   **Output 2024**: [Population Dashboard (2024)](output/visualizations/dashboard_40a61c8f-4908-4092-bdbc-4d4a9f419029.html)
+*   **Output 2025**: [Population Dashboard (2025)](output/visualizations/dashboard_3b7622a0-92ac-4130-8286-19df10e37c47.html)
+
+### Runout (Incurred But Not Reported) Analysis
+Risk scores mature over time as claims lag settles. This analysis quantifies the value of "completeness" by scoring claims at different points throughout the year (3, 6, 9 months).
+
+![lag](./images/lag.png)
+
+*   **Configuration:** [scoring_lag_analysis_2024_6m.yaml](configs/scoring/scoring_lag_analysis_2024_6m.yaml)
+*   **Output 2021-2025**: [Year-over-Year Lag Trends (2021-2025)](output/visualizations/lag_trend_analysis.html)
+*   **Output 3 month**: [Decomposition Drivers (2025, 3mo -> Final)](output/visualizations/decomposition_drivers_f3a7abe0-09e6-4281-b915-8efc4aaa9d17.html)
+
+### Filter Analysis (Audit Risk)
+Assess the impact of "outliers" or data quality issues by simulating the removal of diagnoses from high-risk provider types or claim categories.
+
+Analysis steps:
+1. create custom SQL view: https://github.com/garthmortensen/prism/blob/main/ra_dbt/models/raw_views/high_confidence_claims.sql
+2. source the SQL view in the config: https://github.com/garthmortensen/prism/blob/main/ra_dagster/configs/scoring/scoring_audit_risk.yaml
+
+### Benefit Design Impact (The "Metal Level" Effect)
+ACA risk adjustment models behave differently depending on the metal level (Platinum, Gold, Silver, Bronze) due to coefficients. Assign the entire population to a single metal level (e.g., all Bronze).
+
+Analysis steps:
+1. create custom SQL views: https://github.com/garthmortensen/prism/blob/main/ra_dbt/models/raw_views/members_simulated_silver.sql
+2. source the SQL view in the config: https://github.com/garthmortensen/prism/blob/main/ra_dagster/configs/scoring/scoring_metal_level.yaml
+
+### Model Version Cross-Walking (The "Regulatory Cliff")
+Simulate the impact of regulatory changes by scoring the current population against future model versions (e.g., V24 vs. V28).
+
+Analysis steps:
+1. source the SQL view in the config: https://github.com/garthmortensen/prism/blob/main/ra_dagster/configs/scoring/scoring_regulatory_cliff.yaml
+
+</details>
