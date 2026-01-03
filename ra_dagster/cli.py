@@ -19,7 +19,7 @@ def db_bootstrap(
     duckdb_path: str = typer.Option(DEFAULT_DUCKDB_PATH, "--duckdb-path"),
 ) -> None:
     """Create core Prism schemas + tables in DuckDB.
-    
+
     Creates: `main_intermediate`, `main_runs`, `main_analytics`.
     """
 
