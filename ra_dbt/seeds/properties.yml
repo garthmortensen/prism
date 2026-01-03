@@ -2,6 +2,7 @@ version: 2
 
 seeds:
   - name: raw_plans
+    description: Reference table of insurance plans offered.
     config:
       column_types:
         monthly_premium: numeric(10,2)
@@ -9,11 +10,23 @@ seeds:
         oop_max: integer
     columns:
       - name: plan_id
+        description: Unique identifier for the plan
         tests:
           - not_null
           - unique
+      - name: plan_name
+        description: Name of the insurance plan
+      - name: metal_level
+        description: Metal tier of the plan (Bronze, Silver, Gold, Platinum)
+      - name: monthly_premium
+        description: Monthly premium cost
+      - name: deductible
+        description: Annual deductible amount
+      - name: oop_max
+        description: Out-of-pocket maximum amount
 
   - name: raw_providers
+    description: Reference table of healthcare providers.
     config:
       column_types:
         zip: text
@@ -21,11 +34,19 @@ seeds:
         npi: text
     columns:
       - name: provider_id
+        description: Unique identifier for the provider
         tests:
           - not_null
           - unique
+      - name: provider_name
+        description: Name of the provider or facility
+      - name: npi
+        description: National Provider Identifier
+      - name: specialty
+        description: Provider specialty
 
   - name: raw_members
+    description: Source table containing member demographic information.
     config:
       column_types:
         dob: date
@@ -38,11 +59,19 @@ seeds:
         year: integer
     columns:
       - name: member_id
+        description: Unique identifier for the member
         tests:
           - not_null
           - unique
+      - name: dob
+        description: Date of birth
+      - name: gender
+        description: Gender (M/F)
+      - name: zip
+        description: Zip code of residence
 
   - name: raw_enrollments
+    description: Source table containing member enrollment periods.
     config:
       column_types:
         start_date: date
@@ -50,11 +79,21 @@ seeds:
         premium_paid: numeric(10,2)
     columns:
       - name: enrollment_id
+        description: Unique identifier for the enrollment record
         tests:
           - not_null
           - unique
+      - name: member_id
+        description: Unique identifier for the member
+      - name: start_date
+        description: Coverage start date
+      - name: end_date
+        description: Coverage end date
+      - name: plan_id
+        description: Identifier for the insurance plan
 
   - name: raw_claims
+    description: Source table containing medical and pharmacy claims.
     config:
       column_types:
         claim_id: text
@@ -102,8 +141,27 @@ seeds:
         ccsr_description: text
     columns:
       - name: claim_id
+        description: Unique identifier for the claim
         tests:
           - not_null
           - unique
+      - name: member_id
+        description: Unique identifier for the member
+      - name: provider_id
+        description: Unique identifier for the provider
+      - name: service_date
+        description: Date of service
+      - name: paid_amount
+        description: Amount paid by the payer
+      - name: diagnosis_code
+        description: Primary diagnosis code (ICD-10)
+      - name: claim_type
+        description: Type of claim (e.g., PROFESSIONAL, INSTITUTIONAL, RX)
+      - name: drug
+        description: NDC code for pharmacy claims
+      - name: ms_drg
+        description: MS-DRG code for inpatient claims
+      - name: cpt
+        description: CPT/HCPCS procedure code
 
 

@@ -48,9 +48,72 @@ models:
           - not_null
       
       - name: coefficient_value
-        description: Coefficient value applied for this component
+        description: The risk score value contributed by this component
         tests:
           - not_null
+
+  - name: int_member_months
+    description: Calculated enrollment duration in months for each member. Capped at 12 months.
+    columns:
+      - name: member_id
+        description: Unique identifier for the member
+        tests:
+          - unique
+          - not_null
+      - name: enrollment_months
+        description: Number of months the member was enrolled (1-12)
+      - name: gender
+        description: Member's gender
+      - name: metal_level
+        description: Insurance plan metal level
+      - name: date_of_birth
+        description: Member's date of birth
+
+  - name: int_member_diagnoses
+    description: Aggregated list of unique diagnosis codes per member.
+    columns:
+      - name: member_id
+        description: Unique identifier for the member
+        tests:
+          - unique
+          - not_null
+      - name: diagnosis_list
+        description: Array of unique ICD-10 diagnosis codes for the member
+
+  - name: int_member_rx
+    description: Aggregated list of unique NDC codes per member.
+    columns:
+      - name: member_id
+        description: Unique identifier for the member
+        tests:
+          - unique
+          - not_null
+      - name: ndc_list
+        description: Array of unique NDC codes for the member
+
+  - name: int_aca_risk_input
+    description: |
+      Consolidated input table for ACA risk scoring. 
+      Joins member demographics, enrollment duration, diagnosis lists, and NDC lists into a single wide table.
+      This is the primary input for the risk scoring calculator.
+    columns:
+      - name: member_id
+        description: Unique identifier for the member
+        tests:
+          - unique
+          - not_null
+      - name: enrollment_months
+        description: Number of months the member was enrolled
+      - name: gender
+        description: Member's gender
+      - name: metal_level
+        description: Insurance plan metal level
+      - name: date_of_birth
+        description: Member's date of birth
+      - name: diagnoses
+        description: List of diagnosis codes
+      - name: ndc_codes
+        description: List of NDC codes
       
       - name: source_diagnoses_or_ndcs
         description: |

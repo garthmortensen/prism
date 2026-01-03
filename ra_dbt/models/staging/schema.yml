@@ -2,38 +2,54 @@ version: 2
 
 models:
   - name: stg_enrollment
-    description: Staged enrollment data joined with member demographics
+    description: Staged enrollment data joined with member demographics. Contains one record per enrollment period per member.
     columns:
       - name: member_id
+        description: Unique identifier for the member
         tests:
           - unique
           - not_null
       - name: date_of_birth
+        description: Member's date of birth
       - name: gender
+        description: Member's gender (M/F)
       - name: metal_level
+        description: Insurance plan metal level (e.g., bronze, silver, gold, platinum)
       - name: start_date
+        description: Start date of the enrollment coverage period
       - name: end_date
+        description: End date of the enrollment coverage period
 
   - name: stg_claims_dx
-    description: Staged diagnosis claims (medical only)
+    description: Staged diagnosis claims (medical only). Filters out pharmacy claims and null diagnoses.
     columns:
       - name: claim_id
+        description: Unique identifier for the medical claim
         tests:
           - unique
           - not_null
       - name: member_id
+        description: Unique identifier for the member
         tests:
           - not_null
+      - name: service_date
+        description: Date when the medical service was provided
       - name: diagnosis_code
+        description: ICD-10 diagnosis code (dots removed)
 
   - name: stg_claims_rx
-    description: Staged pharmacy claims
+    description: Staged pharmacy claims. Filters for only pharmacy claims.
     columns:
       - name: claim_id
+        description: Unique identifier for the pharmacy claim
         tests:
           - unique
           - not_null
       - name: member_id
+        description: Unique identifier for the member
         tests:
           - not_null
+      - name: fill_date
+        description: Date when the prescription was filled
       - name: ndc_code
+        description: National Drug Code (NDC) for the dispensed medication

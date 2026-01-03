@@ -1,0 +1,220 @@
+version: 2
+
+models:
+  - name: raw_claims_2024
+    description: Raw claims data filtered for service year 2024.
+    columns:
+      - name: claim_id
+        description: Unique identifier for the claim
+        tests:
+          - unique
+          - not_null
+      - name: member_id
+        description: Unique identifier for the member
+      - name: service_date
+        description: Date of service
+      - name: paid_date
+        description: Date the claim was paid
+      - name: paid_amount
+        description: Amount paid for the claim
+      - name: diagnosis_code
+        description: Primary diagnosis code
+      - name: claim_type
+        description: Type of claim (e.g., PROFESSIONAL, INSTITUTIONAL, RX)
+
+  - name: raw_enrollments_2024
+    description: Raw enrollment data filtered for year 2024.
+    columns:
+      - name: enrollment_id
+        description: Unique identifier for the enrollment record
+        tests:
+          - unique
+          - not_null
+      - name: member_id
+        description: Unique identifier for the member
+      - name: start_date
+        description: Coverage start date
+      - name: end_date
+        description: Coverage end date
+      - name: plan_id
+        description: Identifier for the insurance plan
+
+  - name: raw_members_2024
+    description: Raw member demographic data for year 2024.
+    columns:
+      - name: member_id
+        description: Unique identifier for the member
+        tests:
+          - unique
+          - not_null
+      - name: dob
+        description: Date of birth
+      - name: gender
+        description: Gender
+      - name: plan_metal
+        description: Metal level of the plan (Bronze, Silver, Gold, Platinum)
+
+  - name: claims_2024_6months
+    description: Claims data for the first 6 months of 2024 (through June 30th). Used for mid-year analysis.
+    columns:
+      - name: claim_id
+        description: Unique identifier for the claim
+      - name: member_id
+        description: Unique identifier for the member
+      - name: service_date
+        description: Date of service
+
+  - name: high_confidence_claims
+    description: Claims that have been verified or have a high probability of being accurate.
+    columns:
+      - name: claim_id
+        description: Unique identifier for the claim
+      - name: confidence_score
+        description: Score indicating the confidence level of the claim accuracy
+
+  - name: members_simulated_bronze
+    description: Simulated member population with Bronze level plans for modeling purposes.
+    columns:
+      - name: member_id
+        description: Simulated member ID
+      - name: risk_score
+        description: Projected risk score
+
+  - name: members_simulated_silver
+    description: Simulated member population with Silver level plans for modeling purposes.
+    columns:
+      - name: member_id
+        description: Simulated member ID
+      - name: risk_score
+        description: Projected risk score
+
+  - name: raw_claims_2021
+    description: Raw claims data filtered for service year 2021.
+    columns:
+      - name: claim_id
+        description: Unique identifier for the claim
+      - name: member_id
+        description: Unique identifier for the member
+
+  - name: raw_claims_2022
+    description: Raw claims data filtered for service year 2022.
+    columns:
+      - name: claim_id
+        description: Unique identifier for the claim
+      - name: member_id
+        description: Unique identifier for the member
+
+  - name: raw_claims_2023
+    description: Raw claims data filtered for service year 2023.
+    columns:
+      - name: claim_id
+        description: Unique identifier for the claim
+      - name: member_id
+        description: Unique identifier for the member
+
+  - name: raw_claims_2025
+    description: Raw claims data filtered for service year 2025.
+    columns:
+      - name: claim_id
+        description: Unique identifier for the claim
+      - name: member_id
+        description: Unique identifier for the member
+
+  - name: raw_enrollments_2021
+    description: Raw enrollment data filtered for year 2021.
+    columns:
+      - name: enrollment_id
+        description: Unique identifier for the enrollment record
+      - name: member_id
+        description: Unique identifier for the member
+
+  - name: raw_enrollments_2022
+    description: Raw enrollment data filtered for year 2022.
+    columns:
+      - name: enrollment_id
+        description: Unique identifier for the enrollment record
+      - name: member_id
+        description: Unique identifier for the member
+
+  - name: raw_enrollments_2023
+    description: Raw enrollment data filtered for year 2023.
+    columns:
+      - name: enrollment_id
+        description: Unique identifier for the enrollment record
+      - name: member_id
+        description: Unique identifier for the member
+
+  - name: raw_enrollments_2025
+    description: Raw enrollment data filtered for year 2025.
+    columns:
+      - name: enrollment_id
+        description: Unique identifier for the enrollment record
+      - name: member_id
+        description: Unique identifier for the member
+
+  - name: raw_members_2021
+    description: Raw member demographic data for year 2021.
+    columns:
+      - name: member_id
+        description: Unique identifier for the member
+
+  - name: raw_members_2022
+    description: Raw member demographic data for year 2022.
+    columns:
+      - name: member_id
+        description: Unique identifier for the member
+
+  - name: raw_members_2023
+    description: Raw member demographic data for year 2023.
+    columns:
+      - name: member_id
+        description: Unique identifier for the member
+
+  - name: raw_members_2025
+    description: Raw member demographic data for year 2025.
+    columns:
+      - name: member_id
+        description: Unique identifier for the member
+
+  - name: claims_2021_3months
+    description: Claims data for the first 3 months of 2021.
+  - name: claims_2021_6months
+    description: Claims data for the first 6 months of 2021.
+  - name: claims_2021_9months
+    description: Claims data for the first 9 months of 2021.
+
+  - name: claims_2022_3months
+    description: Claims data for the first 3 months of 2022.
+  - name: claims_2022_6months
+    description: Claims data for the first 6 months of 2022.
+  - name: claims_2022_9months
+    description: Claims data for the first 9 months of 2022.
+
+  - name: claims_2023_3months
+    description: Claims data for the first 3 months of 2023.
+  - name: claims_2023_6months
+    description: Claims data for the first 6 months of 2023.
+  - name: claims_2023_9months
+    description: Claims data for the first 9 months of 2023.
+
+  - name: claims_2024_3months
+    description: Claims data for the first 3 months of 2024.
+  - name: claims_2024_9months
+    description: Claims data for the first 9 months of 2024.
+
+  - name: claims_2025_3months
+    description: Claims data for the first 3 months of 2025.
+  - name: claims_2025_6months
+    description: Claims data for the first 6 months of 2025.
+  - name: claims_2025_9months
+    description: Claims data for the first 9 months of 2025.
+
+  - name: claims_monte_carlo_radv
+    description: Claims data used for Monte Carlo RADV simulations.
+  - name: members_monte_carlo_radv
+    description: Member data used for Monte Carlo RADV simulations.
+  - name: enrollments_monte_carlo_radv
+    description: Enrollment data used for Monte Carlo RADV simulations.
+
+  - name: raw_claims_2024_enhanced
+    description: Enhanced raw claims data for 2024 with additional processing or fields.
