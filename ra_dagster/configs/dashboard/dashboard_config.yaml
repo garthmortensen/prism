@@ -1,0 +1,10 @@
+ops:
+  dashboard_metrics:
+    config:
+      run_id: "27ae1037-6601-46ca-96b7-fc5efd62cb36"
+      run_description: "Lag Analysis 2022 (9-month runout)"
+
+resources:
+  duckdb:
+    config:
+      path: /home/garth/garage/prism/risk_adjustment.duckdb

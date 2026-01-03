@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    #vis.vega-embed {
+      width: 100%;
+      display: flex;
+    }
+
+    #vis.vega-embed details,
+    #vis.vega-embed details summary {
+      position: relative;
+    }
+  </style>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vega@6"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vega-lite@6.1.0"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vega-embed@7"></script>
+</head>
+<body>
+  <div id="vis"></div>
+  <script>
+    (function(vegaEmbed) {
+      var spec = {"config": {"view": {"continuousWidth": 300, "continuousHeight": 300}}, "data": {"name": "data-47d5b67768873e9c3669a4298de1c812"}, "mark": {"type": "line", "point": true}, "encoding": {"color": {"field": "year", "title": "Year", "type": "nominal"}, "tooltip": [{"field": "year", "type": "nominal"}, {"field": "lag_month", "type": "quantitative"}, {"field": "avg_risk_score", "type": "quantitative"}, {"field": "run_description", "type": "nominal"}], "x": {"field": "lag_month", "title": "Lag (Months)", "type": "quantitative"}, "y": {"field": "avg_risk_score", "scale": {"zero": false}, "title": "Average Risk Score", "type": "quantitative"}}, "title": "Year-over-Year Risk Score Maturation (Lag Analysis)", "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json", "datasets": {"data-47d5b67768873e9c3669a4298de1c812": [{"year": "(6-month", "lag_month": 6, "avg_risk_score": 4.885701128722398, "run_description": "Lag Analysis (6-month runout)"}, {"year": "(6-month", "lag_month": 6, "avg_risk_score": 4.885701128722411, "run_description": "Lag Analysis (6-month runout)"}, {"year": "2022", "lag_month": 3, "avg_risk_score": 0.9102699988042485, "run_description": "Lag Analysis 2022 (3-month runout)"}, {"year": "2022", "lag_month": 6, "avg_risk_score": 4.639985531507817, "run_description": "Lag Analysis 2022 (6-month runout)"}, {"year": "2022", "lag_month": 9, "avg_risk_score": 8.696030132727463, "run_description": "Lag Analysis 2022 (9-month runout)"}, {"year": "2023", "lag_month": 3, "avg_risk_score": 0.9843876789796818, "run_description": "Lag Analysis 2023 (3-month runout)"}, {"year": "2023", "lag_month": 6, "avg_risk_score": 4.914398748646295, "run_description": "Lag Analysis 2023 (6-month runout)"}, {"year": "2023", "lag_month": 9, "avg_risk_score": 8.913348213211407, "run_description": "Lag Analysis 2023 (9-month runout)"}, {"year": "2024", "lag_month": 3, "avg_risk_score": 0.9708266090297851, "run_description": "Lag Analysis 2024 (3-month runout)"}, {"year": "2024", "lag_month": 6, "avg_risk_score": 4.885701128722401, "run_description": "Lag Analysis 2024 (6-month runout)"}, {"year": "2024", "lag_month": 9, "avg_risk_score": 8.947915746077543, "run_description": "Lag Analysis 2024 (9-month runout)"}, {"year": "2025", "lag_month": 3, "avg_risk_score": 0.9477982116964937, "run_description": "Lag Analysis 2025 (3-month runout)"}, {"year": "2025", "lag_month": 6, "avg_risk_score": 4.7755733446108986, "run_description": "Lag Analysis 2025 (6-month runout)"}, {"year": "2025", "lag_month": 9, "avg_risk_score": 8.58073417109716, "run_description": "Lag Analysis 2025 (9-month runout)"}, {"year": "(3-month", "lag_month": 3, "avg_risk_score": 0.9708266090297875, "run_description": "Lag Analysis (3-month runout)"}, {"year": "(6-month", "lag_month": 6, "avg_risk_score": 4.885701128722416, "run_description": "Lag Analysis (6-month runout)"}, {"year": "(9-month", "lag_month": 9, "avg_risk_score": 8.947915746077518, "run_description": "Lag Analysis (9-month runout)"}, {"year": "2022", "lag_month": 3, "avg_risk_score": 0.9102699988042489, "run_description": "Lag Analysis 2022 (3-month runout)"}, {"year": "2022", "lag_month": 6, "avg_risk_score": 4.6399855315078185, "run_description": "Lag Analysis 2022 (6-month runout)"}, {"year": "2022", "lag_month": 9, "avg_risk_score": 8.696030132727476, "run_description": "Lag Analysis 2022 (9-month runout)"}, {"year": "2023", "lag_month": 3, "avg_risk_score": 0.9843876789796818, "run_description": "Lag Analysis 2023 (3-month runout)"}, {"year": "2023", "lag_month": 6, "avg_risk_score": 4.91439874864628, "run_description": "Lag Analysis 2023 (6-month runout)"}, {"year": "2023", "lag_month": 9, "avg_risk_score": 8.91334821321141, "run_description": "Lag Analysis 2023 (9-month runout)"}, {"year": "2024", "lag_month": 3, "avg_risk_score": 0.9708266090297855, "run_description": "Lag Analysis 2024 (3-month runout)"}, {"year": "2024", "lag_month": 9, "avg_risk_score": 8.947915746077545, "run_description": "Lag Analysis 2024 (9-month runout)"}, {"year": "2025", "lag_month": 3, "avg_risk_score": 0.9477982116964903, "run_description": "Lag Analysis 2025 (3-month runout)"}, {"year": "2025", "lag_month": 6, "avg_risk_score": 4.775573344610923, "run_description": "Lag Analysis 2025 (6-month runout)"}, {"year": "2025", "lag_month": 9, "avg_risk_score": 8.580734171097113, "run_description": "Lag Analysis 2025 (9-month runout)"}, {"year": "(3-month", "lag_month": 3, "avg_risk_score": 0.9708266090297848, "run_description": "Lag Analysis (3-month runout)"}, {"year": "(6-month", "lag_month": 6, "avg_risk_score": 4.885701128722391, "run_description": "Lag Analysis (6-month runout)"}, {"year": "(9-month", "lag_month": 9, "avg_risk_score": 8.947915746077493, "run_description": "Lag Analysis (9-month runout)"}, {"year": "2022", "lag_month": 3, "avg_risk_score": 0.910269998804248, "run_description": "Lag Analysis 2022 (3-month runout)"}, {"year": "2022", "lag_month": 6, "avg_risk_score": 4.639985531507838, "run_description": "Lag Analysis 2022 (6-month runout)"}, {"year": "2022", "lag_month": 9, "avg_risk_score": 8.696030132727492, "run_description": "Lag Analysis 2022 (9-month runout)"}]}};
+      var embedOpt = {"mode": "vega-lite"};
+
+      function showError(el, error){
+          el.innerHTML = ('<div style="color:red;">'
+                          + '<p>JavaScript Error: ' + error.message + '</p>'
+                          + "<p>This usually means there's a typo in your chart specification. "
+                          + "See the javascript console for the full traceback.</p>"
+                          + '</div>');
+          throw error;
+      }
+      const el = document.getElementById('vis');
+      vegaEmbed("#vis", spec, embedOpt)
+        .catch(error => showError(el, error));
+    })(vegaEmbed);
+
+  </script>
+</body>
+</html>

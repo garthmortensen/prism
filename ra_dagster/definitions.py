@@ -6,6 +6,13 @@ from dagster import Definitions, define_asset_job
 from ra_dagster.assets.comparison import compare_runs
 from ra_dagster.assets.decomposition import decompose_runs
 from ra_dagster.assets.scoring import score_members_aca
+from ra_dagster.assets.visualizations import (
+    scoring_visualizations,
+    comparison_visualizations,
+    decomposition_visualizations,
+    lag_trend_visualizations,
+)
+from ra_dagster.assets.dashboard import dashboard_metrics, dashboard_html
 from ra_dagster.resources.duckdb_resource import DuckDBResource
 
 CONFIGS_DIR = Path(__file__).resolve().parent / "configs"
@@ -20,9 +27,12 @@ with open(CONFIGS_DIR / "comparison" / "comparison_example.yaml", encoding="utf-
 with open(CONFIGS_DIR / "scoring" / "scoring_example.yaml", encoding="utf-8") as f:
     default_scoring_config = yaml.safe_load(f)
 
+with open(CONFIGS_DIR / "dashboard" / "dashboard_config.yaml", encoding="utf-8") as f:
+    default_dashboard_config = yaml.safe_load(f)
+
 scoring_job = define_asset_job(
     name="scoring_job",
-    selection=["score_members_aca"],
+    selection=["score_members_aca", "scoring_visualizations"],
     description="""
     # ACA Risk Scoring Job
 
@@ -43,7 +53,7 @@ scoring_job = define_asset_job(
 
 comparison_job = define_asset_job(
     name="comparison_job",
-    selection=["compare_runs"],
+    selection=["compare_runs", "comparison_visualizations"],
     description="""
     # Run Comparison Job
 
@@ -64,7 +74,7 @@ comparison_job = define_asset_job(
 
 decomposition_job = define_asset_job(
     name="decomposition_job",
-    selection=["decompose_runs"],
+    selection=["decompose_runs", "decomposition_visualizations"],
     description="""
     # Risk Decomposition Job
 
@@ -84,11 +94,43 @@ decomposition_job = define_asset_job(
     config=default_decomp_config,
 )
 
+dashboard_job = define_asset_job(
+    name="dashboard_job",
+    selection=["dashboard_metrics", "dashboard_html"],
+    description="""
+    # Population Dashboard Job
+
+    Calculates population metrics (demographics, risk scores) for a specific run
+    and generates an HTML dashboard.
+
+    **Steps:**
+    1. Reads risk scores and member data for `run_id`
+    2. Computes aggregate metrics (Age, Gender, Metal Level)
+    3. Generates an HTML report
+    """,
+    tags={"team": "analytics", "priority": "medium"},
+    metadata={
+        "owner": "Garth Mortensen",
+        "docs": "https://github.com/garthmortensen/prism/ra_dagster",
+    },
+    config=default_dashboard_config,
+)
+
 
 definitions = Definitions(
-    assets=[score_members_aca, compare_runs, decompose_runs],
+    assets=[
+        score_members_aca,
+        compare_runs,
+        decompose_runs,
+        scoring_visualizations,
+        comparison_visualizations,
+        decomposition_visualizations,
+        lag_trend_visualizations,
+        dashboard_metrics,
+        dashboard_html,
+    ],
     resources={
         "duckdb": DuckDBResource(),
     },
-    jobs=[scoring_job, comparison_job, decomposition_job],
+    jobs=[scoring_job, comparison_job, decomposition_job, dashboard_job],
 )

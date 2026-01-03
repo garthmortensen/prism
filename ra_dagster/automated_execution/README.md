@@ -2,6 +2,8 @@
 
 This directory contains scripts to automate the execution of Dagster jobs for Risk Adjustment analysis.
 
+Risk Adjustment has an annual cycle, which materializes itself as repetively executed jobs. As year-end approaches, certain executions/reports become increasingly important. With dagster, such jobs can be easily setup and scheduled. 
+
 ## `launch_analyses.py`
 
 This script launches Dagster runs for all YAML configuration files found in `ra_dagster/configs/`. It supports batch execution for scoring, decomposition, and comparison jobs.
@@ -61,13 +63,3 @@ uv run dagster dev -m ra_dagster.definitions
   - End with `.bak` or `.disabled`
   - Contain `example`, `ignore`, `skip`, or `xxx` in the filename
 - **Environment Setup**: Uses `DAGSTER_HOME` if set; otherwise defaults to `./.dagster_home` to match `make dagster`.
-- **Output**: Prints the Run ID for each successful launch.
-
-### Directory Structure
-
-The script expects the following configuration structure:
-
-- `ra_dagster/configs/scoring/` -> `scoring_job`
-- `ra_dagster/configs/decomposition/` -> `decomposition_job`
-- `ra_dagster/configs/comparison/` -> `comparison_job`
-

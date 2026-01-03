@@ -1,0 +1,338 @@
+
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Risk Adjustment Dashboard</title>
+        <style>
+            :root {
+                --bg-color: #f3f4f6;
+                --card-bg: #ffffff;
+                --text-primary: #111827;
+                --text-secondary: #6b7280;
+                --accent-blue: #3b82f6;
+                --border-color: #e5e7eb;
+            }
+            body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg-color); color: var(--text-primary); margin: 0; padding: 40px; }
+            .container { max-width: 1200px; margin: 0 auto; }
+            
+            /* Header */
+            .header { margin-bottom: 30px; border-bottom: 1px solid var(--border-color); padding-bottom: 20px; }
+            .header h1 { margin: 0; font-size: 2rem; color: var(--text-primary); }
+            .header .meta { color: var(--text-secondary); margin-top: 5px; font-size: 0.9rem; }
+            
+            /* KPI Grid */
+            .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 20px; margin-bottom: 40px; }
+            .kpi-card { background: var(--card-bg); padding: 20px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid var(--border-color); }
+            .kpi-label { font-size: 0.85rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
+            .kpi-value { font-size: 2rem; font-weight: 700; color: var(--text-primary); margin-top: 8px; }
+            .kpi-sub { font-size: 0.85rem; color: var(--text-secondary); margin-top: 4px; }
+            
+            /* Content Grid */
+            .content-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(500px, 1fr)); gap: 30px; }
+            .card { background: var(--card-bg); padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid var(--border-color); }
+            .card h2 { margin-top: 0; font-size: 1.25rem; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-bottom: 20px; color: var(--text-primary); }
+            
+            /* Tables */
+            table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+            th { text-align: left; padding: 12px; border-bottom: 2px solid var(--border-color); color: var(--text-secondary); font-weight: 600; }
+            td { padding: 12px; border-bottom: 1px solid var(--border-color); }
+            tr:last-child td { border-bottom: none; }
+            
+            /* Bar Charts */
+            .bar-container { margin-bottom: 12px; }
+            .bar-header { display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 4px; }
+            .bar-label { font-weight: 500; }
+            .bar-value { color: var(--text-secondary); }
+            .bar-bg { background-color: #f3f4f6; height: 8px; border-radius: 4px; overflow: hidden; }
+            .bar-fill { height: 100%; border-radius: 4px; }
+            
+            /* Badges */
+            .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; }
+            .badge-platinum { background-color: #e0e7ff; color: #4338ca; }
+            .badge-gold { background-color: #fef3c7; color: #b45309; }
+            .badge-silver { background-color: #f3f4f6; color: #4b5563; }
+            .badge-bronze { background-color: #fff7ed; color: #9a3412; }
+            
+            /* Score Breakdown */
+            .score-breakdown { display: flex; gap: 20px; align-items: center; margin-top: 20px; }
+            .score-part { flex: 1; text-align: center; padding: 15px; background: #f9fafb; border-radius: 8px; }
+            .score-part-val { font-size: 1.5rem; font-weight: bold; }
+            .score-part-lbl { font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>Population Health Dashboard</h1>
+                <div class="meta">Run ID: 40a61c8f-4908-4092-bdbc-4d4a9f419029 &bull; ACA scoring run 2024</div>
+            </div>
+            
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-label">Total Members</div>
+                    <div class="kpi-value">8,328</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Avg Risk Score</div>
+                    <div class="kpi-value">14.638</div>
+                    <div class="kpi-sub">Target: 1.000</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Avg Age</div>
+                    <div class="kpi-value">44.7</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Total HCCs</div>
+                    <div class="kpi-value">22,416</div>
+                    <div class="kpi-sub">2.69 per member</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Zero Score %</div>
+                    <div class="kpi-value">4.4%</div>
+                    <div class="kpi-sub">Potential Suspects</div>
+                </div>
+            </div>
+            
+            <div class="content-grid">
+                <div class="card">
+                    <h2>Risk Score Composition</h2>
+                    <div class="score-breakdown">
+                        <div class="score-part">
+                            <div class="score-part-val" style="color: #3b82f6;">0.244</div>
+                            <div class="score-part-lbl">Demographic</div>
+                        </div>
+                        <div class="score-part" style="font-size: 1.2rem; color: #9ca3af;">+</div>
+                        <div class="score-part">
+                            <div class="score-part-val" style="color: #ef4444;">13.470</div>
+                            <div class="score-part-lbl">HCC Disease Burden</div>
+                        </div>
+                        <div class="score-part" style="font-size: 1.2rem; color: #9ca3af;">=</div>
+                        <div class="score-part">
+                            <div class="score-part-val">14.638</div>
+                            <div class="score-part-lbl">Total Score</div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 30px;">
+                        <h3>Top 10 HCC Drivers</h3>
+                        
+        <div class="bar-container">
+            <div class="bar-header">
+                <span class="bar-label">G21 <span class="bar-sublabel"></span></span>
+                <span class="bar-value">421</span>
+            </div>
+            <div class="bar-bg">
+                <div class="bar-fill" style="width: 100.0%; background-color: #ef4444;"></div>
+            </div>
+        </div>
+        
+        <div class="bar-container">
+            <div class="bar-header">
+                <span class="bar-label">G15A <span class="bar-sublabel"></span></span>
+                <span class="bar-value">392</span>
+            </div>
+            <div class="bar-bg">
+                <div class="bar-fill" style="width: 93.11163895486936%; background-color: #ef4444;"></div>
+            </div>
+        </div>
+        
+        <div class="bar-container">
+            <div class="bar-header">
+                <span class="bar-label">G18A <span class="bar-sublabel"></span></span>
+                <span class="bar-value">360</span>
+            </div>
+            <div class="bar-bg">
+                <div class="bar-fill" style="width: 85.5106888361045%; background-color: #ef4444;"></div>
+            </div>
+        </div>
+        
+        <div class="bar-container">
+            <div class="bar-header">
+                <span class="bar-label">6 <span class="bar-sublabel"></span></span>
+                <span class="bar-value">353</span>
+            </div>
+            <div class="bar-bg">
+                <div class="bar-fill" style="width: 83.8479809976247%; background-color: #ef4444;"></div>
+            </div>
+        </div>
+        
+        <div class="bar-container">
+            <div class="bar-header">
+                <span class="bar-label">G16 <span class="bar-sublabel"></span></span>
+                <span class="bar-value">345</span>
+            </div>
+            <div class="bar-bg">
+                <div class="bar-fill" style="width: 81.94774346793349%; background-color: #ef4444;"></div>
+            </div>
+        </div>
+        
+        <div class="bar-container">
+            <div class="bar-header">
+                <span class="bar-label">G14 <span class="bar-sublabel"></span></span>
+                <span class="bar-value">345</span>
+            </div>
+            <div class="bar-bg">
+                <div class="bar-fill" style="width: 81.94774346793349%; background-color: #ef4444;"></div>
+            </div>
+        </div>
+        
+        <div class="bar-container">
+            <div class="bar-header">
+                <span class="bar-label">19 <span class="bar-sublabel"></span></span>
+                <span class="bar-value">344</span>
+            </div>
+            <div class="bar-bg">
+                <div class="bar-fill" style="width: 81.71021377672209%; background-color: #ef4444;"></div>
+            </div>
+        </div>
+        
+        <div class="bar-container">
+            <div class="bar-header">
+                <span class="bar-label">G12 <span class="bar-sublabel"></span></span>
+                <span class="bar-value">342</span>
+            </div>
+            <div class="bar-bg">
+                <div class="bar-fill" style="width: 81.23515439429929%; background-color: #ef4444;"></div>
+            </div>
+        </div>
+        
+        <div class="bar-container">
+            <div class="bar-header">
+                <span class="bar-label">G13 <span class="bar-sublabel"></span></span>
+                <span class="bar-value">334</span>
+            </div>
+            <div class="bar-bg">
+                <div class="bar-fill" style="width: 79.33491686460808%; background-color: #ef4444;"></div>
+            </div>
+        </div>
+        
+        <div class="bar-container">
+            <div class="bar-header">
+                <span class="bar-label">G10 <span class="bar-sublabel"></span></span>
+                <span class="bar-value">330</span>
+            </div>
+            <div class="bar-bg">
+                <div class="bar-fill" style="width: 78.38479809976246%; background-color: #ef4444;"></div>
+            </div>
+        </div>
+        
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h2>Population Mix</h2>
+                    <div style="margin-bottom: 30px;">
+                        <h3>Model Type</h3>
+                        
+        <div class="bar-container">
+            <div class="bar-header">
+                <span class="bar-label">Adult <span class="bar-sublabel"></span></span>
+                <span class="bar-value">6,402</span>
+            </div>
+            <div class="bar-bg">
+                <div class="bar-fill" style="width: 100.0%; background-color: #10b981;"></div>
+            </div>
+        </div>
+        
+        <div class="bar-container">
+            <div class="bar-header">
+                <span class="bar-label">Child <span class="bar-sublabel"></span></span>
+                <span class="bar-value">1,682</span>
+            </div>
+            <div class="bar-bg">
+                <div class="bar-fill" style="width: 26.27303967510153%; background-color: #10b981;"></div>
+            </div>
+        </div>
+        
+        <div class="bar-container">
+            <div class="bar-header">
+                <span class="bar-label">Infant <span class="bar-sublabel"></span></span>
+                <span class="bar-value">244</span>
+            </div>
+            <div class="bar-bg">
+                <div class="bar-fill" style="width: 3.811308965948141%; background-color: #10b981;"></div>
+            </div>
+        </div>
+        
+                    </div>
+                    
+                    <h3>Metal Level Performance</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Tier</th>
+                                <th>Members</th>
+                                <th>Share</th>
+                                <th>Avg Risk</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            
+        <tr>
+            <td><span class="badge badge-bronze">Bronze</span></td>
+            <td>2,121</td>
+            <td>25.5%</td>
+            <td>14.325</td>
+        </tr>
+        
+        <tr>
+            <td><span class="badge badge-platinum">Platinum</span></td>
+            <td>2,097</td>
+            <td>25.2%</td>
+            <td>15.176</td>
+        </tr>
+        
+        <tr>
+            <td><span class="badge badge-gold">Gold</span></td>
+            <td>2,077</td>
+            <td>24.9%</td>
+            <td>14.891</td>
+        </tr>
+        
+        <tr>
+            <td><span class="badge badge-silver">Silver</span></td>
+            <td>2,033</td>
+            <td>24.4%</td>
+            <td>14.151</td>
+        </tr>
+        
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="card">
+                    <h2>Demographics (Age/Sex)</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Age Band</th>
+                                <th>Male</th>
+                                <th>Female</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>0-18</td><td>890</td><td>871</td></tr><tr><td>19-34</td><td>743</td><td>693</td></tr><tr><td>35-44</td><td>468</td><td>446</td></tr><tr><td>45-54</td><td>463</td><td>455</td></tr><tr><td>55-64</td><td>472</td><td>484</td></tr><tr><td>65+</td><td>1,174</td><td>1,169</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="card">
+                    <h2>Risk Distribution</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Score Band</th>
+                                <th>Members</th>
+                                <th>Share</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>Healthy (<1.0)</td><td>1,275</td><td>15.3%</td></tr><tr><td>High (2-4)</td><td>671</td><td>8.1%</td></tr><tr><td>Moderate (1-2)</td><td>396</td><td>4.8%</td></tr><tr><td>Very High (>4)</td><td>5,986</td><td>71.9%</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </body>
+    </html>
+    

@@ -1,0 +1,10 @@
+ops:
+  dashboard_metrics:
+    config:
+      run_id: "40a61c8f-4908-4092-bdbc-4d4a9f419029"
+      run_description: "ACA scoring run 2024"
+
+resources:
+  duckdb:
+    config:
+      path: /home/garth/garage/prism/risk_adjustment.duckdb
