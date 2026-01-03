@@ -12,8 +12,8 @@ Benefits:
 """
 
 import json
-import re
 import os
+import re
 
 # Get current working directory (should be the dbt project root)
 PATH_DBT_PROJECT = os.getcwd()
@@ -23,11 +23,11 @@ PATH_DBT_PROJECT = os.getcwd()
 search_str = 'o=[i("manifest","manifest.json"+t),i("catalog","catalog.json"+t)]'
 
 # Read the generated HTML file from dbt docs generate
-with open(os.path.join(PATH_DBT_PROJECT, "target", "index.html"), "r") as f:
+with open(os.path.join(PATH_DBT_PROJECT, "target", "index.html")) as f:
     content_index = f.read()
 
 # Read the manifest JSON (contains all dbt project metadata)
-with open(os.path.join(PATH_DBT_PROJECT, "target", "manifest.json"), "r") as f:
+with open(os.path.join(PATH_DBT_PROJECT, "target", "manifest.json")) as f:
     json_manifest = json.loads(f.read())
 
 # Clean up internal dbt projects from the documentation
@@ -50,7 +50,7 @@ for element_type in ["nodes", "sources", "macros", "parent_map", "child_map"]:
 # Read the catalog JSON (contains column-level metadata, if available)
 catalog_path = os.path.join(PATH_DBT_PROJECT, "target", "catalog.json")
 if os.path.exists(catalog_path):
-    with open(catalog_path, "r") as f:
+    with open(catalog_path) as f:
         json_catalog = json.loads(f.read())
     print("Using existing catalog.json")
 else:
@@ -79,7 +79,8 @@ with open(os.path.join(PATH_DBT_PROJECT, "target", "index.html"), "w") as f:
 
     if search_str not in content_index:
         print(
-            f"WARNING: Search string '{search_str}' not found in index.html. Static embedding might have failed."
+            f"WARNING: Search string '{search_str}' not found in index.html. "
+            "Static embedding might have failed."
         )
         # Try alternative search string for newer dbt versions if needed
         # search_str_v2 = '...'
