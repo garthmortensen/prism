@@ -35,6 +35,8 @@ Handles all SQL transformations within the warehouse. It cleans raw claims data 
 dbt build  # Runs all dbt models and executes data quality tests
 ```
 
+Data dictoinary: https://garthmortensen.github.io/prism
+
 ### 2. scoring calculators (`ra_calculators/`)
 Contains the demo python risk score calculators. This logic is isolated from the orchestration layer to ensure its unit-testable.
 ### 3. job orchestration (`ra_dagster/`)
