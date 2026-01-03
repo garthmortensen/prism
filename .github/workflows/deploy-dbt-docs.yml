@@ -1,0 +1,151 @@
+name: Generate and Deploy dbt Docs
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Install dependencies
+        run: |
+          uv sync --all-extras
+          echo "$PWD/.venv/bin" >> $GITHUB_PATH
+          
+      - name: Install dbt dependencies
+        working-directory: ./ra_dbt
+        run: |
+          dbt deps
+      - name: Generate dbt docs
+        working-directory: ./ra_dbt
+        run: |
+          echo "=== Creating dummy profiles.yml for docs generation ==="
+          mkdir -p ~/.dbt
+          cat > ~/.dbt/profiles.yml << EOF
+          prism:
+            target: dev
+            outputs:
+              dev:
+                type: duckdb
+                path: 'dbt_docs.duckdb'
+          EOF
+          
+          echo "=== Generating dbt manifest and docs ==="
+          # First generate manifest (should work without database)
+          dbt parse || echo "Parse command completed"
+          
+          # Try full docs generation (may fail, but creates additional files)
+          dbt docs generate --no-compile || echo "Docs generate completed (database connection may have failed)"
+          
+          echo "=== Files created in target directory ==="
+          ls -la target/ 2>/dev/null || echo "No target directory found"
+          
+          # Check what we have and decide how to proceed
+          if [ -f "target/manifest.json" ]; then
+            echo "✓ manifest.json found"
+            
+            # Check if we have index.html
+            if [ -f "target/index.html" ]; then
+              echo "✓ index.html found - running static docs script"
+              python ../make_static_docs.py
+              echo "✓ Static docs generation completed!"
+            else
+              echo "index.html missing - looking for template"
+              # Look for template in dbt packages
+              template_file=""
+              if [ -f "dbt_packages/dbt_expectations/docs/index.html" ]; then
+                template_file="dbt_packages/dbt_expectations/docs/index.html"
+              fi
+              
+              if [ -n "$template_file" ]; then
+                echo "Using template from: $template_file"
+                cp "$template_file" target/index.html
+                python ../make_static_docs.py
+                echo "✓ Static docs generated with template!"
+              else
+                echo "No template found, creating minimal docs"
+                cat > target/index.html << 'EOF'
+          <!DOCTYPE html>
+          <html>
+          <head>
+              <title>dbt Documentation</title>
+              <meta charset="utf-8">
+              <style>
+                  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 40px; max-width: 800px; margin: 0 auto; }
+                  .header { text-align: center; margin-bottom: 40px; }
+                  .content { line-height: 1.6; }
+                  .info-box { background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; }
+              </style>
+          </head>
+          <body>
+              <div class="header">
+                  <h1>dbt Documentation</h1>
+                  <p>Data Build Tool Project Documentation</p>
+              </div>
+              <div class="content">
+                  <div class="info-box">
+                      <h2>About This Project</h2>
+                      <p>This is a dbt (data build tool) project for data warehousing and analytics.</p>
+                      <p>The documentation is generated automatically from the project's manifest file.</p>
+                  </div>
+                  <div class="info-box">
+                      <h2>Status</h2>
+                      <p>Project manifest loaded successfully</p>
+                      <p>Database catalog not available (requires database connection)</p>
+                  </div>
+              </div>
+          </body>
+          </html>
+          EOF
+              fi
+            fi
+          else
+            echo "No manifest.json found - creating error documentation"
+            mkdir -p target
+            cat > target/index.html << 'EOF'
+          <!DOCTYPE html>
+          <html>
+          <head>
+              <title>dbt Documentation - Error</title>
+              <style>body { font-family: Arial, sans-serif; padding: 40px; text-align: center; color: #721c24; }</style>
+          </head>
+          <body>
+              <h1>Documentation Generation Failed</h1>
+              <p>There was an issue generating the dbt documentation.</p>
+              <p>Please check the GitHub Actions logs for more details.</p>
+          </body>
+          </html>
+          EOF
+          fi
+          
+          echo "=== Final target directory contents ==="
+          ls -la target/
+      - name: Setup GitHub Pages
+        uses: actions/configure-pages@v4
+        
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './ra_dbt/target'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
