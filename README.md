@@ -132,65 +132,8 @@ flowchart LR
     </details>
 
 2.  **Two Score Comparison Run**: Automatically calculates deltas between any two runs (e.g., "Production vs. Simulation") to analyze impact.
-
-    <details>
-    <summary><strong>View Comparison Charts</strong></summary>
-
-    ```mermaid
-    flowchart LR
-      A[("runs.risk_scores (run A)")]
-      J[["compare_runs"]]
-      B[("runs.risk_scores (run B)")]
-      O[("analytics.run_comparison")]
-      VIS[["comparison_visualizations"]]
-    
-      A --> J
-      B --> J
-      J --> O
-      O --> VIS
-    ```
-
-    ```mermaid
-    xychart-beta
-      title "Member-level Δ risk score distribution (A→B)"
-      x-axis ["<-5","-5..-2","-2..-1","-1..0","0..1","1..2","2..5",">5"]
-      y-axis "Members" 0 --> 16000
-      bar [1582, 1127, 1323, 6942, 14568, 4821, 2565, 350]
-    ```
-
-    </details>
     
 3.  **N-Score Decomposition Run**: Decomposes total score changes into specific drivers (e.g., Model Change, Population Mix) for complex scenarios.
-
-    <details>
-    <summary><strong>View Decomposition Charts</strong></summary>
-
-    ```mermaid
-    flowchart LR
-      R1[("run 1")]
-      R2[("run 2")]
-      R3[("run 3")]
-      R4[("run 4")]
-      D[["decompose_runs"]]
-      O[("analytics.decomposition_scenarios")]
-      VIS[["decomposition_visualizations"]]
-    
-      R1 --> D
-      R2 --> D
-      R3 --> D
-      R4 --> D
-      D --> O
-      O --> VIS
-    ```
-
-    ```mermaid
-    xychart-beta
-      title "Marginal contributions (impacts sum to total)"
-      x-axis ["Model Change", "Population Mix", "Interaction", "Total"]
-      y-axis "Impact" -1 --> 16
-      bar [-0.6564, 14.6911, -0.6487, 13.3860]
-    ```
-    </details>
 
 ## Sample Analyses
 
