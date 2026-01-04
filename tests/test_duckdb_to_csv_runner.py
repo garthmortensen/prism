@@ -154,6 +154,7 @@ def test_duckdb_to_csv_runner_coerces_invalid_gender(tmp_path: Path) -> None:
     assert len(rows) == 2
     assert {r["member_id"] for r in rows} == {"M1", "M2"}
 
+
 def test_duckdb_to_csv_runner_skips_invalid_gender(tmp_path: Path) -> None:
     """Test that invalid genders are skipped when configured."""
     duckdb_path = tmp_path / "risk_adjustment.duckdb"

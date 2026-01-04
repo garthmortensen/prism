@@ -89,11 +89,13 @@ def _recreate_risk_scores_with_details_components_last(con: duckdb.DuckDBPyConne
         con.execute("ROLLBACK")
         raise
 
+
 def ensure_core_schemas(con: duckdb.DuckDBPyConnection) -> None:
     """Ensure that the core schemas exist in the database."""
     con.execute("CREATE SCHEMA IF NOT EXISTS main_intermediate")
     con.execute("CREATE SCHEMA IF NOT EXISTS main_runs")
     con.execute("CREATE SCHEMA IF NOT EXISTS main_analytics")
+
 
 def ensure_run_registry(con: duckdb.DuckDBPyConnection) -> None:
     """Ensure that the run_registry table exists."""
@@ -135,6 +137,7 @@ def ensure_run_registry(con: duckdb.DuckDBPyConnection) -> None:
         "CREATE INDEX IF NOT EXISTS idx_run_registry_timestamp ON main_runs.run_registry "
         "(run_timestamp)"
     )
+
 
 def ensure_marts_tables(con: duckdb.DuckDBPyConnection) -> None:
     """Ensure that the data marts tables exist."""
@@ -240,12 +243,16 @@ def ensure_marts_tables(con: duckdb.DuckDBPyConnection) -> None:
         )
         """
     )
+
+
 def ensure_prism_warehouse(con: duckdb.DuckDBPyConnection) -> None:
     """Ensure that the entire Prism warehouse structure exists."""
     ensure_core_schemas(con)
     ensure_run_registry(con)
     ensure_marts_tables(con)
     """Get the current UTC timestamp."""
+
+
 def now_utc() -> datetime:
     """Get the current UTC timestamp."""
     return datetime.utcnow()

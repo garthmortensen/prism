@@ -9,8 +9,9 @@ def get_function_behavior(node):
     """Extracts the first line of the docstring as behavior."""
     docstring = ast.get_docstring(node)
     if docstring:
-        return docstring.strip().split('\n')[0]
+        return docstring.strip().split("\n")[0]
     return "No description provided."
+
 
 class StructureVisitor(ast.NodeVisitor):
     def __init__(self):
@@ -24,7 +25,7 @@ class StructureVisitor(ast.NodeVisitor):
             "name": node.name,
             "type": "class",
             "doc": get_function_behavior(node),
-            "children": []
+            "children": [],
         }
         self.stack[-1].append(item)
         self.stack.append(item["children"])
@@ -37,7 +38,7 @@ class StructureVisitor(ast.NodeVisitor):
             "name": node.name,
             "type": "function",
             "doc": get_function_behavior(node),
-            "children": []
+            "children": [],
         }
         self.stack[-1].append(item)
         self.stack.append(item["children"])
@@ -50,12 +51,13 @@ class StructureVisitor(ast.NodeVisitor):
             "name": node.name,
             "type": "async_function",
             "doc": get_function_behavior(node),
-            "children": []
+            "children": [],
         }
         self.stack[-1].append(item)
         self.stack.append(item["children"])
         self.generic_visit(node)
         self.stack.pop()
+
 
 def analyze_file(filepath, root_dir):
     """Analyzes a Python file to extract structure."""
@@ -67,19 +69,16 @@ def analyze_file(filepath, root_dir):
 
     visitor = StructureVisitor()
     visitor.visit(tree)
-    
+
     if not visitor.structure:
         return None
 
     # Create module name from path
     rel_path = os.path.relpath(filepath, root_dir)
     module_name = os.path.splitext(rel_path)[0].replace(os.sep, ".")
-    
-    return {
-        "name": module_name,
-        "type": "module",
-        "children": visitor.structure
-    }
+
+    return {"name": module_name, "type": "module", "children": visitor.structure}
+
 
 def generate_yaml_data(modules):
     """Generate a flat YAML dictionary from the hierarchical module structure."""
@@ -103,14 +102,16 @@ def generate_yaml_data(modules):
         if flat_list:
             yaml_data[module["name"]] = flat_list
     return yaml_data
+
+
 def generate_dot_data(modules):
     """Generate a DOT graph string from the hierarchical module structure."""
     lines = [
         "digraph RepoStructure {",
         "rankdir=LR;",
-        "node [shape=box style=filled fillcolor=white];"
+        "node [shape=box style=filled fillcolor=white];",
     ]
-    
+
     def clean_id(name):
         return name.replace(".", "_").replace("-", "_")
 
@@ -121,10 +122,10 @@ def generate_dot_data(modules):
                 clean_cluster_name = clean_id(cluster_name)
                 lines.append(f"subgraph {clean_cluster_name} {{")
                 lines.append(f'label="{node["name"]}";')
-                lines.append('style=filled; fillcolor=white; color=black;')
-                
+                lines.append("style=filled; fillcolor=white; color=black;")
+
                 process_nodes(node["children"], f"{parent_prefix}_{node['name']}")
-                
+
                 lines.append("}")
             elif node["type"] in ("function", "async_function"):
                 node_id = clean_id(f"{parent_prefix}_{node['name']}")
@@ -135,32 +136,45 @@ def generate_dot_data(modules):
         clean_cluster_name = clean_id(cluster_name)
         lines.append(f"subgraph {clean_cluster_name} {{")
         lines.append(f'label="{module["name"]}";')
-        lines.append('style=filled; fillcolor=lightgrey; color=black;')
-        
+        lines.append("style=filled; fillcolor=lightgrey; color=black;")
+
         process_nodes(module["children"], module["name"])
-        
+
         lines.append("}")
-        
+
     lines.append("}")
     return "\n".join(lines)
+
+
 def main():
     """Main entry point to generate the function map files."""
     # Set root_dir to the parent directory of this script (the repo root)
     script_dir = os.path.dirname(os.path.abspath(__file__))
     root_dir = os.path.dirname(script_dir)
-    
+
     exclude_dirs = {
-        '.git', '.venv', 'venv', '__pycache__', 'compute_logs', 
-        'dagster_home', 'docs', 'images', 'logs', 'storage', 
-        'dbt_packages', 'target', 'node_modules', 'site-packages'
+        ".git",
+        ".venv",
+        "venv",
+        "__pycache__",
+        "compute_logs",
+        "dagster_home",
+        "docs",
+        "images",
+        "logs",
+        "storage",
+        "dbt_packages",
+        "target",
+        "node_modules",
+        "site-packages",
     }
-    
+
     modules = []
 
     for dirpath, dirnames, filenames in os.walk(root_dir):
         # Modify dirnames in-place to exclude directories
         dirnames[:] = [d for d in dirnames if d not in exclude_dirs]
-        
+
         for filename in filenames:
             if filename.endswith(".py"):
                 filepath = os.path.join(dirpath, filename)
@@ -184,6 +198,7 @@ def main():
     with open(os.path.join(script_dir, "repo_structure.dot"), "w") as f:
         f.write(dot_content)
     print(f"Generated {os.path.join(script_dir, 'repo_structure.dot')}")
+
 
 if __name__ == "__main__":
     main()

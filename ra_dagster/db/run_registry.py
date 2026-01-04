@@ -90,6 +90,7 @@ def insert_run(con: duckdb.DuckDBPyConnection, record: RunRecord) -> None:
         ],
     )
 
+
 def update_run_status(
     con: duckdb.DuckDBPyConnection,
     *,
