@@ -100,7 +100,6 @@ def update_run_status(
     con.execute(
         """
         UPDATE main_runs.run_registry
-        UPDATE main_runs.run_registry
         SET status = ?, updated_at = ?
         WHERE run_id = ?
         """,

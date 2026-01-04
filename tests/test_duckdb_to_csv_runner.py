@@ -157,7 +157,6 @@ def test_duckdb_to_csv_runner_coerces_invalid_gender(tmp_path: Path) -> None:
 def test_duckdb_to_csv_runner_skips_invalid_gender(tmp_path: Path) -> None:
     """Test that invalid genders are skipped when configured."""
     duckdb_path = tmp_path / "risk_adjustment.duckdb"
-    out_csv = tmp_path / "scores.csv"justment.duckdb"
     out_csv = tmp_path / "scores.csv"
 
     con = duckdb.connect(str(duckdb_path))

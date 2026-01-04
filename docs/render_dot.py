@@ -1,5 +1,6 @@
-import graphviz
 import os
+
+import graphviz
 
 try:
     script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -14,6 +15,8 @@ try:
 except graphviz.backend.execute.ExecutableNotFound:
     print("Error: The 'dot' executable was not found.")
     print("The 'graphviz' Python package requires the Graphviz system software to be installed.")
-    print("Please install it using your system package manager (e.g., 'sudo apt install graphviz').")
+    print(
+        "Please install it using your system package manager (e.g., 'sudo apt install graphviz')."
+    )
 except Exception as e:
     print(f"An error occurred: {e}")

@@ -1,7 +1,9 @@
-import os
 import ast
-import yaml
 import json
+import os
+
+import yaml
+
 
 def get_function_behavior(node):
     """Extracts the first line of the docstring as behavior."""
@@ -57,7 +59,7 @@ class StructureVisitor(ast.NodeVisitor):
 
 def analyze_file(filepath, root_dir):
     """Analyzes a Python file to extract structure."""
-    with open(filepath, "r", encoding="utf-8") as f:
+    with open(filepath, encoding="utf-8") as f:
         try:
             tree = ast.parse(f.read(), filename=filepath)
         except SyntaxError:
@@ -82,28 +84,32 @@ def analyze_file(filepath, root_dir):
 def generate_yaml_data(modules):
     """Generate a flat YAML dictionary from the hierarchical module structure."""
     yaml_data = {}
+
+    def recurse(nodes, prefix, result_list):
+        for node in nodes:
+            current_name = node["name"]
+            if prefix:
+                current_name = f"{prefix}.{node['name']}"
+
+            if node["type"] in ("function", "async_function"):
+                result_list.append({current_name: node["doc"]})
+
+            recurse(node.get("children", []), current_name, result_list)
+
     for module in modules:
         flat_list = []
-        
-        def recurse(nodes, prefix):
-            for node in nodes:
-                current_name = node["name"]
-                if prefix:
-                    current_name = f"{prefix}.{node['name']}"
-                
-                if node["type"] in ("function", "async_function"):
-                    flat_list.append({current_name: node["doc"]})
-                
-                recurse(node.get("children", []), current_name)
+        recurse(module["children"], "", flat_list)
 
-        recurse(module["children"], "")
-        
         if flat_list:
             yaml_data[module["name"]] = flat_list
     return yaml_data
 def generate_dot_data(modules):
     """Generate a DOT graph string from the hierarchical module structure."""
-    lines = ["digraph RepoStructure {", "rankdir=LR;", "node [shape=box style=filled fillcolor=white];"]
+    lines = [
+        "digraph RepoStructure {",
+        "rankdir=LR;",
+        "node [shape=box style=filled fillcolor=white];"
+    ]
     
     def clean_id(name):
         return name.replace(".", "_").replace("-", "_")

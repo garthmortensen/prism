@@ -88,7 +88,6 @@ def extract_launchpad_config(
         """Safely get an attribute from an object."""
         try:
             return getattr(obj, name)
-        except Exception:r(obj, name)
         except Exception:
             return None
 

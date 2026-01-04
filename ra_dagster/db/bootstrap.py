@@ -241,7 +241,6 @@ def ensure_marts_tables(con: duckdb.DuckDBPyConnection) -> None:
         """
     )
 def ensure_prism_warehouse(con: duckdb.DuckDBPyConnection) -> None:
-def ensure_prism_warehouse(con: duckdb.DuckDBPyConnection) -> None:
     """Ensure that the entire Prism warehouse structure exists."""
     ensure_core_schemas(con)
     ensure_run_registry(con)
