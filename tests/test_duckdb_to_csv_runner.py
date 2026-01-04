@@ -10,6 +10,7 @@ from ra_calculators.aca_risk_score_calculator.duckdb_to_csv import score_from_du
 
 
 def test_duckdb_to_csv_runner_smoke(tmp_path: Path) -> None:
+    """Smoke test for the DuckDB to CSV runner."""
     duckdb_path = tmp_path / "risk_adjustment.duckdb"
     out_csv = tmp_path / "scores.csv"
 
@@ -85,6 +86,7 @@ def test_duckdb_to_csv_runner_smoke(tmp_path: Path) -> None:
 
 
 def test_duckdb_to_csv_runner_coerces_invalid_gender(tmp_path: Path) -> None:
+    """Test that invalid genders are coerced when configured."""
     duckdb_path = tmp_path / "risk_adjustment.duckdb"
     out_csv = tmp_path / "scores.csv"
 
@@ -152,9 +154,10 @@ def test_duckdb_to_csv_runner_coerces_invalid_gender(tmp_path: Path) -> None:
     assert len(rows) == 2
     assert {r["member_id"] for r in rows} == {"M1", "M2"}
 
-
 def test_duckdb_to_csv_runner_skips_invalid_gender(tmp_path: Path) -> None:
+    """Test that invalid genders are skipped when configured."""
     duckdb_path = tmp_path / "risk_adjustment.duckdb"
+    out_csv = tmp_path / "scores.csv"justment.duckdb"
     out_csv = tmp_path / "scores.csv"
 
     con = duckdb.connect(str(duckdb_path))

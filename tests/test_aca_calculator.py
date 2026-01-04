@@ -206,6 +206,7 @@ class TestHierarchyApplication:
 
     @pytest.fixture
     def calculator(self):
+        """Fixture to provide an ACACalculator instance."""
         return ACACalculator(model_year="2024")
 
     def test_hierarchy_removes_superseded(self, calculator):

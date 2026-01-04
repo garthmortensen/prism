@@ -1,0 +1,119 @@
+ra_calculators.aca_risk_score_calculator.calculator:
+- ACACalculator.__init__: Initialize calculator with model year.
+- ACACalculator._calculate_age: Calculate age in years as of a given date.
+- ACACalculator._get_model_type: Determine model type from age.
+- ACACalculator._get_demographic_variable: Get the demographic variable name for coefficient
+    lookup.
+- ACACalculator._get_coefficient: Look up coefficient for a variable.
+- ACACalculator._map_diagnoses_to_ccs: Map ICD-10 codes to Condition Categories.
+- ACACalculator._apply_groupings: Apply HCC groupings for the model.
+- ACACalculator._exclude_model_hccs: Remove HCCs that are excluded from this model.
+- ACACalculator._map_ndcs_to_rxcs: Map NDC codes to RXCs.
+- ACACalculator._apply_rxc_hierarchies: Apply RXC hierarchies.
+- ACACalculator._find_source_icds_for_hcc: Find which ICD codes contributed to a specific
+    HCC.
+- ACACalculator._find_source_ndcs_for_rxc: Find which NDC codes contributed to a specific
+    RXC.
+- ACACalculator.score: Calculate risk score for a single member.
+- ACACalculator.score_batch: Calculate risk scores for multiple members.
+ra_calculators.aca_risk_score_calculator.duckdb_to_csv:
+- _get_repo_root: Get the root directory of the repository.
+- _default_duckdb_path: Get the default path to the DuckDB database.
+- score_from_duckdb_to_csv: Read member inputs from DuckDB and write ACA risk scores
+    to CSV.
+- _build_arg_parser: Build the argument parser for the CLI.
+- main: Main entry point for the DuckDB to CSV scoring script.
+ra_calculators.aca_risk_score_calculator.generate_comprehensive_scenarios:
+- generate_scenarios: Generate a comprehensive set of test scenarios for risk scoring.
+ra_calculators.aca_risk_score_calculator.hierarchies:
+- apply_hierarchies: Apply HCC hierarchies to remove superseded conditions.
+ra_calculators.aca_risk_score_calculator.member_processing:
+- coerce_str_list: Coerce a value (list, tuple, or single item) into a list of strings.
+- normalize_gender: Normalize gender to 'M' or 'F', or return None if invalid.
+- rows_to_member_inputs: Convert raw database rows into MemberInput objects with validation.
+ra_calculators.aca_risk_score_calculator.table_loader:
+- _get_tables_dir: Get the directory for a model year's tables.
+- load_icd_to_cc: Load ICD-10 to CC mappings from table_3.parquet.
+- load_hierarchies: Load HCC hierarchies from table_4.parquet.
+- load_coefficients: Load risk coefficients from table_9.parquet.
+- load_hcc_groups: Load HCC groupings from table_6.json (Adult) or table_7.json (Child).
+- _extract_hccs_from_definition: Extract HCC numbers from a SAS-style definition string.
+- load_model_exclusions: Load HCCs excluded from each model from table_12.parquet.
+- load_ndc_to_rxc: Load NDC to RXC mappings from table_10a.parquet.
+- load_rxc_hierarchies: Load RXC hierarchies from table_11.parquet.
+- load_hcc_labels: Load HCC labels from table_4.parquet.
+- load_rxc_labels: Load RXC labels from table_10a.parquet.
+- clear_cache: Clear the table cache.
+ra_dagster.assets.comparison:
+- compare_runs: Compute member-level deltas between two scoring runs into main_analytics.run_comparison.
+ra_dagster.assets.dashboard:
+- dashboard_metrics: Calculate population metrics for a specific run.
+- dashboard_html: Generate an HTML dashboard from the calculated metrics.
+ra_dagster.assets.decomposition:
+- decompose_runs: Compute an N-way decomposition of risk score changes using member-level
+    deltas.
+- decompose_runs.calculate_impact: Calculate the impact of a specific driver on the
+    risk score.
+ra_dagster.assets.scoring:
+- _validate_relation_name: Allow only simple identifiers like schema.table (or db.schema.table).
+- _relation_exists: Check if a relation (table or view) exists in the database.
+- _resolve_relation: Resolve a relation name against DuckDB, handling common dbt/DuckDB
+    prefixing.
+- _maybe_build_member_input_view: Return the relation to read member inputs from.
+- score_members_aca: Score members using the ACA HHS-HCC calculator and write to main_runs.risk_scores.
+- score_members_aca.flush_batch: Flush a batch of scored members to the database.
+ra_dagster.assets.visualizations:
+- scoring_visualizations: Generate visualizations for recent scoring runs.
+- comparison_visualizations: Generate visualizations for recent comparison runs.
+- decomposition_visualizations: Generate visualizations for recent decomposition runs.
+- lag_trend_visualizations: Generate year-over-year trend lines for lag analysis.
+ra_dagster.automated_execution.launch_analyses:
+- launch_run: Launches a Dagster run via CLI.
+- run_batch: Runs all YAML configs in a specific subfolder.
+ra_dagster.cli:
+- db_bootstrap: Create core Prism schemas + tables in DuckDB.
+ra_dagster.db.run_registry:
+- allocate_group_id: Allocate a new group ID for a set of runs.
+- insert_run: Insert a new run record into the registry.
+- update_run_status: Update the status of an existing run.
+ra_dagster.resources.duckdb_resource:
+- DuckDBConnection.connect: Establish a connection to the DuckDB database.
+- DuckDBResource.get_connection: Get a DuckDB connection from the resource.
+ra_dagster.utils.run_ids:
+- generate_run_id: Generate a unique ID for a run.
+- generate_run_timestamp: Return YYYYMMDDHHMMSSUUUU where UUUU is 1/10,000th of a
+    second.
+- get_git_provenance: Return current git commit + whether the working tree is clean.
+- get_git_provenance._run_git: Run a git command and return the output.
+- json_dumps: Dump an object to a JSON string with custom serialization.
+- extract_launchpad_config: Best-effort extraction of the Dagster Launchpad run config.
+- extract_launchpad_config._safe_getattr: Safely get an attribute from an object.
+tests.test_aca_calculator:
+- TestMemberInput.test_valid_member: Test creating a valid member input.
+- TestMemberInput.test_default_values: Test default values are applied.
+- TestMemberInput.test_invalid_gender: Test that invalid gender raises error.
+- TestACACalculator.calculator: Create calculator instance.
+- TestACACalculator.test_adult_model_selection: Test that adults (age >= 21) use Adult
+    model.
+- TestACACalculator.test_child_model_selection: Test that children (age 2-20) use
+    Child model.
+- TestACACalculator.test_infant_model_selection: Test that infants (age 0-1) use Infant
+    model.
+- TestACACalculator.test_demographic_only_score: Test scoring with demographics only
+    (no diagnoses).
+- TestACACalculator.test_diagnosis_mapping: Test that diagnoses are mapped to CCs.
+- TestACACalculator.test_score_output_structure: Test that score output has expected
+    structure.
+- TestACACalculator.test_metal_level_affects_score: Test that different metal levels
+    produce different scores.
+- TestACACalculator.test_batch_scoring: Test batch scoring multiple members.
+- TestACACalculator.test_adult_edf_applied_when_partial_year_and_has_hcc: Adult EDF
+    is added when enrollment_months is 1-11 and HCC_CNT > 0.
+- TestHierarchyApplication.calculator: Fixture to provide an ACACalculator instance.
+- TestHierarchyApplication.test_hierarchy_removes_superseded: Test that hierarchies
+    remove superseded HCCs.
+tests.test_decomposition_interaction:
+- test_decomposition_writes_interaction_row: Test that decomposition correctly writes
+    interaction rows.
+tests.test_placeholder:
+- test_placeholder: Placeholder test to ensure the test suite runs.

@@ -9,6 +9,7 @@ from uuid import uuid4
 
 
 def generate_run_id() -> str:
+    """Generate a unique ID for a run."""
     return str(uuid4())
 
 
@@ -39,6 +40,7 @@ def get_git_provenance(cwd: str | None = None) -> GitProvenance:
     """
 
     def _run_git(args: list[str]) -> str | None:
+        """Run a git command and return the output."""
         try:
             completed = subprocess.run(
                 ["git", *args],
@@ -66,8 +68,9 @@ def get_git_provenance(cwd: str | None = None) -> GitProvenance:
 
     return GitProvenance(branch=branch, commit=commit, commit_short=commit_short, clean=clean)
 
-
 def json_dumps(obj: Any) -> str:
+    """Dump an object to a JSON string with custom serialization."""
+    return json.dumps(obj, separators=(",", ":"), default=str)
     return json.dumps(obj, separators=(",", ":"), default=str)
 
 
@@ -81,10 +84,11 @@ def extract_launchpad_config(
     Dagster surfaces this in slightly different places depending on context type and version.
     We try a few common attributes and fall back to a caller-provided dict.
     """
-
     def _safe_getattr(obj: Any, name: str) -> Any:
+        """Safely get an attribute from an object."""
         try:
             return getattr(obj, name)
+        except Exception:r(obj, name)
         except Exception:
             return None
 

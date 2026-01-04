@@ -83,6 +83,7 @@ def _validate_relation_name(relation: str) -> str:
 
 
 def _relation_exists(con: duckdb.DuckDBPyConnection, relation: str) -> bool:
+    """Check if a relation (table or view) exists in the database."""
     parts = relation.split(".")
     if len(parts) == 1:
         (table,) = parts
@@ -509,6 +510,7 @@ def score_members_aca(
         ]
 
         def flush_batch(rows: list[dict[str, Any]]) -> None:
+            """Flush a batch of scored members to the database."""
             if not rows:
                 return
             df = pl.DataFrame(rows).select(db_columns)

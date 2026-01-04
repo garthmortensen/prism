@@ -1,0 +1,223 @@
+digraph RepoStructure {
+rankdir=LR;
+node [shape=box style=filled fillcolor=white];
+subgraph cluster_tests_test_placeholder {
+label="tests.test_placeholder";
+style=filled; fillcolor=lightgrey; color=black;
+tests_test_placeholder_test_placeholder [label="test_placeholder"];
+}
+subgraph cluster_tests_test_aca_calculator {
+label="tests.test_aca_calculator";
+style=filled; fillcolor=lightgrey; color=black;
+subgraph cluster_tests_test_aca_calculator_TestMemberInput {
+label="TestMemberInput";
+style=filled; fillcolor=white; color=black;
+tests_test_aca_calculator_TestMemberInput_test_valid_member [label="test_valid_member"];
+tests_test_aca_calculator_TestMemberInput_test_default_values [label="test_default_values"];
+tests_test_aca_calculator_TestMemberInput_test_invalid_gender [label="test_invalid_gender"];
+}
+subgraph cluster_tests_test_aca_calculator_TestACACalculator {
+label="TestACACalculator";
+style=filled; fillcolor=white; color=black;
+tests_test_aca_calculator_TestACACalculator_calculator [label="calculator"];
+tests_test_aca_calculator_TestACACalculator_test_adult_model_selection [label="test_adult_model_selection"];
+tests_test_aca_calculator_TestACACalculator_test_child_model_selection [label="test_child_model_selection"];
+tests_test_aca_calculator_TestACACalculator_test_infant_model_selection [label="test_infant_model_selection"];
+tests_test_aca_calculator_TestACACalculator_test_demographic_only_score [label="test_demographic_only_score"];
+tests_test_aca_calculator_TestACACalculator_test_diagnosis_mapping [label="test_diagnosis_mapping"];
+tests_test_aca_calculator_TestACACalculator_test_score_output_structure [label="test_score_output_structure"];
+tests_test_aca_calculator_TestACACalculator_test_metal_level_affects_score [label="test_metal_level_affects_score"];
+tests_test_aca_calculator_TestACACalculator_test_batch_scoring [label="test_batch_scoring"];
+tests_test_aca_calculator_TestACACalculator_test_adult_edf_applied_when_partial_year_and_has_hcc [label="test_adult_edf_applied_when_partial_year_and_has_hcc"];
+}
+subgraph cluster_tests_test_aca_calculator_TestHierarchyApplication {
+label="TestHierarchyApplication";
+style=filled; fillcolor=white; color=black;
+tests_test_aca_calculator_TestHierarchyApplication_calculator [label="calculator"];
+tests_test_aca_calculator_TestHierarchyApplication_test_hierarchy_removes_superseded [label="test_hierarchy_removes_superseded"];
+}
+}
+subgraph cluster_tests_test_decomposition_interaction {
+label="tests.test_decomposition_interaction";
+style=filled; fillcolor=lightgrey; color=black;
+tests_test_decomposition_interaction_test_decomposition_writes_interaction_row [label="test_decomposition_writes_interaction_row"];
+}
+subgraph cluster_ra_calculators_aca_risk_score_calculator_models {
+label="ra_calculators.aca_risk_score_calculator.models";
+style=filled; fillcolor=lightgrey; color=black;
+subgraph cluster_ra_calculators_aca_risk_score_calculator_models_ScoreComponent {
+label="ScoreComponent";
+style=filled; fillcolor=white; color=black;
+}
+subgraph cluster_ra_calculators_aca_risk_score_calculator_models_MemberInput {
+label="MemberInput";
+style=filled; fillcolor=white; color=black;
+}
+subgraph cluster_ra_calculators_aca_risk_score_calculator_models_ScoreOutput {
+label="ScoreOutput";
+style=filled; fillcolor=white; color=black;
+}
+}
+subgraph cluster_ra_calculators_aca_risk_score_calculator_table_loader {
+label="ra_calculators.aca_risk_score_calculator.table_loader";
+style=filled; fillcolor=lightgrey; color=black;
+ra_calculators_aca_risk_score_calculator_table_loader__get_tables_dir [label="_get_tables_dir"];
+ra_calculators_aca_risk_score_calculator_table_loader_load_icd_to_cc [label="load_icd_to_cc"];
+ra_calculators_aca_risk_score_calculator_table_loader_load_hierarchies [label="load_hierarchies"];
+ra_calculators_aca_risk_score_calculator_table_loader_load_coefficients [label="load_coefficients"];
+ra_calculators_aca_risk_score_calculator_table_loader_load_hcc_groups [label="load_hcc_groups"];
+ra_calculators_aca_risk_score_calculator_table_loader__extract_hccs_from_definition [label="_extract_hccs_from_definition"];
+ra_calculators_aca_risk_score_calculator_table_loader_load_model_exclusions [label="load_model_exclusions"];
+ra_calculators_aca_risk_score_calculator_table_loader_load_ndc_to_rxc [label="load_ndc_to_rxc"];
+ra_calculators_aca_risk_score_calculator_table_loader_load_rxc_hierarchies [label="load_rxc_hierarchies"];
+ra_calculators_aca_risk_score_calculator_table_loader_load_hcc_labels [label="load_hcc_labels"];
+ra_calculators_aca_risk_score_calculator_table_loader_load_rxc_labels [label="load_rxc_labels"];
+ra_calculators_aca_risk_score_calculator_table_loader_clear_cache [label="clear_cache"];
+}
+subgraph cluster_ra_calculators_aca_risk_score_calculator_hierarchies {
+label="ra_calculators.aca_risk_score_calculator.hierarchies";
+style=filled; fillcolor=lightgrey; color=black;
+ra_calculators_aca_risk_score_calculator_hierarchies_apply_hierarchies [label="apply_hierarchies"];
+}
+subgraph cluster_ra_calculators_aca_risk_score_calculator_calculator {
+label="ra_calculators.aca_risk_score_calculator.calculator";
+style=filled; fillcolor=lightgrey; color=black;
+subgraph cluster_ra_calculators_aca_risk_score_calculator_calculator_ACACalculator {
+label="ACACalculator";
+style=filled; fillcolor=white; color=black;
+ra_calculators_aca_risk_score_calculator_calculator_ACACalculator___init__ [label="__init__"];
+ra_calculators_aca_risk_score_calculator_calculator_ACACalculator__calculate_age [label="_calculate_age"];
+ra_calculators_aca_risk_score_calculator_calculator_ACACalculator__get_model_type [label="_get_model_type"];
+ra_calculators_aca_risk_score_calculator_calculator_ACACalculator__get_demographic_variable [label="_get_demographic_variable"];
+ra_calculators_aca_risk_score_calculator_calculator_ACACalculator__get_coefficient [label="_get_coefficient"];
+ra_calculators_aca_risk_score_calculator_calculator_ACACalculator__map_diagnoses_to_ccs [label="_map_diagnoses_to_ccs"];
+ra_calculators_aca_risk_score_calculator_calculator_ACACalculator__apply_groupings [label="_apply_groupings"];
+ra_calculators_aca_risk_score_calculator_calculator_ACACalculator__exclude_model_hccs [label="_exclude_model_hccs"];
+ra_calculators_aca_risk_score_calculator_calculator_ACACalculator__map_ndcs_to_rxcs [label="_map_ndcs_to_rxcs"];
+ra_calculators_aca_risk_score_calculator_calculator_ACACalculator__apply_rxc_hierarchies [label="_apply_rxc_hierarchies"];
+ra_calculators_aca_risk_score_calculator_calculator_ACACalculator__find_source_icds_for_hcc [label="_find_source_icds_for_hcc"];
+ra_calculators_aca_risk_score_calculator_calculator_ACACalculator__find_source_ndcs_for_rxc [label="_find_source_ndcs_for_rxc"];
+ra_calculators_aca_risk_score_calculator_calculator_ACACalculator_score [label="score"];
+ra_calculators_aca_risk_score_calculator_calculator_ACACalculator_score_batch [label="score_batch"];
+}
+}
+subgraph cluster_ra_calculators_aca_risk_score_calculator_generate_comprehensive_scenarios {
+label="ra_calculators.aca_risk_score_calculator.generate_comprehensive_scenarios";
+style=filled; fillcolor=lightgrey; color=black;
+ra_calculators_aca_risk_score_calculator_generate_comprehensive_scenarios_generate_scenarios [label="generate_scenarios"];
+}
+subgraph cluster_ra_calculators_aca_risk_score_calculator_duckdb_to_csv {
+label="ra_calculators.aca_risk_score_calculator.duckdb_to_csv";
+style=filled; fillcolor=lightgrey; color=black;
+ra_calculators_aca_risk_score_calculator_duckdb_to_csv__get_repo_root [label="_get_repo_root"];
+ra_calculators_aca_risk_score_calculator_duckdb_to_csv__default_duckdb_path [label="_default_duckdb_path"];
+ra_calculators_aca_risk_score_calculator_duckdb_to_csv_score_from_duckdb_to_csv [label="score_from_duckdb_to_csv"];
+ra_calculators_aca_risk_score_calculator_duckdb_to_csv__build_arg_parser [label="_build_arg_parser"];
+ra_calculators_aca_risk_score_calculator_duckdb_to_csv_main [label="main"];
+}
+subgraph cluster_ra_calculators_aca_risk_score_calculator_member_processing {
+label="ra_calculators.aca_risk_score_calculator.member_processing";
+style=filled; fillcolor=lightgrey; color=black;
+ra_calculators_aca_risk_score_calculator_member_processing_coerce_str_list [label="coerce_str_list"];
+ra_calculators_aca_risk_score_calculator_member_processing_normalize_gender [label="normalize_gender"];
+ra_calculators_aca_risk_score_calculator_member_processing_rows_to_member_inputs [label="rows_to_member_inputs"];
+}
+subgraph cluster_ra_dagster_cli {
+label="ra_dagster.cli";
+style=filled; fillcolor=lightgrey; color=black;
+ra_dagster_cli_db_bootstrap [label="db_bootstrap"];
+}
+subgraph cluster_ra_dagster_resources_duckdb_resource {
+label="ra_dagster.resources.duckdb_resource";
+style=filled; fillcolor=lightgrey; color=black;
+subgraph cluster_ra_dagster_resources_duckdb_resource_DuckDBConnection {
+label="DuckDBConnection";
+style=filled; fillcolor=white; color=black;
+ra_dagster_resources_duckdb_resource_DuckDBConnection_connect [label="connect"];
+}
+subgraph cluster_ra_dagster_resources_duckdb_resource_DuckDBResource {
+label="DuckDBResource";
+style=filled; fillcolor=white; color=black;
+ra_dagster_resources_duckdb_resource_DuckDBResource_get_connection [label="get_connection"];
+}
+}
+subgraph cluster_ra_dagster_assets_scoring {
+label="ra_dagster.assets.scoring";
+style=filled; fillcolor=lightgrey; color=black;
+subgraph cluster_ra_dagster_assets_scoring_InvalidGenderOption {
+label="InvalidGenderOption";
+style=filled; fillcolor=white; color=black;
+}
+subgraph cluster_ra_dagster_assets_scoring_GenderOption {
+label="GenderOption";
+style=filled; fillcolor=white; color=black;
+}
+subgraph cluster_ra_dagster_assets_scoring_ScoringConfig {
+label="ScoringConfig";
+style=filled; fillcolor=white; color=black;
+}
+ra_dagster_assets_scoring__validate_relation_name [label="_validate_relation_name"];
+ra_dagster_assets_scoring__relation_exists [label="_relation_exists"];
+ra_dagster_assets_scoring__resolve_relation [label="_resolve_relation"];
+ra_dagster_assets_scoring__maybe_build_member_input_view [label="_maybe_build_member_input_view"];
+ra_dagster_assets_scoring_score_members_aca [label="score_members_aca"];
+}
+subgraph cluster_ra_dagster_assets_comparison {
+label="ra_dagster.assets.comparison";
+style=filled; fillcolor=lightgrey; color=black;
+ra_dagster_assets_comparison_compare_runs [label="compare_runs"];
+}
+subgraph cluster_ra_dagster_assets_decomposition {
+label="ra_dagster.assets.decomposition";
+style=filled; fillcolor=lightgrey; color=black;
+ra_dagster_assets_decomposition_decompose_runs [label="decompose_runs"];
+}
+subgraph cluster_ra_dagster_assets_visualizations {
+label="ra_dagster.assets.visualizations";
+style=filled; fillcolor=lightgrey; color=black;
+ra_dagster_assets_visualizations_scoring_visualizations [label="scoring_visualizations"];
+ra_dagster_assets_visualizations_comparison_visualizations [label="comparison_visualizations"];
+ra_dagster_assets_visualizations_decomposition_visualizations [label="decomposition_visualizations"];
+ra_dagster_assets_visualizations_lag_trend_visualizations [label="lag_trend_visualizations"];
+}
+subgraph cluster_ra_dagster_assets_dashboard {
+label="ra_dagster.assets.dashboard";
+style=filled; fillcolor=lightgrey; color=black;
+subgraph cluster_ra_dagster_assets_dashboard_DashboardConfig {
+label="DashboardConfig";
+style=filled; fillcolor=white; color=black;
+}
+ra_dagster_assets_dashboard_dashboard_metrics [label="dashboard_metrics"];
+ra_dagster_assets_dashboard_dashboard_html [label="dashboard_html"];
+}
+subgraph cluster_ra_dagster_db_run_registry {
+label="ra_dagster.db.run_registry";
+style=filled; fillcolor=lightgrey; color=black;
+subgraph cluster_ra_dagster_db_run_registry_RunRecord {
+label="RunRecord";
+style=filled; fillcolor=white; color=black;
+}
+ra_dagster_db_run_registry_allocate_group_id [label="allocate_group_id"];
+ra_dagster_db_run_registry_insert_run [label="insert_run"];
+ra_dagster_db_run_registry_update_run_status [label="update_run_status"];
+}
+subgraph cluster_ra_dagster_utils_run_ids {
+label="ra_dagster.utils.run_ids";
+style=filled; fillcolor=lightgrey; color=black;
+ra_dagster_utils_run_ids_generate_run_id [label="generate_run_id"];
+ra_dagster_utils_run_ids_generate_run_timestamp [label="generate_run_timestamp"];
+subgraph cluster_ra_dagster_utils_run_ids_GitProvenance {
+label="GitProvenance";
+style=filled; fillcolor=white; color=black;
+}
+ra_dagster_utils_run_ids_get_git_provenance [label="get_git_provenance"];
+ra_dagster_utils_run_ids_json_dumps [label="json_dumps"];
+ra_dagster_utils_run_ids_extract_launchpad_config [label="extract_launchpad_config"];
+}
+subgraph cluster_ra_dagster_automated_execution_launch_analyses {
+label="ra_dagster.automated_execution.launch_analyses";
+style=filled; fillcolor=lightgrey; color=black;
+ra_dagster_automated_execution_launch_analyses_launch_run [label="launch_run"];
+ra_dagster_automated_execution_launch_analyses_run_batch [label="run_batch"];
+}
+}

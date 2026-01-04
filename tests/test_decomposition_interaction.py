@@ -11,6 +11,7 @@ from ra_dagster.resources.duckdb_resource import DuckDBResource
 
 
 def test_decomposition_writes_interaction_row(tmp_path: Path) -> None:
+    """Test that decomposition correctly writes interaction rows."""
     db_path = tmp_path / "test.duckdb"
 
     con = duckdb.connect(str(db_path))

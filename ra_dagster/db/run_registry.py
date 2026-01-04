@@ -32,6 +32,7 @@ class RunRecord:
 
 
 def allocate_group_id(con: duckdb.DuckDBPyConnection) -> int:
+    """Allocate a new group ID for a set of runs."""
     row = con.execute(
         "SELECT COALESCE(MAX(group_id), 0) + 1 AS next_id FROM main_runs.run_registry"
     ).fetchone()
@@ -39,6 +40,7 @@ def allocate_group_id(con: duckdb.DuckDBPyConnection) -> int:
 
 
 def insert_run(con: duckdb.DuckDBPyConnection, record: RunRecord) -> None:
+    """Insert a new run record into the registry."""
     con.execute(
         """
         INSERT INTO main_runs.run_registry (
@@ -88,15 +90,16 @@ def insert_run(con: duckdb.DuckDBPyConnection, record: RunRecord) -> None:
         ],
     )
 
-
 def update_run_status(
     con: duckdb.DuckDBPyConnection,
     *,
     run_id: str,
     status: str,
 ) -> None:
+    """Update the status of an existing run."""
     con.execute(
         """
+        UPDATE main_runs.run_registry
         UPDATE main_runs.run_registry
         SET status = ?, updated_at = ?
         WHERE run_id = ?

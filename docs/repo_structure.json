@@ -1,0 +1,720 @@
+[
+  {
+    "name": "tests.test_placeholder",
+    "type": "module",
+    "children": [
+      {
+        "name": "test_placeholder",
+        "type": "function",
+        "doc": "Placeholder test to ensure the test suite runs.",
+        "children": []
+      }
+    ]
+  },
+  {
+    "name": "tests.test_aca_calculator",
+    "type": "module",
+    "children": [
+      {
+        "name": "TestMemberInput",
+        "type": "class",
+        "doc": "Tests for MemberInput model.",
+        "children": [
+          {
+            "name": "test_valid_member",
+            "type": "function",
+            "doc": "Test creating a valid member input.",
+            "children": []
+          },
+          {
+            "name": "test_default_values",
+            "type": "function",
+            "doc": "Test default values are applied.",
+            "children": []
+          },
+          {
+            "name": "test_invalid_gender",
+            "type": "function",
+            "doc": "Test that invalid gender raises error.",
+            "children": []
+          }
+        ]
+      },
+      {
+        "name": "TestACACalculator",
+        "type": "class",
+        "doc": "Tests for ACACalculator.",
+        "children": [
+          {
+            "name": "calculator",
+            "type": "function",
+            "doc": "Create calculator instance.",
+            "children": []
+          },
+          {
+            "name": "test_adult_model_selection",
+            "type": "function",
+            "doc": "Test that adults (age >= 21) use Adult model.",
+            "children": []
+          },
+          {
+            "name": "test_child_model_selection",
+            "type": "function",
+            "doc": "Test that children (age 2-20) use Child model.",
+            "children": []
+          },
+          {
+            "name": "test_infant_model_selection",
+            "type": "function",
+            "doc": "Test that infants (age 0-1) use Infant model.",
+            "children": []
+          },
+          {
+            "name": "test_demographic_only_score",
+            "type": "function",
+            "doc": "Test scoring with demographics only (no diagnoses).",
+            "children": []
+          },
+          {
+            "name": "test_diagnosis_mapping",
+            "type": "function",
+            "doc": "Test that diagnoses are mapped to CCs.",
+            "children": []
+          },
+          {
+            "name": "test_score_output_structure",
+            "type": "function",
+            "doc": "Test that score output has expected structure.",
+            "children": []
+          },
+          {
+            "name": "test_metal_level_affects_score",
+            "type": "function",
+            "doc": "Test that different metal levels produce different scores.",
+            "children": []
+          },
+          {
+            "name": "test_batch_scoring",
+            "type": "function",
+            "doc": "Test batch scoring multiple members.",
+            "children": []
+          },
+          {
+            "name": "test_adult_edf_applied_when_partial_year_and_has_hcc",
+            "type": "function",
+            "doc": "Adult EDF is added when enrollment_months is 1-11 and HCC_CNT > 0.",
+            "children": []
+          }
+        ]
+      },
+      {
+        "name": "TestHierarchyApplication",
+        "type": "class",
+        "doc": "Tests for HCC hierarchy logic.",
+        "children": [
+          {
+            "name": "calculator",
+            "type": "function",
+            "doc": "Fixture to provide an ACACalculator instance.",
+            "children": []
+          },
+          {
+            "name": "test_hierarchy_removes_superseded",
+            "type": "function",
+            "doc": "Test that hierarchies remove superseded HCCs.",
+            "children": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "tests.test_decomposition_interaction",
+    "type": "module",
+    "children": [
+      {
+        "name": "test_decomposition_writes_interaction_row",
+        "type": "function",
+        "doc": "Test that decomposition correctly writes interaction rows.",
+        "children": []
+      }
+    ]
+  },
+  {
+    "name": "ra_calculators.aca_risk_score_calculator.models",
+    "type": "module",
+    "children": [
+      {
+        "name": "ScoreComponent",
+        "type": "class",
+        "doc": "Individual score component for audit trail.",
+        "children": []
+      },
+      {
+        "name": "MemberInput",
+        "type": "class",
+        "doc": "Input data for a single member.",
+        "children": []
+      },
+      {
+        "name": "ScoreOutput",
+        "type": "class",
+        "doc": "Output from risk score calculation.",
+        "children": []
+      }
+    ]
+  },
+  {
+    "name": "ra_calculators.aca_risk_score_calculator.table_loader",
+    "type": "module",
+    "children": [
+      {
+        "name": "_get_tables_dir",
+        "type": "function",
+        "doc": "Get the directory for a model year's tables.",
+        "children": []
+      },
+      {
+        "name": "load_icd_to_cc",
+        "type": "function",
+        "doc": "Load ICD-10 to CC mappings from table_3.parquet.",
+        "children": []
+      },
+      {
+        "name": "load_hierarchies",
+        "type": "function",
+        "doc": "Load HCC hierarchies from table_4.parquet.",
+        "children": []
+      },
+      {
+        "name": "load_coefficients",
+        "type": "function",
+        "doc": "Load risk coefficients from table_9.parquet.",
+        "children": []
+      },
+      {
+        "name": "load_hcc_groups",
+        "type": "function",
+        "doc": "Load HCC groupings from table_6.json (Adult) or table_7.json (Child).",
+        "children": []
+      },
+      {
+        "name": "_extract_hccs_from_definition",
+        "type": "function",
+        "doc": "Extract HCC numbers from a SAS-style definition string.",
+        "children": []
+      },
+      {
+        "name": "load_model_exclusions",
+        "type": "function",
+        "doc": "Load HCCs excluded from each model from table_12.parquet.",
+        "children": []
+      },
+      {
+        "name": "load_ndc_to_rxc",
+        "type": "function",
+        "doc": "Load NDC to RXC mappings from table_10a.parquet.",
+        "children": []
+      },
+      {
+        "name": "load_rxc_hierarchies",
+        "type": "function",
+        "doc": "Load RXC hierarchies from table_11.parquet.",
+        "children": []
+      },
+      {
+        "name": "load_hcc_labels",
+        "type": "function",
+        "doc": "Load HCC labels from table_4.parquet.",
+        "children": []
+      },
+      {
+        "name": "load_rxc_labels",
+        "type": "function",
+        "doc": "Load RXC labels from table_10a.parquet.",
+        "children": []
+      },
+      {
+        "name": "clear_cache",
+        "type": "function",
+        "doc": "Clear the table cache.",
+        "children": []
+      }
+    ]
+  },
+  {
+    "name": "ra_calculators.aca_risk_score_calculator.hierarchies",
+    "type": "module",
+    "children": [
+      {
+        "name": "apply_hierarchies",
+        "type": "function",
+        "doc": "Apply HCC hierarchies to remove superseded conditions.",
+        "children": []
+      }
+    ]
+  },
+  {
+    "name": "ra_calculators.aca_risk_score_calculator.calculator",
+    "type": "module",
+    "children": [
+      {
+        "name": "ACACalculator",
+        "type": "class",
+        "doc": "HHS-HCC Risk Score Calculator for ACA markets.",
+        "children": [
+          {
+            "name": "__init__",
+            "type": "function",
+            "doc": "Initialize calculator with model year.",
+            "children": []
+          },
+          {
+            "name": "_calculate_age",
+            "type": "function",
+            "doc": "Calculate age in years as of a given date.",
+            "children": []
+          },
+          {
+            "name": "_get_model_type",
+            "type": "function",
+            "doc": "Determine model type from age.",
+            "children": []
+          },
+          {
+            "name": "_get_demographic_variable",
+            "type": "function",
+            "doc": "Get the demographic variable name for coefficient lookup.",
+            "children": []
+          },
+          {
+            "name": "_get_coefficient",
+            "type": "function",
+            "doc": "Look up coefficient for a variable.",
+            "children": []
+          },
+          {
+            "name": "_map_diagnoses_to_ccs",
+            "type": "function",
+            "doc": "Map ICD-10 codes to Condition Categories.",
+            "children": []
+          },
+          {
+            "name": "_apply_groupings",
+            "type": "function",
+            "doc": "Apply HCC groupings for the model.",
+            "children": []
+          },
+          {
+            "name": "_exclude_model_hccs",
+            "type": "function",
+            "doc": "Remove HCCs that are excluded from this model.",
+            "children": []
+          },
+          {
+            "name": "_map_ndcs_to_rxcs",
+            "type": "function",
+            "doc": "Map NDC codes to RXCs.",
+            "children": []
+          },
+          {
+            "name": "_apply_rxc_hierarchies",
+            "type": "function",
+            "doc": "Apply RXC hierarchies.",
+            "children": []
+          },
+          {
+            "name": "_find_source_icds_for_hcc",
+            "type": "function",
+            "doc": "Find which ICD codes contributed to a specific HCC.",
+            "children": []
+          },
+          {
+            "name": "_find_source_ndcs_for_rxc",
+            "type": "function",
+            "doc": "Find which NDC codes contributed to a specific RXC.",
+            "children": []
+          },
+          {
+            "name": "score",
+            "type": "function",
+            "doc": "Calculate risk score for a single member.",
+            "children": []
+          },
+          {
+            "name": "score_batch",
+            "type": "function",
+            "doc": "Calculate risk scores for multiple members.",
+            "children": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "ra_calculators.aca_risk_score_calculator.generate_comprehensive_scenarios",
+    "type": "module",
+    "children": [
+      {
+        "name": "generate_scenarios",
+        "type": "function",
+        "doc": "Generate a comprehensive set of test scenarios for risk scoring.",
+        "children": []
+      }
+    ]
+  },
+  {
+    "name": "ra_calculators.aca_risk_score_calculator.duckdb_to_csv",
+    "type": "module",
+    "children": [
+      {
+        "name": "_get_repo_root",
+        "type": "function",
+        "doc": "Get the root directory of the repository.",
+        "children": []
+      },
+      {
+        "name": "_default_duckdb_path",
+        "type": "function",
+        "doc": "Get the default path to the DuckDB database.",
+        "children": []
+      },
+      {
+        "name": "score_from_duckdb_to_csv",
+        "type": "function",
+        "doc": "Read member inputs from DuckDB and write ACA risk scores to CSV.",
+        "children": []
+      },
+      {
+        "name": "_build_arg_parser",
+        "type": "function",
+        "doc": "Build the argument parser for the CLI.",
+        "children": []
+      },
+      {
+        "name": "main",
+        "type": "function",
+        "doc": "Main entry point for the DuckDB to CSV scoring script.",
+        "children": []
+      }
+    ]
+  },
+  {
+    "name": "ra_calculators.aca_risk_score_calculator.member_processing",
+    "type": "module",
+    "children": [
+      {
+        "name": "coerce_str_list",
+        "type": "function",
+        "doc": "Coerce a value (list, tuple, or single item) into a list of strings.",
+        "children": []
+      },
+      {
+        "name": "normalize_gender",
+        "type": "function",
+        "doc": "Normalize gender to 'M' or 'F', or return None if invalid.",
+        "children": []
+      },
+      {
+        "name": "rows_to_member_inputs",
+        "type": "function",
+        "doc": "Convert raw database rows into MemberInput objects with validation.",
+        "children": []
+      }
+    ]
+  },
+  {
+    "name": "ra_dagster.cli",
+    "type": "module",
+    "children": [
+      {
+        "name": "db_bootstrap",
+        "type": "function",
+        "doc": "Create core Prism schemas + tables in DuckDB.",
+        "children": []
+      }
+    ]
+  },
+  {
+    "name": "ra_dagster.resources.duckdb_resource",
+    "type": "module",
+    "children": [
+      {
+        "name": "DuckDBConnection",
+        "type": "class",
+        "doc": "No description provided.",
+        "children": [
+          {
+            "name": "connect",
+            "type": "function",
+            "doc": "Establish a connection to the DuckDB database.",
+            "children": []
+          }
+        ]
+      },
+      {
+        "name": "DuckDBResource",
+        "type": "class",
+        "doc": "Dagster resource for connecting to the Prism DuckDB warehouse.",
+        "children": [
+          {
+            "name": "get_connection",
+            "type": "function",
+            "doc": "Get a DuckDB connection from the resource.",
+            "children": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "ra_dagster.assets.scoring",
+    "type": "module",
+    "children": [
+      {
+        "name": "InvalidGenderOption",
+        "type": "class",
+        "doc": "No description provided.",
+        "children": []
+      },
+      {
+        "name": "GenderOption",
+        "type": "class",
+        "doc": "No description provided.",
+        "children": []
+      },
+      {
+        "name": "ScoringConfig",
+        "type": "class",
+        "doc": "No description provided.",
+        "children": []
+      },
+      {
+        "name": "_validate_relation_name",
+        "type": "function",
+        "doc": "Allow only simple identifiers like schema.table (or db.schema.table).",
+        "children": []
+      },
+      {
+        "name": "_relation_exists",
+        "type": "function",
+        "doc": "Check if a relation (table or view) exists in the database.",
+        "children": []
+      },
+      {
+        "name": "_resolve_relation",
+        "type": "function",
+        "doc": "Resolve a relation name against DuckDB, handling common dbt/DuckDB prefixing.",
+        "children": []
+      },
+      {
+        "name": "_maybe_build_member_input_view",
+        "type": "function",
+        "doc": "Return the relation to read member inputs from.",
+        "children": []
+      },
+      {
+        "name": "score_members_aca",
+        "type": "function",
+        "doc": "Score members using the ACA HHS-HCC calculator and write to main_runs.risk_scores.",
+        "children": [
+          {
+            "name": "flush_batch",
+            "type": "function",
+            "doc": "Flush a batch of scored members to the database.",
+            "children": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "ra_dagster.assets.comparison",
+    "type": "module",
+    "children": [
+      {
+        "name": "compare_runs",
+        "type": "function",
+        "doc": "Compute member-level deltas between two scoring runs into main_analytics.run_comparison.",
+        "children": []
+      }
+    ]
+  },
+  {
+    "name": "ra_dagster.assets.decomposition",
+    "type": "module",
+    "children": [
+      {
+        "name": "decompose_runs",
+        "type": "function",
+        "doc": "Compute an N-way decomposition of risk score changes using member-level deltas.",
+        "children": [
+          {
+            "name": "calculate_impact",
+            "type": "function",
+            "doc": "Calculate the impact of a specific driver on the risk score.",
+            "children": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "ra_dagster.assets.visualizations",
+    "type": "module",
+    "children": [
+      {
+        "name": "scoring_visualizations",
+        "type": "function",
+        "doc": "Generate visualizations for recent scoring runs.",
+        "children": []
+      },
+      {
+        "name": "comparison_visualizations",
+        "type": "function",
+        "doc": "Generate visualizations for recent comparison runs.",
+        "children": []
+      },
+      {
+        "name": "decomposition_visualizations",
+        "type": "function",
+        "doc": "Generate visualizations for recent decomposition runs.",
+        "children": []
+      },
+      {
+        "name": "lag_trend_visualizations",
+        "type": "function",
+        "doc": "Generate year-over-year trend lines for lag analysis.",
+        "children": []
+      }
+    ]
+  },
+  {
+    "name": "ra_dagster.assets.dashboard",
+    "type": "module",
+    "children": [
+      {
+        "name": "DashboardConfig",
+        "type": "class",
+        "doc": "No description provided.",
+        "children": []
+      },
+      {
+        "name": "dashboard_metrics",
+        "type": "function",
+        "doc": "Calculate population metrics for a specific run.",
+        "children": []
+      },
+      {
+        "name": "dashboard_html",
+        "type": "function",
+        "doc": "Generate an HTML dashboard from the calculated metrics.",
+        "children": []
+      }
+    ]
+  },
+  {
+    "name": "ra_dagster.db.run_registry",
+    "type": "module",
+    "children": [
+      {
+        "name": "RunRecord",
+        "type": "class",
+        "doc": "No description provided.",
+        "children": []
+      },
+      {
+        "name": "allocate_group_id",
+        "type": "function",
+        "doc": "Allocate a new group ID for a set of runs.",
+        "children": []
+      },
+      {
+        "name": "insert_run",
+        "type": "function",
+        "doc": "Insert a new run record into the registry.",
+        "children": []
+      },
+      {
+        "name": "update_run_status",
+        "type": "function",
+        "doc": "Update the status of an existing run.",
+        "children": []
+      }
+    ]
+  },
+  {
+    "name": "ra_dagster.utils.run_ids",
+    "type": "module",
+    "children": [
+      {
+        "name": "generate_run_id",
+        "type": "function",
+        "doc": "Generate a unique ID for a run.",
+        "children": []
+      },
+      {
+        "name": "generate_run_timestamp",
+        "type": "function",
+        "doc": "Return YYYYMMDDHHMMSSUUUU where UUUU is 1/10,000th of a second.",
+        "children": []
+      },
+      {
+        "name": "GitProvenance",
+        "type": "class",
+        "doc": "No description provided.",
+        "children": []
+      },
+      {
+        "name": "get_git_provenance",
+        "type": "function",
+        "doc": "Return current git commit + whether the working tree is clean.",
+        "children": [
+          {
+            "name": "_run_git",
+            "type": "function",
+            "doc": "Run a git command and return the output.",
+            "children": []
+          }
+        ]
+      },
+      {
+        "name": "json_dumps",
+        "type": "function",
+        "doc": "Dump an object to a JSON string with custom serialization.",
+        "children": []
+      },
+      {
+        "name": "extract_launchpad_config",
+        "type": "function",
+        "doc": "Best-effort extraction of the Dagster Launchpad run config.",
+        "children": [
+          {
+            "name": "_safe_getattr",
+            "type": "function",
+            "doc": "Safely get an attribute from an object.",
+            "children": []
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "ra_dagster.automated_execution.launch_analyses",
+    "type": "module",
+    "children": [
+      {
+        "name": "launch_run",
+        "type": "function",
+        "doc": "Launches a Dagster run via CLI.",
+        "children": []
+      },
+      {
+        "name": "run_batch",
+        "type": "function",
+        "doc": "Runs all YAML configs in a specific subfolder.",
+        "children": []
+      }
+    ]
+  }
+]

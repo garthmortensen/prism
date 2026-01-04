@@ -6,6 +6,7 @@ import duckdb
 
 
 def _risk_scores_details_components_last(con: duckdb.DuckDBPyConnection) -> bool:
+    """Get the schema for the risk_scores table with details and components at the end."""
     rows = con.execute("PRAGMA table_info('main_runs.risk_scores')").fetchall()
     # PRAGMA table_info returns: (cid, name, type, notnull, dflt_value, pk)
     cols = [r[1] for r in rows]
@@ -15,6 +16,7 @@ def _risk_scores_details_components_last(con: duckdb.DuckDBPyConnection) -> bool
 
 
 def _recreate_risk_scores_with_details_components_last(con: duckdb.DuckDBPyConnection) -> None:
+    """Recreate the risk_scores table with the updated schema."""
     # Keep this migration narrow: only reorder when details/components aren't last.
     if _risk_scores_details_components_last(con):
         return
@@ -87,14 +89,14 @@ def _recreate_risk_scores_with_details_components_last(con: duckdb.DuckDBPyConne
         con.execute("ROLLBACK")
         raise
 
-
 def ensure_core_schemas(con: duckdb.DuckDBPyConnection) -> None:
+    """Ensure that the core schemas exist in the database."""
     con.execute("CREATE SCHEMA IF NOT EXISTS main_intermediate")
     con.execute("CREATE SCHEMA IF NOT EXISTS main_runs")
     con.execute("CREATE SCHEMA IF NOT EXISTS main_analytics")
 
-
 def ensure_run_registry(con: duckdb.DuckDBPyConnection) -> None:
+    """Ensure that the run_registry table exists."""
     con.execute(
         """
         CREATE TABLE IF NOT EXISTS main_runs.run_registry (
@@ -134,8 +136,8 @@ def ensure_run_registry(con: duckdb.DuckDBPyConnection) -> None:
         "(run_timestamp)"
     )
 
-
 def ensure_marts_tables(con: duckdb.DuckDBPyConnection) -> None:
+    """Ensure that the data marts tables exist."""
     con.execute(
         """
         CREATE TABLE IF NOT EXISTS main_runs.risk_scores (
@@ -238,13 +240,13 @@ def ensure_marts_tables(con: duckdb.DuckDBPyConnection) -> None:
         )
         """
     )
-
-
 def ensure_prism_warehouse(con: duckdb.DuckDBPyConnection) -> None:
+def ensure_prism_warehouse(con: duckdb.DuckDBPyConnection) -> None:
+    """Ensure that the entire Prism warehouse structure exists."""
     ensure_core_schemas(con)
     ensure_run_registry(con)
     ensure_marts_tables(con)
-
-
+    """Get the current UTC timestamp."""
 def now_utc() -> datetime:
+    """Get the current UTC timestamp."""
     return datetime.utcnow()

@@ -6,6 +6,7 @@ import polars as pl
 
 
 def generate_scenarios():
+    """Generate a comprehensive set of test scenarios for risk scoring."""
     # Base path for tables
     tables_dir = Path(__file__).parent / "diy_tables/cy2024_diy_tables"
 

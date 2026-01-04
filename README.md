@@ -23,7 +23,8 @@ Prism solves this with:
 *   **"Glass box" transparency**: All logic is defined in **Python** + **SQL**, and entirely **Git** version-controlled.
 *   **Reproducibility**: Every run is logged with a unique ID.
 *   **Advanced analytics**: Automatically diffs runs to pinpoint changes and decomposes them into drivers like "Population Mix" or "Model Changes".
-*   **3-Part stack**: Uses **Python**, **dbt** for SQL transformations, and **Dagster** for job orchestration.
+*   **3-Part stack**: Uses **Python**, **dbt** for SQL transformations, and **Dagster** for job orchestration, leveraging best-in-class open-source tech.
+*  **Desirability:** Attracts high-value analysts who seek modern data engineering over legacy languages and tools. Python and SQL are all top-ranked technologies according to the [2024 Stack Overflow Developer Survey](https://survey.stackoverflow.co/2024/technology#admired-and-desired) and [TIOBE Index](https://www.tiobe.com/tiobe-index/).
 
 <details>
 <summary><strong>Deep Dive: Core Components & Developer Interface</strong></summary>

@@ -2,5 +2,5 @@
 
 
 def test_placeholder():
-    """Remove this once real tests exist."""
+    """Placeholder test to ensure the test suite runs."""
     assert True

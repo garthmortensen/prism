@@ -134,6 +134,7 @@ def decompose_runs(context, duckdb: DuckDBResource) -> None:
         batch_id = context.run_id
 
         def calculate_impact(run_a, run_b, mode):
+            """Calculate the impact of a specific driver on the risk score."""
             # mode: intersection, baseline_population, scenario_population
 
             agg_func = "AVG"

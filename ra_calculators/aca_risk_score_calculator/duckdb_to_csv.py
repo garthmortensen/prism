@@ -15,10 +15,12 @@ from ra_calculators.aca_risk_score_calculator.member_processing import rows_to_m
 
 
 def _get_repo_root() -> Path:
+    """Get the root directory of the repository."""
     return Path(__file__).resolve().parents[2]
 
 
 def _default_duckdb_path() -> str:
+    """Get the default path to the DuckDB database."""
     env_path = os.environ.get("DUCKDB_PATH")
     if env_path:
         return env_path
@@ -157,6 +159,7 @@ def score_from_duckdb_to_csv(
 
 
 def _build_arg_parser() -> argparse.ArgumentParser:
+    """Build the argument parser for the CLI."""
     p = argparse.ArgumentParser(
         prog="ra_calculators.aca_risk_score_calculator.duckdb_to_csv",
         description=(
@@ -217,6 +220,7 @@ def _build_arg_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Main entry point for the DuckDB to CSV scoring script."""
     args = _build_arg_parser().parse_args(argv)
 
     output_csv = args.output_csv
