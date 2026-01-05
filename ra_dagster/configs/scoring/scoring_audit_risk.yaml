@@ -12,6 +12,5 @@ ops:
       run_description: "Audit Risk (High Confidence Claims Only)"
 
 resources:
-  duckdb:
-    config:
-      path: /home/garth/garage/prism/risk_adjustment.duckdb
+  database:
+    config: "dev"

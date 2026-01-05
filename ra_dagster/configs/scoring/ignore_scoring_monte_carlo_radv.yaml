@@ -12,6 +12,5 @@ ops:
       run_description: "Monte Carlo RADV Simulation (N=50)"
 
 resources:
-  duckdb:
-    config:
-      path: /home/garth/garage/prism/risk_adjustment.duckdb
+  database:
+    config: "dev"

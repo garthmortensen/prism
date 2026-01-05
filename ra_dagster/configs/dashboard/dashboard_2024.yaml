@@ -5,6 +5,5 @@ ops:
       run_description: "ACA scoring run 2024"
 
 resources:
-  duckdb:
-    config:
-      path: /home/garth/garage/prism/risk_adjustment.duckdb
+  database:
+    config: "dev"

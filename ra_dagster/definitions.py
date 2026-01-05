@@ -1,10 +1,24 @@
+"""
+Module: definitions.py
+Description:
+    Dagster repository definition.
+    - Aggregates all assets, jobs, and resources.
+    - Loads default configurations from YAML files.
+    - Defines the top-level `Definitions` object for the Dagster daemon.
+
+Usage:
+    Loaded by Dagster to construct the execution graph.
+"""
 from pathlib import Path
 
 import yaml
-from dagster import Definitions, define_asset_job
+from dagster import Definitions, define_asset_job, AssetSelection
+from dagster_dbt import DbtCliResource
 
 from ra_dagster.assets.comparison import compare_runs
+from ra_dagster.assets.comparison_dashboard import comparison_dashboard_html, comparison_dashboard_metrics
 from ra_dagster.assets.dashboard import dashboard_html, dashboard_metrics
+from ra_dagster.assets.dbt_assets import dbt_analytics_assets, dbt_project
 from ra_dagster.assets.decomposition import decompose_runs
 from ra_dagster.assets.scoring import score_members_aca
 from ra_dagster.assets.visualizations import (
@@ -13,7 +27,7 @@ from ra_dagster.assets.visualizations import (
     lag_trend_visualizations,
     scoring_visualizations,
 )
-from ra_dagster.resources.duckdb_resource import DuckDBResource
+from ra_dagster.resources.sqlalchemy_resource import db_resource
 
 CONFIGS_DIR = Path(__file__).resolve().parent / "configs"
 
@@ -30,9 +44,12 @@ with open(CONFIGS_DIR / "scoring" / "scoring_example.yaml", encoding="utf-8") as
 with open(CONFIGS_DIR / "dashboard" / "dashboard_config.yaml", encoding="utf-8") as f:
     default_dashboard_config = yaml.safe_load(f)
 
+with open(CONFIGS_DIR / "comparison" / "comparison_dashboard_config.yaml", encoding="utf-8") as f:
+    default_comparison_dashboard_config = yaml.safe_load(f)
+
 scoring_job = define_asset_job(
     name="scoring_job",
-    selection=["score_members_aca", "scoring_visualizations"],
+    selection=AssetSelection.assets(score_members_aca, scoring_visualizations) | AssetSelection.assets(dbt_analytics_assets),
     description="""
     # ACA Risk Scoring Job
 
@@ -42,6 +59,7 @@ scoring_job = define_asset_job(
     1. Reads member data from `int_aca_risk_input`
     2. Applies HHS-HCC model logic
     3. Writes results to `main_runs.risk_scores`
+    4. Materializes dbt analytics marts
     """,
     tags={"team": "analytics", "priority": "high"},
     metadata={
@@ -117,6 +135,27 @@ dashboard_job = define_asset_job(
     config=default_dashboard_config,
 )
 
+comparison_dashboard_job = define_asset_job(
+    name="comparison_dashboard_job",
+    selection=["comparison_dashboard_metrics", "comparison_dashboard_html"],
+    description="""
+    # Comparison Dashboard Job
+
+    Calculates comparison metrics for a specific comparison batch and generates an HTML dashboard.
+
+    **Steps:**
+    1. Reads comparison data for `batch_id`
+    2. Computes aggregate metrics (Match Status, Score Diff)
+    3. Generates an HTML report
+    """,
+    tags={"team": "analytics", "priority": "medium"},
+    metadata={
+        "owner": "Garth Mortensen",
+        "docs": "https://github.com/garthmortensen/prism/ra_dagster",
+    },
+    config=default_comparison_dashboard_config,
+)
+
 
 definitions = Definitions(
     assets=[
@@ -129,9 +168,13 @@ definitions = Definitions(
         lag_trend_visualizations,
         dashboard_metrics,
         dashboard_html,
+        comparison_dashboard_metrics,
+        comparison_dashboard_html,
+        dbt_analytics_assets,
     ],
     resources={
-        "duckdb": DuckDBResource(),
+        "database": db_resource,
+        "dbt": DbtCliResource(project_dir=dbt_project),
     },
-    jobs=[scoring_job, comparison_job, decomposition_job, dashboard_job],
+    jobs=[scoring_job, comparison_job, decomposition_job, dashboard_job, comparison_dashboard_job],
 )

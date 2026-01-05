@@ -1,12 +1,25 @@
+"""
+Asset: scoring.py
+Description:
+    Core risk adjustment calculation logic.
+    - Resolves input views (claims, enrollment, members).
+    - Normalizes data into a standard input format.
+    - Executes the HHS-HCC risk model (via `ra_calculators`).
+    - Writes detailed results to `main_runs.risk_scores`.
+
+Usage:
+    Executed via the `scoring_job` in Dagster.
+"""
 import json
 import re
 from enum import Enum
 from pathlib import Path
 from typing import Any
 
-import duckdb
 import polars as pl
-from dagster import AssetExecutionContext, Config, asset
+from dagster import AssetExecutionContext, Config, asset, ResourceParam
+from sqlalchemy import text
+from sqlalchemy.engine import Connection
 
 from ra_calculators.aca_risk_score_calculator import ACACalculator
 from ra_calculators.aca_risk_score_calculator.member_processing import rows_to_member_inputs
@@ -17,7 +30,7 @@ from ra_dagster.db.run_registry import (
     insert_run,
     update_run_status,
 )
-from ra_dagster.resources.duckdb_resource import DuckDBResource
+from ra_dagster.resources.sqlalchemy_resource import SqlAlchemyResource
 from ra_dagster.utils.run_ids import (
     extract_launchpad_config,
     generate_run_timestamp,
@@ -82,45 +95,45 @@ def _validate_relation_name(relation: str) -> str:
     return relation
 
 
-def _relation_exists(con: duckdb.DuckDBPyConnection, relation: str) -> bool:
+def _relation_exists(con: Connection, relation: str) -> bool:
     """Check if a relation (table or view) exists in the database."""
     parts = relation.split(".")
     if len(parts) == 1:
         (table,) = parts
         row = con.execute(
-            """
+            text("""
             SELECT 1
             FROM information_schema.tables
-            WHERE table_name = ?
+            WHERE table_name = :table
             LIMIT 1
-            """,
-            [table],
+            """),
+            {"table": table},
         ).fetchone()
         return row is not None
 
     if len(parts) == 2:
         schema, table = parts
         row = con.execute(
-            """
+            text("""
             SELECT 1
             FROM information_schema.tables
-            WHERE table_schema = ?
-              AND table_name = ?
+            WHERE table_schema = :schema
+              AND table_name = :table
             LIMIT 1
-            """,
-            [schema, table],
+            """),
+            {"schema": schema, "table": table},
         ).fetchone()
         return row is not None
 
     # For db.schema.table (or similar), try existence via a cheap query.
     try:
-        con.execute(f"SELECT 1 FROM {relation} LIMIT 0")
+        con.execute(text(f"SELECT 1 FROM {relation} LIMIT 0"))
         return True
     except Exception:
         return False
 
 
-def _resolve_relation(con: duckdb.DuckDBPyConnection, relation: str) -> str:
+def _resolve_relation(con: Connection, relation: str) -> str:
     """Resolve a relation name against DuckDB, handling common dbt/DuckDB prefixing.
 
     DuckDB + dbt sometimes materialize a configured schema like `main_raw` as
@@ -155,26 +168,26 @@ def _resolve_relation(con: duckdb.DuckDBPyConnection, relation: str) -> str:
 
         # As a last resort, try to locate it by table name.
         rows = con.execute(
-            """
+            text("""
             SELECT table_schema
             FROM information_schema.tables
-            WHERE table_name = ?
+            WHERE table_name = :table
             ORDER BY table_schema
-            """,
-            [table],
+            """),
+            {"table": table},
         ).fetchall()
         if len(rows) == 1:
             return f"{rows[0][0]}.{table}"
 
     raise ValueError(
-        f"DuckDB relation not found: {relation!r}. "
+        f"Database relation not found: {relation!r}. "
         "Check that dbt has been run and that the schema/table name is correct."
     )
 
 
 def _maybe_build_member_input_view(
     *,
-    con: duckdb.DuckDBPyConnection,
+    con: Connection,
     claims_view: str | None,
     enrollments_view: str | None,
     members_view: str | None,
@@ -199,13 +212,13 @@ def _maybe_build_member_input_view(
     members_view = _resolve_relation(con, members_view)
 
     # Create temp aliases matching dbt seed names so the downstream SQL is identical.
-    con.execute(f"CREATE OR REPLACE TEMP VIEW raw_claims AS SELECT * FROM {claims_view}")
-    con.execute(f"CREATE OR REPLACE TEMP VIEW raw_enrollments AS SELECT * FROM {enrollments_view}")
-    con.execute(f"CREATE OR REPLACE TEMP VIEW raw_members AS SELECT * FROM {members_view}")
+    con.execute(text(f"CREATE OR REPLACE TEMP VIEW raw_claims AS SELECT * FROM {claims_view}"))
+    con.execute(text(f"CREATE OR REPLACE TEMP VIEW raw_enrollments AS SELECT * FROM {enrollments_view}"))
+    con.execute(text(f"CREATE OR REPLACE TEMP VIEW raw_members AS SELECT * FROM {members_view}"))
 
     # Mirror dbt models (staging -> intermediate -> int_aca_risk_input), but as TEMP views.
     con.execute(
-        """
+        text("""
         CREATE OR REPLACE TEMP VIEW stg_claims_dx AS
         WITH source AS (
             SELECT * FROM raw_claims
@@ -218,11 +231,11 @@ def _maybe_build_member_input_view(
         FROM source
         WHERE diagnosis_code IS NOT NULL
           AND claim_type != 'RX'
-        """
+        """)
     )
 
     con.execute(
-        """
+        text("""
         CREATE OR REPLACE TEMP VIEW stg_claims_rx AS
         WITH source AS (
             SELECT * FROM raw_claims
@@ -234,11 +247,11 @@ def _maybe_build_member_input_view(
             drug AS ndc_code
         FROM source
         WHERE claim_type = 'RX'
-        """
+        """)
     )
 
     con.execute(
-        """
+        text("""
         CREATE OR REPLACE TEMP VIEW stg_enrollment AS
         WITH enrollments AS (
             SELECT * FROM raw_enrollments
@@ -248,99 +261,62 @@ def _maybe_build_member_input_view(
         )
         SELECT
             e.member_id,
-            CAST(e.start_date AS DATE) AS start_date,
-            CAST(e.end_date AS DATE) AS end_date,
             m.gender,
-            LOWER(m.plan_metal) AS metal_level,
-            CAST(m.dob AS DATE) AS date_of_birth
+            m.dob,
+            e.start_date,
+            e.end_date,
+            m.plan_metal AS metal_level,
+            m.enrollment_length_continuous AS enrollment_months
         FROM enrollments e
         LEFT JOIN members m ON e.member_id = m.member_id
-        """
+        """)
     )
 
     con.execute(
-        """
-        CREATE OR REPLACE TEMP VIEW int_member_months AS
+        text("""
+        CREATE OR REPLACE TEMP VIEW int_aca_risk_input AS
         WITH enrollment AS (
             SELECT * FROM stg_enrollment
-        )
-        SELECT
-            member_id,
-            LEAST(
-                12, GREATEST(1, DATE_DIFF('month', start_date, end_date) + 1)
-            ) AS enrollment_months,
-            gender,
-            metal_level,
-            date_of_birth
-        FROM enrollment
-        """
-    )
-
-    con.execute(
-        """
-        CREATE OR REPLACE TEMP VIEW int_member_diagnoses AS
-        WITH diagnoses AS (
+        ),
+        claims_dx AS (
             SELECT * FROM stg_claims_dx
-        )
-        SELECT
-            member_id,
-            LIST(DISTINCT diagnosis_code) AS diagnosis_list
-        FROM diagnoses
-        GROUP BY member_id
-        """
-    )
-
-    con.execute(
-        """
-        CREATE OR REPLACE TEMP VIEW int_member_rx AS
-        WITH rx AS (
+        ),
+        claims_rx AS (
             SELECT * FROM stg_claims_rx
         )
         SELECT
-            member_id,
-            LIST(DISTINCT ndc_code) AS ndc_list
-        FROM rx
-        GROUP BY member_id
-        """
-    )
-
-    con.execute(
-        """
-        CREATE OR REPLACE TEMP VIEW int_aca_risk_input AS
-        WITH members AS (
-            SELECT * FROM int_member_months
-        ),
-        diagnoses AS (
-            SELECT * FROM int_member_diagnoses
-        ),
-        rx AS (
-            SELECT * FROM int_member_rx
-        )
-        SELECT
-            m.member_id,
-            m.enrollment_months,
-            m.gender,
-            m.metal_level,
-            m.date_of_birth,
-            COALESCE(d.diagnosis_list, []) AS diagnoses,
-            COALESCE(r.ndc_list, []) AS ndc_codes
-        FROM members m
-        LEFT JOIN diagnoses d ON m.member_id = d.member_id
-        LEFT JOIN rx r ON m.member_id = r.member_id
-        """
+            e.member_id,
+            e.gender,
+            e.dob,
+            e.start_date,
+            e.end_date,
+            e.metal_level,
+            e.enrollment_months,
+            dx.diagnosis_code AS diagnoses,
+            dx.service_date AS diagnosis_service_date,
+            rx.ndc_code AS ndc_codes,
+            rx.fill_date AS rx_fill_date
+        FROM enrollment e
+        LEFT JOIN claims_dx dx ON e.member_id = dx.member_id
+        LEFT JOIN claims_rx rx ON e.member_id = rx.member_id
+        """)
     )
 
     return "int_aca_risk_input"
 
 
+
+
+
 @asset
 def score_members_aca(
-    context: AssetExecutionContext, config: ScoringConfig, duckdb: DuckDBResource
+    context: AssetExecutionContext, config: ScoringConfig, database: ResourceParam[SqlAlchemyResource]
 ) -> None:
     """Score members using the ACA HHS-HCC calculator and write to main_runs.risk_scores."""
 
-    context.log.info(f"Connecting to DuckDB at: {duckdb.path}")
-    con = duckdb.get_connection().connect()
+    engine = database.get_engine()
+    context.log.info(f"Connecting to database: {engine.url}")
+    con = engine.connect()
 
     ensure_prism_warehouse(con)
 
@@ -442,17 +418,19 @@ def score_members_aca(
         calculator = ACACalculator(model_year=str(diy_model_year))
 
         rows = con.execute(
-            f"""
+            text(f"""
             SELECT
                 member_id,
-                date_of_birth,
-                gender,
-                metal_level,
-                enrollment_months,
-                diagnoses,
-                ndc_codes
+                ANY_VALUE(dob) AS date_of_birth,
+                ANY_VALUE(gender) AS gender,
+                ANY_VALUE(metal_level) AS metal_level,
+                ANY_VALUE(enrollment_months) AS enrollment_months,
+                LIST(DISTINCT diagnoses) AS diagnoses,
+                LIST(DISTINCT ndc_codes) AS ndc_codes
             FROM {input_relation}
-            """
+            GROUP BY member_id
+            ORDER BY member_id
+            """)
         ).fetchall()
 
         invalid_gender = config.invalid_gender.value
@@ -479,6 +457,12 @@ def score_members_aca(
         # This is significantly more I/O intensive than the CSV export which only writes summary
         # scores.
         # We use Polars for bulk insertion to minimize overhead.
+
+        # Clean up any existing data for this run_id (e.g. from a retry)
+        con.execute(
+            text("DELETE FROM main_runs.risk_scores WHERE run_id = :run_id"),
+            {"run_id": run_id}
+        )
 
         batch_size = 10000
         out_rows: list[dict[str, Any]] = []
@@ -514,13 +498,13 @@ def score_members_aca(
             if not rows:
                 return
             df = pl.DataFrame(rows).select(db_columns)
-            con.register("df_view", df)
-            cols_sql = ", ".join(db_columns)
-            con.execute(
-                f"INSERT OR REPLACE INTO main_runs.risk_scores ({cols_sql}) "
-                f"SELECT {cols_sql} FROM df_view"
+            df.to_pandas().to_sql(
+                "risk_scores",
+                con=con,
+                schema="main_runs",
+                if_exists="append",
+                index=False,
             )
-            con.unregister("df_view")
 
         for member in members:
             score = calculator.score(

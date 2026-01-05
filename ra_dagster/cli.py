@@ -1,3 +1,13 @@
+"""
+Module: cli.py
+Description:
+    Command-line interface for the Prism application.
+    - Exposes database management utilities (bootstrap).
+    - Entry point for ad-hoc administrative tasks.
+
+Usage:
+    Run via `prism` or `python -m ra_dagster.cli`.
+"""
 from __future__ import annotations
 
 from pathlib import Path
@@ -5,32 +15,29 @@ from pathlib import Path
 import typer
 
 from ra_dagster.db.bootstrap import ensure_prism_warehouse
-from ra_dagster.resources.duckdb_resource import DuckDBResource
+from ra_dagster.resources.sqlalchemy_resource import SqlAlchemyResource
 
 app = typer.Typer(no_args_is_help=True, help="Prism CLI - Database and orchestration utilities")
-
-DEFAULT_DUCKDB_PATH = str(
-    (Path(__file__).resolve().parents[2] / "risk_adjustment.duckdb").resolve()
-)
 
 
 @app.command(name="db-bootstrap")
 def db_bootstrap(
-    duckdb_path: str = typer.Option(DEFAULT_DUCKDB_PATH, "--duckdb-path"),
+    database: str = typer.Option("dev", "--database", "-d", help="Database environment: dev or prod"),
 ) -> None:
-    """Create core Prism schemas + tables in DuckDB.
+    """Create core Prism schemas + tables.
 
     Creates: `main_intermediate`, `main_runs`, `main_analytics`.
     """
 
-    res = DuckDBResource(path=duckdb_path)
-    con = res.get_connection().connect()
+    res = SqlAlchemyResource(database=database)
+    engine = res.get_engine()
+    con = engine.connect()
     try:
         ensure_prism_warehouse(con)
     finally:
         con.close()
 
-    typer.echo(f"Bootstrapped warehouse at {Path(duckdb_path).resolve()}")
+    typer.echo(f"Bootstrapped warehouse for environment: {database}")
 
 
 if __name__ == "__main__":

@@ -11,6 +11,9 @@ dependencies = [
     "dagster-webserver",
     "dbt-duckdb",
     "duckdb",
+    "duckdb-engine",
+    "snowflake-sqlalchemy",
+    "sqlalchemy",
     "graphviz>=0.21",
     "hccpy",
     "httpx",
@@ -27,6 +30,7 @@ dependencies = [
     "sqlalchemy>=2.0.45",
     "tabulate",
     "typer",
+    "plotly>=6.5.0",
 ]
 
 [project.optional-dependencies]

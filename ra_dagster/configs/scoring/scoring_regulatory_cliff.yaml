@@ -12,6 +12,5 @@ ops:
       run_description: "Regulatory Cliff (2024 Data on 2023 Model)"
 
 resources:
-  duckdb:
-    config:
-      path: /home/garth/garage/prism/risk_adjustment.duckdb
+  database:
+    config: "dev"
