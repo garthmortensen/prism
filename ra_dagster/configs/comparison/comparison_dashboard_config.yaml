@@ -1,0 +1,9 @@
+resources:
+  database:
+    config: "dev"
+
+ops:
+  comparison_dashboard_metrics:
+    config:
+      batch_id: "REPLACE_WITH_BATCH_ID"
+      description: "Comparison Analysis"

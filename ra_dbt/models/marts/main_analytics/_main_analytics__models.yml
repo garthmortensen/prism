@@ -1,0 +1,137 @@
+version: 2
+
+models:
+  - name: run_score_summary
+    description: Run-level summary metrics (1 row per run). Aggregates risk scores and component scores across the entire population for a given run.
+    columns:
+      - name: run_id
+        description: Unique identifier for the scoring run.
+        tests:
+          - unique
+          - not_null
+      - name: member_count
+        description: Total number of members scored in this run.
+      - name: avg_score
+        description: Average total risk score across all members.
+      - name: min_score
+        description: Minimum total risk score observed.
+      - name: max_score
+        description: Maximum total risk score observed.
+      - name: p50
+        description: Median (50th percentile) total risk score.
+      - name: p90
+        description: 90th percentile total risk score.
+      - name: p99
+        description: 99th percentile total risk score.
+      - name: avg_age
+        description: Average age of members in the run.
+      - name: avg_hcc_score
+        description: Average score contribution from HCCs (Hierarchical Condition Categories).
+      - name: min_hcc_score
+        description: Minimum HCC score contribution.
+      - name: max_hcc_score
+        description: Maximum HCC score contribution.
+      - name: std_dev_hcc_score
+        description: Standard deviation of HCC score contributions.
+      - name: avg_rxc_score
+        description: Average score contribution from RxCs (Prescription Drug Categories).
+      - name: min_rxc_score
+        description: Minimum RxC score contribution.
+      - name: max_rxc_score
+        description: Maximum RxC score contribution.
+      - name: std_dev_rxc_score
+        description: Standard deviation of RxC score contributions.
+      - name: avg_demographic_score
+        description: Average score contribution from demographic factors (age, gender).
+      - name: min_demographic_score
+        description: Minimum demographic score contribution.
+      - name: max_demographic_score
+        description: Maximum demographic score contribution.
+      - name: std_dev_demographic_score
+        description: Standard deviation of demographic score contributions.
+
+  - name: run_score_distribution
+    description: Run distribution binned by score. Used to visualize the shape of the risk score distribution (e.g., histograms).
+    columns:
+      - name: run_id
+        description: Unique identifier for the scoring run.
+      - name: score_bucket
+        description: Risk score bucket (floored to nearest 0.1).
+      - name: member_count
+        description: Number of members in this score bucket.
+      - name: pct_members
+        description: Percentage of total members in this run falling into this bucket.
+      - name: avg_score
+        description: Average total risk score for members in this bucket.
+      - name: min_score
+        description: Minimum total risk score in this bucket.
+      - name: max_score
+        description: Maximum total risk score in this bucket.
+      - name: avg_hcc_score
+        description: Average HCC score for members in this bucket.
+      - name: avg_rxc_score
+        description: Average RxC score for members in this bucket.
+      - name: avg_demographic_score
+        description: Average demographic score for members in this bucket.
+
+  - name: run_score_by_dim
+    description: Run metrics broken down by various dimensions (model, gender, metal_level, enrollment_months, age_band). Useful for identifying segments driving risk.
+    columns:
+      - name: run_id
+        description: Unique identifier for the scoring run.
+      - name: dimension_name
+        description: Name of the dimension being aggregated (e.g., 'gender', 'age_band').
+      - name: dimension_value
+        description: Value of the dimension (e.g., 'M', '65+').
+      - name: member_count
+        description: Number of members in this segment.
+      - name: avg_score
+        description: Average total risk score for this segment.
+      - name: min_score
+        description: Minimum total risk score for this segment.
+      - name: max_score
+        description: Maximum total risk score for this segment.
+      - name: p50
+        description: Median total risk score for this segment.
+      - name: p90
+        description: 90th percentile total risk score for this segment.
+      - name: p99
+        description: 99th percentile total risk score for this segment.
+      - name: avg_hcc_score
+        description: Average HCC score for this segment.
+      - name: avg_rxc_score
+        description: Average RxC score for this segment.
+      - name: avg_demographic_score
+        description: Average demographic score for this segment.
+
+  - name: run_hcc_summary
+    description: Top driver summaries for HCCs. Aggregates prevalence and score contribution for each HCC code.
+    columns:
+      - name: run_id
+        description: Unique identifier for the scoring run.
+      - name: hcc_code
+        description: The HCC code (e.g., 'HCC001').
+      - name: member_count
+        description: Number of members with this HCC.
+      - name: prevalence
+        description: Percentage of the total population with this HCC.
+      - name: avg_score_contribution
+        description: Average score contribution of this HCC (coefficient).
+      - name: total_score_contribution
+        description: Total score contribution from this HCC across all members (sum of coefficients).
+
+  - name: run_rxc_summary
+    description: Top driver summaries for RxCs. Aggregates prevalence and score contribution for each RxC code.
+    columns:
+      - name: run_id
+        description: Unique identifier for the scoring run.
+      - name: rxc_code
+        description: The RxC code (e.g., 'RXC001').
+      - name: member_count
+        description: Number of members with this RxC.
+      - name: prevalence
+        description: Percentage of the total population with this RxC.
+      - name: avg_score_contribution
+        description: Average score contribution of this RxC (coefficient).
+      - name: total_score_contribution
+        description: Total score contribution from this RxC across all members (sum of coefficients).
