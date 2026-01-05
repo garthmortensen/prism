@@ -10,7 +10,9 @@ This iteration will add a new epic feature called "Agent" to the project.
 
 - Implement the Agent feature using Lang Chain and OpenAI SDK.
 
-- @function_tool will be utilized to define and manage functions within the Agent.
+- LangChain tools (e.g., `@tool`) will be utilized to define and manage functions within the Agent.
+
+- database interactions should use sqlalchemy, with recognition that duckdb and snowflake may be interchanged.
 
 - Ensure seamless integration with existing project components.
 
@@ -22,7 +24,7 @@ The Agent feature will follow a loop architecture to facilitate continuous inter
 
 1. Input Processing: The Agent will receive input from users or other system components.
 
-2. Function Execution: Based on the input, the Agent will determine which functions to execute using @function_tool.
+2. Function Execution: Based on the input, the Agent will determine which functions to execute using LangChain tools.
 
 3. Output Generation: The Agent will generate output based on the results of the function executions.
 
@@ -34,3 +36,25 @@ The Agent feature will follow a loop architecture to facilitate continuous inter
 
 ## Implementation Steps
 
+Create ra_agent/ module structure with agent.py (main loop), tools/ subpackage, prompts/, and Pydantic models for iteration tracking in a new ra_agent/ directory following patterns in ra_calculators.
+
+Define core tools by wrapping existing functions with LangChain tools (`@tool`):
+
+Scoring: wrap ACACalculator.score() and score_members_aca
+Query: create new DuckDB query tools using DuckDBResource patterns
+Analysis: wrap compare_runs and decompose_runs
+Implement agent loop in ra_agent/agent.py using LangChain's AgentExecutor with OpenAI backend, following the Input → Function Execution → Output → Feedback → Archive cycle from feature_agent.md.
+
+Create iteration archive system extending RunRecord pattern with new main_agent.iterations table storing hypothesis, experiment config, analysis results, and parent run_id linkage.
+
+Add CLI commands to cli.py using Typer: prism agent chat (interactive), prism agent run --hypothesis "..." (single iteration), and update Makefile accordingly.
+
+Configure environment by adding OpenAI API key handling to existing patterns and creating system prompt template in ra_agent/prompts/system_prompt.txt.
+
+### Further Considerations
+
+LangChain vs OpenAI Agents SDK? For this project, prefer LangChain/LangGraph for the agent loop and tool definitions (`@tool`). Use OpenAI models via `langchain-openai`.
+
+Async execution model? Per guidelines, agent tools should be async—should blocking Dagster jobs be dispatched via background tasks or run synchronously with progress streaming?
+
+Archive storage location? Options: (A) DuckDB table main_agent.iterations, (B) JSON files in compute_logs alongside existing run logs, (C) Both for redundancy—recommend Option A for queryability.

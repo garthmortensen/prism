@@ -2028,6 +2028,7 @@ dependencies = [
     { name = "pydantic" },
     { name = "pyyaml" },
     { name = "rich" },
+    { name = "sqlalchemy" },
     { name = "tabulate" },
     { name = "typer" },
 ]
@@ -2063,6 +2064,7 @@ requires-dist = [
     { name = "pyyaml" },
     { name = "rich" },
     { name = "ruff", marker = "extra == 'dev'" },
+    { name = "sqlalchemy", specifier = ">=2.0.45" },
     { name = "tabulate" },
     { name = "typer" },
 ]

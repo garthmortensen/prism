@@ -8,10 +8,10 @@ It
 ## Tools & Extension Guidelines
 Adding a tool:
 1. Define an `async` function with clear docstring (first sentence = one-line description).
-2. Decorate with `@function_tool` (OpenAI Agents SDK auto‑generates JSON schema from type hints).
-3. Accept simple primitives; for complex lists (filters) pass JSON-encoded string, parse internally.
-4. Return JSON‑serializable result (stringified dict is fine) including context (row count, dimensions used).
-5. Log: start, key parameters, row count, elapsed time, errors.
+1. Prefer LangChain tools (`@tool`) for agent-callable functions.
+2. Accept simple primitives; for complex lists (filters) pass JSON-encoded string, parse internally.
+3. Return JSON‑serializable result (stringified dict is fine) including context (row count, dimensions used).
+4. Log: start, key parameters, row count, elapsed time, errors.
 Avoid: heavy blocking operations without pagination; silent failures; printing instead of repo logger.
 
 ## Data Access Conventions

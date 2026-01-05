@@ -15,6 +15,8 @@ dependencies = [
     "hccpy",
     "httpx",
     "langchain>=1.2.0",
+    "langchain-openai",
+    "langgraph",
     "openai>=2.14.0",
     "pandas",
     "polars",
@@ -22,6 +24,7 @@ dependencies = [
     "pydantic>=2.0",
     "pyyaml",
     "rich",
+    "sqlalchemy>=2.0.45",
     "tabulate",
     "typer",
 ]
