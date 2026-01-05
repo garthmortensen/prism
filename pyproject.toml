@@ -26,6 +26,7 @@ dependencies = [
     "tabulate",
     "typer",
     "plotly>=6.5.0",
+    "base32-crockford",
 ]
 
 [project.optional-dependencies]

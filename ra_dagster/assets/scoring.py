@@ -27,9 +27,11 @@ from ra_dagster.db.bootstrap import ensure_prism_warehouse, now_utc
 from ra_dagster.db.run_registry import (
     RunRecord,
     allocate_group_id,
+    allocate_run_seq,
     insert_run,
     update_run_status,
 )
+from ra_dagster.utils.human_ids import generate_human_id
 from ra_dagster.resources.sqlalchemy_resource import SqlAlchemyResource
 from ra_dagster.utils.run_ids import (
     extract_launchpad_config,
@@ -379,10 +381,21 @@ def score_members_aca(
     if group_id is None:
         group_id = allocate_group_id(con)
 
+    run_seq = allocate_run_seq(con)
+    run_code = generate_human_id(run_seq, width=4, prefix="s")
+    group_code = (
+        generate_human_id(int(group_id), width=4, prefix="b")
+        if group_id is not None
+        else None
+    )
+
     record = RunRecord(
         run_id=run_id,
+        run_seq=run_seq,
+        run_code=run_code,
         run_timestamp=run_ts,
         group_id=int(group_id),
+        group_code=group_code,
         group_description=config.group_description,
         run_description=config.run_description,
         analysis_type="scoring",

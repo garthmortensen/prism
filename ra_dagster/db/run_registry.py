@@ -26,8 +26,11 @@ from ra_dagster.utils.run_ids import GitProvenance, json_dumps
 @dataclass(frozen=True)
 class RunRecord:
     run_id: str
+    run_seq: int
+    run_code: str
     run_timestamp: str
     group_id: int | None
+    group_code: str | None
     group_description: str | None
     run_description: str | None
     analysis_type: str
@@ -52,17 +55,34 @@ def allocate_group_id(con: Connection) -> int:
     return int(row[0])
 
 
+def allocate_run_seq(con: Connection) -> int:
+    """Allocate a new run sequence number."""
+    try:
+        # Try using the sequence first (DuckDB)
+        row = con.execute(text("SELECT nextval('main_runs.run_id_seq')")).fetchone()
+        return int(row[0])
+    except Exception:
+        # Fallback if sequence doesn't exist or not supported
+        row = con.execute(
+            text("SELECT COALESCE(MAX(run_seq), 0) + 1 AS next_id FROM main_runs.run_registry")
+        ).fetchone()
+        return int(row[0])
+
+
 def insert_run(con: Connection, record: RunRecord) -> None:
     """Insert a new run record into the registry."""
     con.execute(
         text("""
         INSERT INTO main_runs.run_registry (
             run_id,
+            run_seq,
+            run_code,
             run_timestamp,
             status,
             analysis_type,
             run_description,
             group_id,
+            group_code,
             group_description,
             calculator,
             model_version,
@@ -79,11 +99,14 @@ def insert_run(con: Connection, record: RunRecord) -> None:
             blueprint_yml
         ) VALUES (
             :run_id,
+            :run_seq,
+            :run_code,
             :run_timestamp,
             :status,
             :analysis_type,
             :run_description,
             :group_id,
+            :group_code,
             :group_description,
             :calculator,
             :model_version,
@@ -102,11 +125,14 @@ def insert_run(con: Connection, record: RunRecord) -> None:
         """),
         {
             "run_id": record.run_id,
+            "run_seq": record.run_seq,
+            "run_code": record.run_code,
             "run_timestamp": record.run_timestamp,
             "status": record.status,
             "analysis_type": record.analysis_type,
             "run_description": record.run_description,
             "group_id": record.group_id,
+            "group_code": record.group_code,
             "group_description": record.group_description,
             "calculator": record.calculator,
             "model_version": record.model_version,

@@ -148,13 +148,20 @@ def ensure_core_schemas(con: Connection) -> None:
 
 def ensure_run_registry(con: Connection) -> None:
     """Ensure that the run_registry table exists."""
+    
+    if _is_duckdb(con):
+        con.execute(text("CREATE SEQUENCE IF NOT EXISTS main_runs.run_id_seq START 1"))
+
     metadata = MetaData(schema="main_runs")
     Table(
         "run_registry",
         metadata,
         Column("run_id", String, primary_key=True),
+        Column("run_seq", Integer),
+        Column("run_code", String),
         Column("run_timestamp", String),
         Column("group_id", Integer),
+        Column("group_code", String),
         Column("group_description", String),
         Column("run_description", String),
         Column("analysis_type", String),
