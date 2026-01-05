@@ -1,6 +1,6 @@
 # Agent Implementation Decisions
 
-## Decision: LangChain/LangGraph + OpenAI (No OpenAI Agents SDK)
+## Decision: LangChain/LangGraph + OpenAI
 
 Build the Agent feature with:
 
@@ -177,51 +177,6 @@ With Agent added:
 
 ---
 
-## Decision: SQLAlchemy For Database Portability (DuckDB in Dev, Snowflake in Prod)
-
-Agent tools should use **SQLAlchemy Core** for all database interactions so we can swap:
-
-- **DuckDB** locally (fast dev)
-- **Snowflake** in production
-
-### ELI5
-
-SQLAlchemy is a **universal adapter**:
-
-- our code talks to SQLAlchemy
-- SQLAlchemy talks to DuckDB or Snowflake
-
-That means we write a tool like “list recent runs” once.
-
-### What SQLAlchemy Handles Well
-
-- Connection management (`create_engine`)
-- Query building/compilation (and audit SQL output)
-- **Reflection / introspection** (so we can avoid hard-coding column names)
-
-### How We Choose DuckDB vs Snowflake
-
-Use `DATABASE_URL` in the environment (or a Dagster/YAML config that sets it).
-
-```bash
-# Dev (DuckDB)
-export DATABASE_URL='duckdb:///risk_adjustment.duckdb'
-
-# Prod (Snowflake)
-export DATABASE_URL='snowflake://<user>:<password>@<account>/<db>/<schema>?warehouse=<wh>&role=<role>'
-```
-
-### Dialect Packages (When We Implement The DB Layer)
-
-SQLAlchemy needs a dialect/driver for each backend:
-
-- DuckDB: typically `duckdb-engine`
-- Snowflake: typically `snowflake-sqlalchemy` (plus Snowflake connector)
-
-We’ll add these via `uv add` when wiring up the `ra_agent` database module.
-
----
-
 ## Decision: Tool Categories
 
 We'll create these tool groups:
@@ -258,6 +213,20 @@ def decompose_score_changes(run_ids: str, description: str) -> str:
 def score_population(config_name: str) -> str:
     """Trigger a new scoring run using a predefined config."""
 ```
+
+---
+
+## Decision: Data Access Strategy
+
+To ensure efficiency and avoid overwhelming the context window, the agent must follow a strict data access hierarchy:
+
+1. **Mart Data First**: Always start by querying aggregated "mart" tables (e.g., `mart_risk_scores`, `mart_hcc_summary`). These provide high-level trends and summaries.
+2. **Drill Down Second**: Only query member-level tables (e.g., `int_claims`, `raw_eligibility`) if the mart data indicates a specific anomaly or if the user explicitly requests granular details.
+
+**Why?**
+- **Performance**: Mart tables are pre-aggregated and faster to query.
+- **Context**: Member-level data is high-cardinality and can easily exceed token limits.
+- **Cost**: Reduces the number of rows processed by the LLM.
 
 ---
 

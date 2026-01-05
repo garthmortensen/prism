@@ -38,4 +38,9 @@ models:
       materialized: view
       schema: intermediate
 
+    marts:
+      main_analytics:
+        materialized: view
+        schema: analytics
+
 

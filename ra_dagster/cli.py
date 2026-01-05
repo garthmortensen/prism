@@ -16,8 +16,11 @@ import typer
 
 from ra_dagster.db.bootstrap import ensure_prism_warehouse
 from ra_dagster.resources.sqlalchemy_resource import SqlAlchemyResource
+from ra_agent.cli import app as agent_app
 
 app = typer.Typer(no_args_is_help=True, help="Prism CLI - Database and orchestration utilities")
+
+app.add_typer(agent_app, name="agent", help="AI Agent commands")
 
 
 @app.command(name="db-bootstrap")

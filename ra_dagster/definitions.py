@@ -71,7 +71,7 @@ scoring_job = define_asset_job(
 
 comparison_job = define_asset_job(
     name="comparison_job",
-    selection=["compare_runs", "comparison_visualizations"],
+    selection=AssetSelection.assets(compare_runs, comparison_visualizations) | AssetSelection.assets(dbt_analytics_assets),
     description="""
     # Run Comparison Job
 
@@ -81,6 +81,7 @@ comparison_job = define_asset_job(
     1. Reads scores from `main_runs.risk_scores` for `run_id_a` and `run_id_b`
     2. Aligns members (intersection/union/etc.) and computes deltas
     3. Writes results to `main_analytics.run_comparison`
+    4. Materializes dbt analytics marts
     """,
     tags={"team": "analytics", "priority": "high"},
     metadata={

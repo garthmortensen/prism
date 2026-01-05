@@ -93,7 +93,7 @@ def comparison_dashboard_metrics(context, config: ComparisonDashboardConfig, dat
                 avg_score_diff,
                 avg_score_added,
                 avg_score_removed
-            FROM main.run_comparison_by_dim
+            FROM main_analytics.run_comparison_by_dim
             WHERE batch_id = :batch_id
             ORDER BY dimension_name, dimension_value
         """), {"batch_id": batch_id}).fetchall()
