@@ -14,6 +14,8 @@ dependencies = [
     "graphviz>=0.21",
     "hccpy",
     "httpx",
+    "langchain>=1.2.0",
+    "openai>=2.14.0",
     "pandas",
     "polars",
     "pyarrow>=22.0.0",
