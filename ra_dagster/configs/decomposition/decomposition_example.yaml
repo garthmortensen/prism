@@ -24,3 +24,7 @@ ops:
         - name: "Population Mix"
           run_id: "12a11736-c06b-4f72-9a28-937423b6c03f"
           population_mode: scenario_population
+
+resources:
+  database:
+    config: "dev"

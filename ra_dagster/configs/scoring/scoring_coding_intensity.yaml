@@ -12,6 +12,5 @@ ops:
       run_description: "Coding Intensity Simulation (Enhanced Claims)"
 
 resources:
-  duckdb:
-    config:
-      path: /home/garth/garage/prism/risk_adjustment.duckdb
+  database:
+    config: "dev"

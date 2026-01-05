@@ -1,44 +1,59 @@
+"""
+Asset: visualizations.py
+Description:
+    Generates static HTML visualizations from run results.
+    - Scoring histograms.
+    - Comparison delta distributions.
+    - Decomposition waterfall charts.
+    - Lag trend analysis.
+
+Usage:
+    Runs automatically after core assets to produce reporting artifacts.
+"""
 from __future__ import annotations
 
 from pathlib import Path
+import re
 
 import altair as alt
 import pandas as pd
-from dagster import asset
+from dagster import asset, ResourceParam
+from sqlalchemy import text
 
-from ra_dagster.resources.duckdb_resource import DuckDBResource
+from ra_dagster.resources.sqlalchemy_resource import SqlAlchemyResource
 
 VISUALIZATIONS_DIR = Path(__file__).resolve().parents[1] / "output" / "visualizations"
 VISUALIZATIONS_DIR.mkdir(parents=True, exist_ok=True)
 
 
 @asset(deps=["score_members_aca"])
-def scoring_visualizations(context, duckdb: DuckDBResource) -> None:
+def scoring_visualizations(context, database: ResourceParam[SqlAlchemyResource]) -> None:
     """
     Generate visualizations for recent scoring runs.
     """
-    con = duckdb.get_connection().connect()
+    engine = database.get_engine()
+    con = engine.connect()
 
     # Example: Histogram of risk scores for the most recent run
     try:
         # Get most recent scoring run
-        latest_run = con.execute("""
+        latest_run = con.execute(text("""
             SELECT run_id, run_description 
             FROM main_runs.run_registry 
             WHERE analysis_type = 'scoring' AND status = 'success'
             ORDER BY created_at DESC 
             LIMIT 1
-        """).fetchone()
+        """)).fetchone()
 
         if latest_run:
             run_id, description = latest_run
             context.log.info(f"Generating visualization for run: {run_id} ({description})")
 
-            df = con.execute(f"""
+            df = pd.read_sql(text(f"""
                 SELECT risk_score 
                 FROM main_runs.risk_scores 
-                WHERE run_id = '{run_id}'
-            """).fetch_df()
+                WHERE run_id = :run_id
+            """), con, params={"run_id": run_id})
 
             chart = (
                 alt.Chart(df)
@@ -62,21 +77,22 @@ def scoring_visualizations(context, duckdb: DuckDBResource) -> None:
 
 
 @asset(deps=["compare_runs"])
-def comparison_visualizations(context, duckdb: DuckDBResource) -> None:
+def comparison_visualizations(context, database: ResourceParam[SqlAlchemyResource]) -> None:
     """
     Generate visualizations for recent comparison runs.
     """
-    con = duckdb.get_connection().connect()
+    engine = database.get_engine()
+    con = engine.connect()
 
     try:
         # Get most recent comparison run
-        latest_run = con.execute("""
+        latest_run = con.execute(text("""
             SELECT run_id, run_description 
             FROM main_runs.run_registry 
             WHERE analysis_type = 'comparison' AND status = 'success'
             ORDER BY created_at DESC 
             LIMIT 1
-        """).fetchone()
+        """)).fetchone()
 
         if latest_run:
             batch_id, description = latest_run
@@ -85,13 +101,13 @@ def comparison_visualizations(context, duckdb: DuckDBResource) -> None:
             )
 
             # 1. Distribution of Deltas
-            df_deltas = con.execute(f"""
+            df_deltas = pd.read_sql(text(f"""
                 SELECT score_diff 
                 FROM main_analytics.run_comparison 
-                WHERE batch_id = '{batch_id}' 
+                WHERE batch_id = :batch_id 
                   AND match_status IN ('matched', 'both')
                   AND score_diff IS NOT NULL
-            """).fetch_df()
+            """), con, params={"batch_id": batch_id})
 
             chart_deltas = (
                 alt.Chart(df_deltas)
@@ -110,37 +126,42 @@ def comparison_visualizations(context, duckdb: DuckDBResource) -> None:
 
             # 2. Mean Delta by Metal Level (requires joining back to risk_scores)
             # We need to find run_id_b to get the metal level
-            run_id_b = con.execute(f"""
+            # any_value is supported by DuckDB and Snowflake (ANY_VALUE)
+            run_id_b = con.execute(text(f"""
                 SELECT any_value(run_id_b) 
                 FROM main_analytics.run_comparison 
-                WHERE batch_id = '{batch_id}'
-            """).fetchone()[0]
+                WHERE batch_id = :batch_id
+            """), {"batch_id": batch_id}).fetchone()[0]
 
-            df_metal = con.execute(f"""
+            df_metal = pd.read_sql(text(f"""
                 WITH compare AS (
                   SELECT member_id, score_diff
                   FROM main_analytics.run_comparison
-                  WHERE batch_id = '{batch_id}'
+                  WHERE batch_id = :batch_id
                     AND match_status IN ('matched','both')
                     AND score_diff IS NOT NULL
                 ),
                 risk_scores AS (
                   SELECT member_id, metal_level
                   FROM main_runs.risk_scores
-                  WHERE run_id = '{run_id_b}'
+                  WHERE run_id = :run_id_b
                 )
                 SELECT
                   COALESCE(risk_scores.metal_level, 'UNKNOWN') AS metal_level,
                   AVG(compare.score_diff) AS mean_delta
                 FROM compare
-                LEFT JOIN risk_scores USING(member_id)
+                LEFT JOIN risk_scores ON compare.member_id = risk_scores.member_id
                 GROUP BY 1
-            """).fetch_df()
+            """), con, params={"batch_id": batch_id, "run_id_b": run_id_b})
 
             chart_metal = (
                 alt.Chart(df_metal)
                 .mark_bar()
-                .encode()
+                .encode(
+                    x="metal_level",
+                    y="mean_delta",
+                    tooltip=["metal_level", "mean_delta"]
+                )
                 .properties(title=f"Mean Delta by Metal Level: {description}")
             )
 
@@ -155,21 +176,22 @@ def comparison_visualizations(context, duckdb: DuckDBResource) -> None:
 
 
 @asset(deps=["decompose_runs"])
-def decomposition_visualizations(context, duckdb: DuckDBResource) -> None:
+def decomposition_visualizations(context, database: ResourceParam[SqlAlchemyResource]) -> None:
     """
     Generate visualizations for recent decomposition runs.
     """
-    con = duckdb.get_connection().connect()
+    engine = database.get_engine()
+    con = engine.connect()
 
     try:
         # Get most recent decomposition run
-        latest_run = con.execute("""
+        latest_run = con.execute(text("""
             SELECT run_id, run_description 
             FROM main_runs.run_registry 
             WHERE analysis_type = 'decomposition' AND status = 'success'
             ORDER BY created_at DESC 
             LIMIT 1
-        """).fetchone()
+        """)).fetchone()
 
         if latest_run:
             batch_id, description = latest_run
@@ -178,12 +200,12 @@ def decomposition_visualizations(context, duckdb: DuckDBResource) -> None:
             )
 
             # Waterfall / Bar chart of drivers
-            df_drivers = con.execute(f"""
+            df_drivers = pd.read_sql(text(f"""
                 SELECT driver_name, SUM(impact_value) as impact
                 FROM main_analytics.decomposition_scenarios
-                WHERE batch_id = '{batch_id}'
+                WHERE batch_id = :batch_id
                 GROUP BY driver_name
-            """).fetch_df()
+            """), con, params={"batch_id": batch_id})
 
             chart_drivers = (
                 alt.Chart(df_drivers)
@@ -212,20 +234,21 @@ def decomposition_visualizations(context, duckdb: DuckDBResource) -> None:
 
 
 @asset(deps=["score_members_aca"])
-def lag_trend_visualizations(context, duckdb: DuckDBResource) -> None:
+def lag_trend_visualizations(context, database: ResourceParam[SqlAlchemyResource]) -> None:
     """
     Generate year-over-year trend lines for lag analysis.
     """
-    con = duckdb.get_connection().connect()
+    engine = database.get_engine()
+    con = engine.connect()
 
     try:
         # 1. Find all Lag Analysis runs
-        runs = con.execute("""
+        runs = con.execute(text("""
             SELECT run_id, run_description 
             FROM main_runs.run_registry 
             WHERE run_description LIKE 'Lag Analysis %' 
               AND status = 'success'
-        """).fetchall()
+        """)).fetchall()
 
         if not runs:
             context.log.info("No lag analysis runs found.")
@@ -240,8 +263,6 @@ def lag_trend_visualizations(context, duckdb: DuckDBResource) -> None:
                 year = parts[2]  # "2024"
 
                 # Extract month number
-                import re
-
                 match = re.search(r"\((\d+)-month", description)
                 if match:
                     month = int(match.group(1))
@@ -249,11 +270,11 @@ def lag_trend_visualizations(context, duckdb: DuckDBResource) -> None:
                     continue
 
                 # Get average score
-                avg_score = con.execute(f"""
+                avg_score = con.execute(text(f"""
                     SELECT AVG(risk_score) 
                     FROM main_runs.risk_scores 
-                    WHERE run_id = '{run_id}'
-                """).fetchone()[0]
+                    WHERE run_id = :run_id
+                """), {"run_id": run_id}).fetchone()[0]
 
                 if avg_score is not None:
                     data.append(

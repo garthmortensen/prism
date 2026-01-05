@@ -10,6 +10,5 @@ ops:
       run_description: "Lag Analysis 2023 (9-month runout)"
 
 resources:
-  duckdb:
-    config:
-      path: /home/garth/garage/prism/risk_adjustment.duckdb
+  database:
+    config: "dev"

@@ -1,8 +1,20 @@
+"""
+Asset: dashboard.py
+Description:
+    Aggregates population-level metrics for a specific run.
+    - Calculates demographics (Age, Gender).
+    - Summarizes risk scores by Metal Level.
+    - Generates a summary HTML dashboard.
+
+Usage:
+    Executed via the `dashboard_job` in Dagster.
+"""
 from pathlib import Path
 
-from dagster import Config, asset
+from dagster import Config, asset, ResourceParam
+from sqlalchemy import text
 
-from ra_dagster.resources.duckdb_resource import DuckDBResource
+from ra_dagster.resources.sqlalchemy_resource import SqlAlchemyResource
 
 VISUALIZATIONS_DIR = Path(__file__).resolve().parents[1] / "output" / "visualizations"
 VISUALIZATIONS_DIR.mkdir(parents=True, exist_ok=True)
@@ -14,26 +26,28 @@ class DashboardConfig(Config):
 
 
 @asset
-def dashboard_metrics(context, config: DashboardConfig, duckdb: DuckDBResource) -> dict:
+def dashboard_metrics(context, config: DashboardConfig, database: ResourceParam[SqlAlchemyResource]) -> dict:
     """
     Calculate population metrics for a specific run.
     """
-    con = duckdb.get_connection().connect()
+    engine = database.get_engine()
+    con = engine.connect()
     run_id = config.run_id
 
     try:
         # 1. Get Run Metadata (for benefit year to calc age)
-        meta = con.execute(f"""
+        meta = con.execute(text(f"""
             SELECT benefit_year 
             FROM main_runs.run_registry 
-            WHERE run_id = '{run_id}'
-        """).fetchone()
+            WHERE run_id = :run_id
+        """), {"run_id": run_id}).fetchone()
 
         benefit_year = meta[0] if meta else 2024  # Default if not found
 
         # 2. Fetch Data joined with Members for DOB
         # We use a LEFT JOIN in case some members in risk_scores are missing from raw_members
         # (unlikely but possible)
+        # Use datediff for compatibility (DuckDB supports date_diff and datediff, Snowflake supports datediff)
         query = f"""
             WITH base AS (
                 SELECT 
@@ -44,12 +58,12 @@ def dashboard_metrics(context, config: DashboardConfig, duckdb: DuckDBResource) 
                     m.dob
                 FROM main_runs.risk_scores rs
                 LEFT JOIN main_raw.raw_members m ON rs.member_id = m.member_id
-                WHERE rs.run_id = '{run_id}'
+                WHERE rs.run_id = :run_id
             )
             SELECT 
                 COUNT(*) as total_members,
                 AVG(risk_score) as avg_risk_score,
-                AVG(date_diff('year', dob, DATE '{benefit_year}-01-01')) as avg_age,
+                AVG(datediff('year', dob, DATE '{benefit_year}-01-01')) as avg_age,
                 
                 -- Gender Counts
                 COUNT(CASE WHEN gender = 'M' THEN 1 END) as count_male,
@@ -66,7 +80,7 @@ def dashboard_metrics(context, config: DashboardConfig, duckdb: DuckDBResource) 
             FROM base
         """
 
-        metrics = con.execute(query).fetchone()
+        metrics = con.execute(text(query), {"run_id": run_id}).fetchone()
 
         # Unpack
         (

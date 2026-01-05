@@ -1,8 +1,19 @@
+"""
+Asset: decomposition.py
+Description:
+    Performs N-way decomposition of risk score changes.
+    - Isolates the impact of specific factors (e.g., Model Version, Population Mix).
+    - Calculates marginal effects and interaction residuals.
+    - Writes scenario results to `main_analytics`.
+
+Usage:
+    Executed via the `decomposition_job` in Dagster.
+"""
 from __future__ import annotations
 
 from pathlib import Path
 
-from dagster import asset
+from dagster import asset, ResourceParam
 
 from ra_dagster.db.bootstrap import ensure_prism_warehouse, now_utc
 from ra_dagster.db.run_registry import (
@@ -11,16 +22,17 @@ from ra_dagster.db.run_registry import (
     insert_run,
     update_run_status,
 )
-from ra_dagster.resources.duckdb_resource import DuckDBResource
+from ra_dagster.resources.sqlalchemy_resource import SqlAlchemyResource
 from ra_dagster.utils.run_ids import (
     extract_launchpad_config,
     generate_run_timestamp,
     get_git_provenance,
 )
+from sqlalchemy import text
 
 
 @asset
-def decompose_runs(context, duckdb: DuckDBResource) -> None:
+def decompose_runs(context, database: ResourceParam[SqlAlchemyResource]) -> None:
     """
     Compute an N-way decomposition of risk score changes using member-level deltas.
 
@@ -44,7 +56,8 @@ def decompose_runs(context, duckdb: DuckDBResource) -> None:
     """
 
     config = context.op_execution_context.op_config or {}
-    con = duckdb.get_connection().connect()
+    engine = database.get_engine()
+    con = engine.connect()
 
     try:
         ensure_prism_warehouse(con)
@@ -78,12 +91,12 @@ def decompose_runs(context, duckdb: DuckDBResource) -> None:
 
         # 3. Fetch Metadata from Actual Run for RunRecord
         meta_row = con.execute(
-            """
+            text("""
             SELECT model_version, benefit_year
             FROM main_runs.run_registry
-            WHERE run_id = ?
-            """,
-            [run_id_actual],
+            WHERE run_id = :run_id
+            """),
+            {"run_id": run_id_actual},
         ).fetchone()
 
         actual_model_version = meta_row[0] if meta_row else None
@@ -141,9 +154,9 @@ def decompose_runs(context, duckdb: DuckDBResource) -> None:
 
             cte_sql = """
                 WITH A AS (SELECT member_id, risk_score FROM main_runs.risk_scores
-                           WHERE run_id = ?),
+                           WHERE run_id = :run_a),
                      B AS (SELECT member_id, risk_score FROM main_runs.risk_scores
-                           WHERE run_id = ?)
+                           WHERE run_id = :run_b)
             """
 
             if mode == "intersection":
@@ -171,7 +184,7 @@ def decompose_runs(context, duckdb: DuckDBResource) -> None:
             else:
                 raise ValueError(f"Unknown population_mode: {mode}")
 
-            res = con.execute(query, [run_a, run_b]).fetchone()
+            res = con.execute(text(query), {"run_a": run_a, "run_b": run_b}).fetchone()
             return float(res[0]) if res and res[0] is not None else 0.0
 
         # Calculate Total Change
@@ -221,19 +234,45 @@ def decompose_runs(context, duckdb: DuckDBResource) -> None:
                 str(run_id_actual),
             )
         )
-        con.executemany(
-            "INSERT INTO main_analytics.decomposition_definitions "
-            "(batch_id, step_index, driver_name, description, created_at) VALUES (?, ?, ?, ?, ?)",
-            [(*d, now_utc()) for d in definitions],
+        
+        con.execute(
+            text("""
+            INSERT INTO main_analytics.decomposition_definitions 
+            (batch_id, step_index, driver_name, description, created_at) 
+            VALUES (:batch_id, :step_index, :driver_name, :description, :created_at)
+            """),
+            [
+                {
+                    "batch_id": d[0],
+                    "step_index": d[1],
+                    "driver_name": d[2],
+                    "description": d[3],
+                    "created_at": now_utc()
+                }
+                for d in definitions
+            ],
         )
 
-        con.executemany(
-            "INSERT INTO main_analytics.decomposition_scenarios "
-            "(batch_id, driver_name, impact_value, run_id, created_at) VALUES (?, ?, ?, ?, ?)",
-            [(*s, now_utc()) for s in scenarios],
+        con.execute(
+            text("""
+            INSERT INTO main_analytics.decomposition_scenarios 
+            (batch_id, driver_name, impact_value, run_id, created_at) 
+            VALUES (:batch_id, :driver_name, :impact_value, :run_id, :created_at)
+            """),
+            [
+                {
+                    "batch_id": s[0],
+                    "driver_name": s[1],
+                    "impact_value": s[2],
+                    "run_id": s[3],
+                    "created_at": now_utc()
+                }
+                for s in scenarios
+            ],
         )
 
         update_run_status(con, run_id=run_id, status="success")
+        con.commit()
         context.log.info(f"Wrote decomposition definitions and scenarios for batch_id={batch_id}")
 
     except Exception:

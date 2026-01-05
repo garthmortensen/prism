@@ -29,6 +29,5 @@ ops:
           population_mode: intersection
 
 resources:
-  duckdb:
-    config:
-      path: /home/garth/garage/prism/risk_adjustment.duckdb
+  database:
+    config: "dev"

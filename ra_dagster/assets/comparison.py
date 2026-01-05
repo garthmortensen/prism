@@ -1,8 +1,19 @@
+"""
+Asset: comparison.py
+Description:
+    Compares two distinct scoring runs to identify drivers of change.
+    - Calculates member-level score differences.
+    - Categorizes matches (matched, a_only, b_only).
+    - Supports different population modes (intersection, union, etc.).
+
+Usage:
+    Executed via the `comparison_job` in Dagster.
+"""
 from __future__ import annotations
 
 from pathlib import Path
 
-from dagster import asset
+from dagster import asset, ResourceParam
 
 from ra_dagster.db.bootstrap import ensure_prism_warehouse, now_utc
 from ra_dagster.db.run_registry import (
@@ -11,17 +22,18 @@ from ra_dagster.db.run_registry import (
     insert_run,
     update_run_status,
 )
-from ra_dagster.resources.duckdb_resource import DuckDBResource
+from ra_dagster.resources.sqlalchemy_resource import SqlAlchemyResource
 from ra_dagster.utils.run_ids import (
     extract_launchpad_config,
     generate_run_timestamp,
     get_git_provenance,
     json_dumps,
 )
+from sqlalchemy import text
 
 
 @asset
-def compare_runs(context, duckdb: DuckDBResource) -> None:
+def compare_runs(context, database: ResourceParam[SqlAlchemyResource]) -> None:
     """
     Compute member-level deltas between two scoring runs into main_analytics.run_comparison.
 
@@ -42,7 +54,8 @@ def compare_runs(context, duckdb: DuckDBResource) -> None:
     if not (run_id_a and run_id_b):
         raise ValueError("compare_runs requires op config: run_id_a and run_id_b")
 
-    con = duckdb.get_connection().connect()
+    engine = database.get_engine()
+    con = engine.connect()
 
     ensure_prism_warehouse(con)
 
@@ -103,8 +116,12 @@ def compare_runs(context, duckdb: DuckDBResource) -> None:
         # batch_id is the unique ID for this execution (using run_id)
         batch_id = context.run_id
 
+        json_cast = "CAST(:details AS JSON)"
+        if engine.dialect.name == "snowflake":
+            json_cast = "PARSE_JSON(:details)"
+
         con.execute(
-            f"""
+            text(f"""
             INSERT INTO main_analytics.run_comparison (
                 batch_id,
                 run_id_a,
@@ -117,12 +134,12 @@ def compare_runs(context, duckdb: DuckDBResource) -> None:
                 created_at,
                 details
             )
-            WITH A AS (SELECT member_id, risk_score FROM main_runs.risk_scores WHERE run_id = ?),
-                 B AS (SELECT member_id, risk_score FROM main_runs.risk_scores WHERE run_id = ?)
+            WITH A AS (SELECT member_id, risk_score FROM main_runs.risk_scores WHERE run_id = :run_id_a_filter),
+                 B AS (SELECT member_id, risk_score FROM main_runs.risk_scores WHERE run_id = :run_id_b_filter)
             SELECT
-                ?,
-                ?,
-                ?,
+                :batch_id,
+                :run_id_a,
+                :run_id_b,
                 COALESCE(A.member_id, B.member_id) as member_id,
                 COALESCE(B.risk_score, 0.0) - COALESCE(A.risk_score, 0.0) as score_diff,
                 CASE
@@ -132,20 +149,20 @@ def compare_runs(context, duckdb: DuckDBResource) -> None:
                 END as match_status,
                 COALESCE(A.risk_score, 0.0) as score_a,
                 COALESCE(B.risk_score, 0.0) as score_b,
-                ?,
-                CAST(? AS JSON) as details
+                :created_at,
+                {json_cast} as details
             FROM A
             {join_type} B ON A.member_id = B.member_id
-            """,
-            [
-                run_id_a,
-                run_id_b,
-                batch_id,
-                run_id_a,
-                run_id_b,
-                now_utc(),
-                json_dumps({}),
-            ],
+            """),
+            {
+                "run_id_a_filter": run_id_a,
+                "run_id_b_filter": run_id_b,
+                "batch_id": batch_id,
+                "run_id_a": run_id_a,
+                "run_id_b": run_id_b,
+                "created_at": now_utc(),
+                "details": json_dumps({}),
+            },
         )
 
         update_run_status(con, run_id=run_id, status="success")

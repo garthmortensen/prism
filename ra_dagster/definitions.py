@@ -1,3 +1,14 @@
+"""
+Module: definitions.py
+Description:
+    Dagster repository definition.
+    - Aggregates all assets, jobs, and resources.
+    - Loads default configurations from YAML files.
+    - Defines the top-level `Definitions` object for the Dagster daemon.
+
+Usage:
+    Loaded by Dagster to construct the execution graph.
+"""
 from pathlib import Path
 
 import yaml
@@ -13,7 +24,7 @@ from ra_dagster.assets.visualizations import (
     lag_trend_visualizations,
     scoring_visualizations,
 )
-from ra_dagster.resources.duckdb_resource import DuckDBResource
+from ra_dagster.resources.sqlalchemy_resource import db_resource
 
 CONFIGS_DIR = Path(__file__).resolve().parent / "configs"
 
@@ -131,7 +142,7 @@ definitions = Definitions(
         dashboard_html,
     ],
     resources={
-        "duckdb": DuckDBResource(),
+        "database": db_resource,
     },
     jobs=[scoring_job, comparison_job, decomposition_job, dashboard_job],
 )

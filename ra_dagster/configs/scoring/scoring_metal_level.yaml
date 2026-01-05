@@ -12,6 +12,5 @@ ops:
       run_description: "Metal Level Sim (All Silver)"
 
 resources:
-  duckdb:
-    config:
-      path: /home/garth/garage/prism/risk_adjustment.duckdb
+  database:
+    config: "dev"

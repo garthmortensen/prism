@@ -6,3 +6,7 @@ ops:
       run_description: "Comparison of Baseline vs Actual"
       metric: "mean" # mean, sum
       population_mode: "intersection" # intersection, union, a_only, b_only
+
+resources:
+  database:
+    config: "dev"
