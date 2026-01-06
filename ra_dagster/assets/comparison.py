@@ -45,6 +45,18 @@ from ra_dagster.config_schemas import ComparisonConfig
 from ra_dagster.db.bootstrap import ensure_prism_warehouse, now_utc
 from ra_dagster.db.run_registry import (
     RunRecord,
+    allocate_group_id,
+    allocate_run_seq,
+    insert_run,
+    update_run_status,
+    resolve_run_id,
+)
+
+@asset
+def compare_runs(context: AssetExecutionContext, config: ComparisonConfig, database: ResourceParam[SqlAlchemyResource]) -> None:
+    """
+    Compute member-level deltas between two scoring runs.
+    """
     run_ref_a_raw = config.run_ref_a
     run_ref_b_raw = config.run_ref_b
     metric = config.metric

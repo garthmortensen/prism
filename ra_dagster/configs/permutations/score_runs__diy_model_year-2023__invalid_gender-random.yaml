@@ -1,0 +1,12 @@
+# Auto-generated permutation 8 for score_runs
+ops:
+  score_runs:
+    config:
+      member_age_basis_year: null
+      group_id: null
+      group_description: null
+      run_description: ACA scoring run
+      trigger_source: dagster
+      blueprint_id: null
+      diy_model_year: 2023
+      invalid_gender: random

@@ -1,0 +1,11 @@
+# Auto-generated permutation 7 for compare_runs
+ops:
+  compare_runs:
+    config:
+      run_ref_a: PLACEHOLDER
+      run_ref_b: PLACEHOLDER
+      run_description: null
+      group_id: null
+      group_description: null
+      metric: sum
+      population_mode: a_only
