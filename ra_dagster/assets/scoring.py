@@ -413,15 +413,10 @@ def score_members_aca(
         ).fetchall()
 
         invalid_gender = config.invalid_gender.value
-        coerce_gender = config.coerce_gender.value if config.coerce_gender else None
-
-        if invalid_gender == "coerce" and coerce_gender is None:
-            coerce_gender = "M"
 
         members, stats = rows_to_member_inputs(
             rows,
             invalid_gender=invalid_gender,
-            coerce_gender=coerce_gender,
         )
 
         if stats["skipped"] > 0:

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from datetime import date
+import random
 from typing import Any
 
 from ra_calculators.aca_risk_score_calculator import MemberInput
@@ -37,7 +38,6 @@ def rows_to_member_inputs(
     rows: Iterable[tuple[Any, ...]],
     *,
     invalid_gender: str = "skip",
-    coerce_gender: str | None = None,
 ) -> tuple[list[MemberInput], dict[str, Any]]:
     """
     Convert raw database rows into MemberInput objects with validation.
@@ -49,12 +49,8 @@ def rows_to_member_inputs(
     skipped = 0
     invalid_gender_values: dict[str, int] = {}
 
-    if invalid_gender not in {"skip", "coerce"}:
-        raise ValueError("invalid_gender must be one of: skip, coerce")
-
-    if invalid_gender == "coerce":
-        if coerce_gender not in {"M", "F"}:
-            raise ValueError("coerce_gender must be 'M' or 'F' when invalid_gender='coerce'")
+    if invalid_gender not in {"skip", "random", "error"}:
+        raise ValueError("invalid_gender must be one of: skip, random, error")
 
     for (
         member_id,
@@ -72,10 +68,14 @@ def rows_to_member_inputs(
         if normalized_gender is None:
             raw = "<NULL>" if gender is None else str(gender)
             invalid_gender_values[raw] = invalid_gender_values.get(raw, 0) + 1
+            
             if invalid_gender == "skip":
                 skipped += 1
                 continue
-            normalized_gender = str(coerce_gender)
+            elif invalid_gender == "random":
+                normalized_gender = random.choice(["M", "F"])
+            elif invalid_gender == "error":
+                raise ValueError(f"Invalid gender '{raw}' encountered for member {member_id}")
 
         members.append(
             MemberInput(

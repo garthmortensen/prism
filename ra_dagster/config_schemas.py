@@ -8,13 +8,9 @@ from dagster import Config
 
 class InvalidGenderOption(str, Enum):
     skip = "skip"
-    coerce = "coerce"
+    # Randomly assign M or F. Law of large numbers suggests ~50/50 split without state tracking.
+    random = "random"
     error = "error"
-
-
-class GenderOption(str, Enum):
-    male = "M"
-    female = "F"
 
 
 ModelYearOption = Enum(
@@ -35,7 +31,6 @@ class ScoringConfig(Config):
     trigger_source: str = "dagster"
     blueprint_id: str | None = None
     invalid_gender: InvalidGenderOption = InvalidGenderOption.skip
-    coerce_gender: GenderOption | None = None
 
 
 # -----------------------------------------------------------------------------
