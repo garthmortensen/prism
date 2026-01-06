@@ -9,7 +9,7 @@ ops:
       diy_model_year: 2024
       
       # [OPTIONAL] Year used for DOB-based age calculation (age as-of 12/31 of this year).
-      # Defaults to diy_model_year. 
+      # Defaults to diy_model_year. Useful range: diy_model_year +/- 2 years.
       member_age_basis_year: "2024"
       
       # [REQUIRED] A human-readable description for the registry

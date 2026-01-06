@@ -1,3 +1,10 @@
+"""
+Module: run_ids.py
+Description:
+    Utility for generating and managing run IDs (UUIDs).
+    - Can generate specific UUIDs from hashable content (like run config).
+    - Used to ensure idempotent run IDs given the same inputs.
+"""
 from __future__ import annotations
 
 import json

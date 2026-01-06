@@ -1,3 +1,11 @@
+"""
+Script: launch_analyses.py
+Description:
+    Orchestration script to launch multiple Dagster runs for generated configs.
+    - Scans a directory for run config files.
+    - Submits Dagster runs for each config found.
+    - Supports parallel execution management.
+"""
 import glob
 import os
 import subprocess

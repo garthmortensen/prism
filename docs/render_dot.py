@@ -1,3 +1,9 @@
+"""
+Doc Generator: Graphviz Renderer
+
+Helper script to render Graphviz DOT files into SVG images for documentation.
+"""
+
 import os
 
 import graphviz

@@ -1,3 +1,9 @@
+"""Scenario generation for regression testing.
+
+Generates a wide range of member scenarios to test the calculator's robustness.
+permutations include age, gender, metal level, diagnosis combinations, and duration.
+"""
+
 import json
 import re
 from pathlib import Path

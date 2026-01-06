@@ -413,10 +413,21 @@ def score_members_aca(
         ).fetchall()
 
         invalid_gender = config.invalid_gender.value
+        metal_level_override = config.metal_level.value if config.metal_level else None
+        allow_telehealth = config.allow_telehealth
+        
+        # Note: csr_variant is available (config.csr_variant) but not yet supported by calculation logic
+
+        if metal_level_override:
+            context.log.info(f"Overriding metal level for all members to: {metal_level_override}")
+            
+        if not allow_telehealth:
+            context.log.info("Telehealth logic disabled (simulation mode).")
 
         members, stats = rows_to_member_inputs(
             rows,
             invalid_gender=invalid_gender,
+            metal_level_override=metal_level_override,
         )
 
         if stats["skipped"] > 0:

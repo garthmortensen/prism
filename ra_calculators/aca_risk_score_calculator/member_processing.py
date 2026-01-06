@@ -1,3 +1,9 @@
+"""Member data normalization and validation logic.
+
+Converts raw database rows into strongly-typed MemberInput objects.
+Handles gender handling (skip/random/error), date parsing, and type coercion.
+"""
+
 from __future__ import annotations
 
 from collections.abc import Iterable
@@ -38,6 +44,7 @@ def rows_to_member_inputs(
     rows: Iterable[tuple[Any, ...]],
     *,
     invalid_gender: str = "skip",
+    metal_level_override: str | None = None,
 ) -> tuple[list[MemberInput], dict[str, Any]]:
     """
     Convert raw database rows into MemberInput objects with validation.
@@ -77,12 +84,14 @@ def rows_to_member_inputs(
             elif invalid_gender == "error":
                 raise ValueError(f"Invalid gender '{raw}' encountered for member {member_id}")
 
+        final_metal_level = metal_level_override if metal_level_override else (str(metal_level) if metal_level is not None else "silver")
+
         members.append(
             MemberInput(
                 member_id=str(member_id),
                 date_of_birth=date_of_birth,
                 gender=normalized_gender,
-                metal_level=str(metal_level) if metal_level is not None else "silver",
+                metal_level=final_metal_level,
                 enrollment_months=int(enrollment_months) if enrollment_months is not None else 12,
                 diagnoses=coerce_str_list(diagnoses),
                 ndc_codes=coerce_str_list(ndc_codes),

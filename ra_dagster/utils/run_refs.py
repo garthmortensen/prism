@@ -1,3 +1,10 @@
+"""
+Module: run_refs.py
+Description:
+    Utility for generating human-readable short reference codes.
+    - Uses Crockford's Base32 encoding to create short strings from UUIDs.
+    - Useful for tagging runs with a user-friendly identifier.
+"""
 from __future__ import annotations
 
 import base32_crockford as b32

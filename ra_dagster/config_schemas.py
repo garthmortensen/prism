@@ -1,3 +1,10 @@
+"""
+Module: config_schemas.py
+Description:
+    Defines the structured configuration models for Dagster assets.
+    - Includes Enums for fixed choices (MetalLevel, CSRVariant).
+    - Defines Dagster Config classes for type-safe resource and asset configuration.
+"""
 from enum import Enum
 from dagster import Config
 
@@ -13,6 +20,22 @@ class InvalidGenderOption(str, Enum):
     error = "error"
 
 
+class MetalLevel(str, Enum):
+    platinum = "platinum"
+    gold = "gold"
+    silver = "silver"
+    bronze = "bronze"
+    catastrophic = "catastrophic"
+
+
+class CSRVariant(str, Enum):
+    none = "none"
+    csr_73 = "csr_73"
+    csr_87 = "csr_87"
+    csr_94 = "csr_94"
+    limited = "limited"
+
+
 ModelYearOption = Enum(
     "ModelYearOption",
     {str(y): y for y in range(2021, 2026)},
@@ -24,6 +47,7 @@ class ScoringConfig(Config):
     # DIY tables year (controls coefficients/mappings/hierarchies/etc.).
     diy_model_year: ModelYearOption = ModelYearOption(2024)
     # Year used for DOB-based age calculation (age as-of 12/31 of this year).
+    # Typically aligned with diy_model_year +/- 2 years.
     member_age_basis_year: str | None = None
     group_id: int | None = None
     group_description: str | None = None
@@ -31,6 +55,9 @@ class ScoringConfig(Config):
     trigger_source: str = "dagster"
     blueprint_id: str | None = None
     invalid_gender: InvalidGenderOption = InvalidGenderOption.skip
+    metal_level: MetalLevel | None = None
+    csr_variant: CSRVariant | None = None
+    allow_telehealth: bool = True
 
 
 # -----------------------------------------------------------------------------
