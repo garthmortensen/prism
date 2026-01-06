@@ -3,9 +3,9 @@ from __future__ import annotations
 import base32_crockford as b32
 
 
-def generate_human_id(seq_id: int, width: int = 3, prefix: str | None = None) -> str:
+def generate_run_ref(seq_id: int, width: int = 3, prefix: str | None = None) -> str:
     """
-    Generate a human-friendly ID from a sequential integer.
+    Generate a human-friendly run ref from a sequential integer.
     
     Args:
         seq_id: The sequential integer ID.

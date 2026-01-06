@@ -83,6 +83,7 @@ def run_batch(folder_name, job_name):
             or "example" in filename.lower()
             or "xxx" in filename.lower()
             or "skip" in filename.lower()
+            or "dashboard" in filename.lower()
             or "ignore" in filename.lower()
         ):
             print(f"   [SKIP] {filename}")
@@ -103,7 +104,7 @@ if __name__ == "__main__":
 
     if mode == "scoring":
         run_batch("scoring", SCORING_JOB)
-        print("\n[INFO] DONE. Now copy the Run IDs into your decomposition/comparison YAMLs.")
+        print("\n[INFO] DONE. Now copy the Run Pointers (e.g. s00015) into your decomposition/comparison YAMLs.")
 
     elif mode == "decomposition":
         run_batch("decomposition", DECOMP_JOB)

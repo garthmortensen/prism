@@ -13,18 +13,15 @@ from datetime import datetime
 
 import plotly.graph_objects as go
 import plotly.io as pio
-from dagster import Config, asset, ResourceParam
+from dagster import asset, ResourceParam
 from sqlalchemy import text
 
 from ra_dagster.resources.sqlalchemy_resource import SqlAlchemyResource
+from ra_dagster.db.run_registry import resolve_run_id
+from ra_dagster.config_schemas import ComparisonDashboardConfig
 
 VISUALIZATIONS_DIR = Path(__file__).resolve().parents[1] / "output" / "visualizations"
 VISUALIZATIONS_DIR.mkdir(parents=True, exist_ok=True)
-
-
-class ComparisonDashboardConfig(Config):
-    batch_id: str
-    description: str = "Comparison Analysis"
 
 
 @asset(deps=["compare_runs"])
@@ -34,7 +31,9 @@ def comparison_dashboard_metrics(context, config: ComparisonDashboardConfig, dat
     """
     engine = database.get_engine()
     con = engine.connect()
-    batch_id = config.batch_id
+    
+    # Resolve batch_ref if it's a human code
+    batch_id = resolve_run_id(con, config.batch_ref)
 
     try:
         # 1. Get Summary Metrics

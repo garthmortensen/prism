@@ -14,18 +14,15 @@ from datetime import datetime
 
 import plotly.graph_objects as go
 import plotly.io as pio
-from dagster import Config, asset, ResourceParam
+from dagster import asset, ResourceParam
 from sqlalchemy import text
 
 from ra_dagster.resources.sqlalchemy_resource import SqlAlchemyResource
+from ra_dagster.db.run_registry import resolve_run_id
+from ra_dagster.config_schemas import DashboardConfig
 
 VISUALIZATIONS_DIR = Path(__file__).resolve().parents[1] / "output" / "visualizations"
 VISUALIZATIONS_DIR.mkdir(parents=True, exist_ok=True)
-
-
-class DashboardConfig(Config):
-    run_id: str
-    run_description: str = "Dashboard Analysis"
 
 
 @asset(deps=["run_score_summary", "run_score_by_dim", "run_score_distribution", "run_hcc_summary", "run_rxc_summary"])
@@ -35,7 +32,9 @@ def dashboard_metrics(context, config: DashboardConfig, database: ResourceParam[
     """
     engine = database.get_engine()
     con = engine.connect()
-    run_id = config.run_id
+    
+    # Resolve run_ref from potential human code
+    run_id = resolve_run_id(con, config.run_ref)
 
     try:
         # 1. Get Summary Metrics

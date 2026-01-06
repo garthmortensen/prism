@@ -1,0 +1,31 @@
+# REFERENCE SCHEMA - DECOMPOSITION
+# Use this file to see all available options for decomposition jobs.
+
+ops:
+  decompose_runs:
+    config:
+      # [REQUIRED] The Run Ref (e.g. s00015) or UUID for the baseline (starting point)
+      baseline_run_ref: "s00015"
+      
+      # [REQUIRED] The Run Ref (e.g. s00020) or UUID for the actual (ending point)
+      actual_run_ref: "s00020"
+      
+      # [REQUIRED] A human-readable description for the registry
+      run_description: "N-way decomposition"
+      
+      # [OPTIONAL] Global population mode for the analysis
+      # Options: "intersection"
+      population_mode: "intersection"
+      
+      # [OPTIONAL] List of intermediate runs to attribute differences to
+      # Each component is calculated marginally against the baseline
+      components:
+        - name: "Q2 Runout"
+          run_ref: "s00016"
+          
+        - name: "coding_intensity"
+          run_ref: "s00017"
+
+resources:
+  database:
+    config: "dev"

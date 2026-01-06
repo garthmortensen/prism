@@ -12,18 +12,20 @@ Usage:
 """
 import json
 import re
+import getpass
 from enum import Enum
 from pathlib import Path
 from typing import Any
 
 import polars as pl
-from dagster import AssetExecutionContext, Config, asset, ResourceParam
+from dagster import AssetExecutionContext, asset, ResourceParam
 from sqlalchemy import text
 from sqlalchemy.engine import Connection
 
 from ra_calculators.aca_risk_score_calculator import ACACalculator
 from ra_calculators.aca_risk_score_calculator.member_processing import rows_to_member_inputs
 from ra_dagster.db.bootstrap import ensure_prism_warehouse, now_utc
+from ra_dagster.config_schemas import ScoringConfig
 from ra_dagster.db.run_registry import (
     RunRecord,
     allocate_group_id,
@@ -31,7 +33,7 @@ from ra_dagster.db.run_registry import (
     insert_run,
     update_run_status,
 )
-from ra_dagster.utils.human_ids import generate_human_id
+from ra_dagster.utils.run_refs import generate_run_ref
 from ra_dagster.resources.sqlalchemy_resource import SqlAlchemyResource
 from ra_dagster.utils.run_ids import (
     extract_launchpad_config,
@@ -39,49 +41,6 @@ from ra_dagster.utils.run_ids import (
     get_git_provenance,
     json_dumps,
 )
-
-
-class InvalidGenderOption(str, Enum):
-    skip = "skip"
-    coerce = "coerce"
-    error = "error"
-
-
-class GenderOption(str, Enum):
-    male = "M"
-    female = "F"
-
-
-ModelYearOption = Enum(
-    "ModelYearOption",
-    {str(y): y for y in range(2021, 2026)},
-    type=int,
-)
-
-
-class ScoringConfig(Config):
-    # DIY tables year (controls coefficients/mappings/hierarchies/etc.).
-    diy_model_year: ModelYearOption = ModelYearOption(2024)
-    # Backwards-compatible alias for diy_model_year.
-    model_year: ModelYearOption | None = None
-    # Year used for DOB-based age calculation (age as-of 12/31 of this year).
-    # Preferred name; replaces prediction_year.
-    member_age_basis_year: str | None = None
-    # Legacy alias for member_age_basis_year.
-    prediction_year: str | None = None
-    group_id: int | None = None
-    group_description: str | None = None
-    run_description: str = "ACA scoring run"
-    trigger_source: str = "dagster"
-    blueprint_id: str | None = None
-    invalid_gender: InvalidGenderOption = InvalidGenderOption.skip
-    coerce_gender: GenderOption | None = None
-
-    # Optional: parameterize which raw views feed scoring inputs.
-    # If any are set, all three must be set.
-    claims_view: str | None = None
-    enrollments_view: str | None = None
-    members_view: str | None = None
 
 
 _RELATION_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*){0,2}$")
@@ -322,13 +281,15 @@ def score_members_aca(
 
     ensure_prism_warehouse(con)
 
-    diy_model_year = (
-        config.model_year.value if config.model_year is not None else config.diy_model_year.value
-    )
-    member_age_basis_year = config.member_age_basis_year or config.prediction_year
-    benefit_year = (
-        int(member_age_basis_year) if member_age_basis_year is not None else int(diy_model_year)
-    )
+    # 1. Prepare configuration
+    diy_model_year = config.diy_model_year.value
+
+    member_age_basis_year = config.member_age_basis_year
+    if member_age_basis_year is None:
+        member_age_basis_year = str(diy_model_year)
+
+    benefit_year_val = int(member_age_basis_year)
+    benefit_year = benefit_year_val
 
     resolved_claims_view = (
         _resolve_relation(con, config.claims_view) if config.claims_view is not None else None
@@ -382,20 +343,24 @@ def score_members_aca(
         group_id = allocate_group_id(con)
 
     run_seq = allocate_run_seq(con)
-    run_code = generate_human_id(run_seq, width=4, prefix="s")
-    group_code = (
-        generate_human_id(int(group_id), width=4, prefix="b")
+    run_ref = generate_run_ref(run_seq, width=4, prefix="s")
+    group_ref = (
+        generate_run_ref(int(group_id), width=4, prefix="b")
         if group_id is not None
         else None
     )
 
+    context.log.info(f"Run Ref: {run_ref}")
+    if group_ref:
+        context.log.info(f"Batch Ref: {group_ref}")
+
     record = RunRecord(
         run_id=run_id,
         run_seq=run_seq,
-        run_code=run_code,
+        run_ref=run_ref,
         run_timestamp=run_ts,
         group_id=int(group_id),
-        group_code=group_code,
+        group_ref=group_ref,
         group_description=config.group_description,
         run_description=config.run_description,
         analysis_type="scoring",
@@ -421,6 +386,7 @@ def score_members_aca(
         status="started",
         trigger_source=config.trigger_source,
         blueprint_id=config.blueprint_id,
+        whoami=getpass.getuser(),
         created_at=now_utc(),
         updated_at=now_utc(),
     )

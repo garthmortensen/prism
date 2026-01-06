@@ -1,0 +1,30 @@
+# REFERENCE SCHEMA - COMPARISON
+# Use this file to see all available options for comparison jobs.
+
+ops:
+  compare_runs:
+    config:
+      # [REQUIRED] The Run Ref (e.g. s00015) or UUID for the first run
+      run_ref_a: "s00015"
+      
+      # [REQUIRED] The Run Ref (e.g. s00023) or UUID for the second run
+      run_ref_b: "s00023"
+      
+      # [REQUIRED] A human-readable description for the registry
+      run_description: "Description of this analysis"
+      
+      # [OPTIONAL] How to aggregate the data. Default: "mean"
+      # Options: "mean", "sum", "count"
+      metric: "mean"
+      
+      # [OPTIONAL] How to handle population overlap. Default: "intersection"
+      # Options: 
+      #   "intersection" (runs in both A and B)
+      #   "union"        (runs in either A or B)
+      #   "a_only"       (left join A)
+      #   "b_only"       (right join B - referenced as left join on B)
+      population_mode: "intersection"
+
+resources:
+  database:
+    config: "dev"

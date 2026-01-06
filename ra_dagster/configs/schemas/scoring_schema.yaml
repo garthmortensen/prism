@@ -1,0 +1,35 @@
+# REFERENCE SCHEMA - SCORING
+# Use this file to see all available options for scoring jobs.
+
+ops:
+  score_members_aca:
+    config:
+      # [REQUIRED] DIY tables year (controls coefficients/mappings/hierarchies/etc.)
+      # Allowed integers: 2021, 2022, 2023, 2024, 2025
+      diy_model_year: 2024
+      
+      # [OPTIONAL] Year used for DOB-based age calculation (age as-of 12/31 of this year).
+      # Defaults to diy_model_year. 
+      member_age_basis_year: "2024"
+      
+      # [REQUIRED] A human-readable description for the registry
+      run_description: "ACA scoring run"
+      
+      # [OPTIONAL] Group this run with others under a single batch ID
+      group_id: null
+      
+      # [OPTIONAL] Description for the group/batch
+      group_description: null
+      
+      # [OPTIONAL] How to handle invalid gender values ('U', '', etc.)
+      # Options: "skip" (drop row), "coerce" (force via coerce_gender), "error" (raise exception)
+      # Default: "skip"
+      invalid_gender: "skip"
+      
+      # [OPTIONAL] Target gender when invalid_gender is "coerce"
+      # Options: "M", "F"
+      coerce_gender: null
+
+resources:
+  database:
+    config: "dev"
