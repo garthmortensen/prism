@@ -1,3 +1,13 @@
+"""
+Asset: dbt_assets.py
+Description:
+    Wraps the dbt project as a Dagster asset definition.
+    - Loads the dbt project manifest.
+    - Exposes dbt models as Dagster assets for orchestration.
+
+Usage:
+    Imported into definitions.py to register the dbt graph.
+"""
 from pathlib import Path
 
 from dagster import AssetExecutionContext

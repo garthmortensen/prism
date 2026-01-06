@@ -1,3 +1,10 @@
+"""
+Doc Generator: Function Map
+
+Scans the Python codebase to generate a JSON map of all functions and their locations.
+Used by the documentation frontend to provide interactive code navigation.
+"""
+
 import ast
 import json
 import os

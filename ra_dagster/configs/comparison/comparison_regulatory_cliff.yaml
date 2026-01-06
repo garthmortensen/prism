@@ -1,8 +1,8 @@
 ops:
   compare_runs:
     config:
-      run_id_a: "9f776552-0171-4fc1-ada3-a2d8e39976a5"
-      run_id_b: "5b7e3047-0779-4281-a1d5-fe18b5c54d2a"
+      run_ref_a: "9f776552-0171-4fc1-ada3-a2d8e39976a5"
+      run_ref_b: "5b7e3047-0779-4281-a1d5-fe18b5c54d2a"
       run_description: "Regulatory Cliff Analysis (V24 -> V28)"
       metric: "mean"
       population_mode: "intersection"

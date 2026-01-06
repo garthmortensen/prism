@@ -1,0 +1,15 @@
+# REFERENCE SCHEMA - DASHBOARD
+# Use this file to see all available options for dashboard jobs.
+
+ops:
+  dashboard_metrics:
+    config:
+      # [REQUIRED] The Run Ref (e.g. s00015) or UUID to visualize
+      run_ref: "s00015"
+      
+      # [OPTIONAL] Override the description shown on the dashboard
+      run_description: "Dashboard Analysis"
+
+resources:
+  database:
+    config: "dev"

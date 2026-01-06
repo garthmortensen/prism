@@ -118,3 +118,6 @@ dagster_home/
 
 # Dagster
 dagster_home/
+
+# Generated permutations
+ra_dagster/configs/permutations/

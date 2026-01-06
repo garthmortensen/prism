@@ -1,0 +1,57 @@
+# -----------------------------------------------------------------------------
+# PERMUTATION CONTROL MANIFEST
+# -----------------------------------------------------------------------------
+# This file controls the `generate_permutation_configs` asset.
+# It defines which parameters should be swept/permutated for risk adjustment jobs.
+#
+# Structure:
+#   <op_name>:
+#     enable_<field>: bool  -> If False, uses the schema default. If True, sweeps.
+#     <field>: list         -> Specific values to include. If empty/null, sweeps ALL valid options.
+# -----------------------------------------------------------------------------
+
+score_runs:
+  # Model Year
+  # Controls coefficients, hierarchies, etc.
+  enable_diy_model_year: True
+  diy_model_year: 
+    - 2024
+    - 2025
+
+  # Invalid Gender Handling
+  # Options: skip, random, error
+  enable_invalid_gender: True
+  invalid_gender: 
+    - skip
+    - random
+
+  # Metal Level
+  # Options: platinum, gold, silver, bronze, catastrophic, null
+  # If null/omitted from list, it uses the data-driven metal level.
+  enable_metal_level: True
+  metal_level: 
+    - gold
+    - silver
+    - bronze
+
+  # CSR Variant
+  # Options: none, csr_73, csr_87, csr_94, limited, null
+  enable_csr_variant: False
+  csr_variant: []
+
+  # Telehealth
+  # Options: True, False
+  enable_allow_telehealth: True
+  allow_telehealth: []
+
+compare_runs:
+  # Metric
+  # Options: mean, sum
+  enable_metric: True
+  metric: []
+
+  # Population Mode
+  # Options: intersection, union, a_only, b_only
+  enable_population_mode: True
+  population_mode:
+    - intersection

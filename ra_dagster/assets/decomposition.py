@@ -11,17 +11,21 @@ Usage:
 """
 from __future__ import annotations
 
+import getpass
 from pathlib import Path
 
-from dagster import asset, ResourceParam
+from dagster import asset, ResourceParam, AssetExecutionContext
 
 from ra_dagster.db.bootstrap import ensure_prism_warehouse, now_utc
 from ra_dagster.db.run_registry import (
     RunRecord,
     allocate_group_id,
+    allocate_run_seq,
     insert_run,
     update_run_status,
+    resolve_run_id,
 )
+from ra_dagster.utils.run_refs import generate_run_ref
 from ra_dagster.resources.sqlalchemy_resource import SqlAlchemyResource
 from ra_dagster.utils.run_ids import (
     extract_launchpad_config,
@@ -30,9 +34,11 @@ from ra_dagster.utils.run_ids import (
 )
 from sqlalchemy import text
 
+from ra_dagster.config_schemas import DecompositionConfig
+
 
 @asset
-def decompose_runs(context, database: ResourceParam[SqlAlchemyResource]) -> None:
+def decompose_runs(context: AssetExecutionContext, config: DecompositionConfig, database: ResourceParam[SqlAlchemyResource]) -> None:
     """
     Compute an N-way decomposition of risk score changes using member-level deltas.
 
@@ -44,18 +50,17 @@ def decompose_runs(context, database: ResourceParam[SqlAlchemyResource]) -> None
        Interaction is the residual difference.
 
     Config:
-        run_id_baseline: str
-        run_id_actual: str
+        baseline_run_ref: str
+        actual_run_ref: str
         population_mode: str = "intersection" | "baseline_population" | "scenario_population"
             (default: "intersection")
         components: List[Dict]
             name: str
-            run_id: str
+            run_ref: str
             description: str (optional)
             population_mode: str (optional override)
     """
 
-    config = context.op_execution_context.op_config or {}
     engine = database.get_engine()
     con = engine.connect()
 
@@ -63,18 +68,17 @@ def decompose_runs(context, database: ResourceParam[SqlAlchemyResource]) -> None
         ensure_prism_warehouse(con)
 
         # Handle configuration
-        run_id_baseline = config.get("baseline_run_id")
-        run_id_actual = config.get("actual_run_id")
+        run_ref_baseline_raw = config.baseline_run_ref
+        run_ref_actual_raw = config.actual_run_ref
 
-        if not run_id_baseline:
-            raise ValueError("decompose_runs config requires 'baseline_run_id'.")
-        if not run_id_actual:
-            raise ValueError("decompose_runs config requires 'actual_run_id'.")
+        # Resolve runs
+        run_id_baseline = resolve_run_id(con, run_ref_baseline_raw)
+        run_id_actual = resolve_run_id(con, run_ref_actual_raw)
 
         # Hardcoded constants
         method = "marginal"
         metric = "mean"
-        global_pop_mode = config.get("population_mode", "intersection")
+        global_pop_mode = config.population_mode
 
         if global_pop_mode != "intersection":
             raise ValueError(
@@ -82,12 +86,17 @@ def decompose_runs(context, database: ResourceParam[SqlAlchemyResource]) -> None
                 f"Got '{global_pop_mode}'."
             )
 
-        components = config.get("components", [])
-        for comp in components:
-            if "run_id" not in comp:
-                raise ValueError(f"Component '{comp.get('name', 'unnamed')}' requires a 'run_id'.")
-            if "name" not in comp:
-                raise ValueError("Component requires a 'name'.")
+        # Process components
+        components = []
+        for comp_config in config.components:
+            comp_data = {
+                "name": comp_config.name,
+                "run_ref": comp_config.run_ref,
+                "description": comp_config.description,
+                "population_mode": comp_config.population_mode,
+                "run_id": resolve_run_id(con, comp_config.run_ref),
+            }
+            components.append(comp_data)
 
         # 3. Fetch Metadata from Actual Run for RunRecord
         meta_row = con.execute(
@@ -107,21 +116,53 @@ def decompose_runs(context, database: ResourceParam[SqlAlchemyResource]) -> None
         run_ts = generate_run_timestamp()
         git = get_git_provenance(cwd=str(Path(__file__).resolve().parents[2]))
 
-        group_id = config.get("group_id")
+        group_id = config.group_id
         if group_id is None:
             group_id = allocate_group_id(con)
 
+        run_seq = allocate_run_seq(con)
+        run_ref = generate_run_ref(run_seq, width=4, prefix="d")
+        group_ref = (
+            generate_run_ref(int(group_id), width=4, prefix="b")
+            if group_id is not None
+            else None
+        )
+
+        context.log.info(f"Run Ref: {run_ref}")
+        if group_ref:
+            context.log.info(f"Batch Ref: {group_ref}")
+
+        # Convert config to dict for safe usage in blueprint and fallback
+        # dagster.Config methods usually have a way to dump, but explicitly unpacking is safest for now
+        # avoiding .dict() call if version mismatch issues arise, manually extracting known fields if needed
+        # but let's try .dict() or standard python vars() trick isn't good for pydantic. 
+        # Actually, let's just make a dict of it.
+        config_as_dict = {
+            "baseline_run_ref": config.baseline_run_ref,
+            "actual_run_ref": config.actual_run_ref,
+            "population_mode": config.population_mode,
+            "components": [c.dict() for c in config.components], # .dict() usually exists on Config/Pydantic
+            "group_id": config.group_id,
+            "group_description": config.group_description,
+            "run_description": config.run_description,
+            "trigger_source": config.trigger_source,
+            "blueprint_id": config.blueprint_id,
+        }
+
         record = RunRecord(
             run_id=run_id,
+            run_seq=run_seq,
+            run_ref=run_ref,
             run_timestamp=run_ts,
             group_id=int(group_id),
-            group_description=config.get("group_description"),
-            run_description=config.get("run_description", f"N-way decomposition ({method})"),
+            group_ref=group_ref,
+            group_description=config.group_description,
+            run_description=config.run_description,
             analysis_type="decomposition",
             calculator=None,
             model_version=actual_model_version,
             benefit_year=actual_benefit_year,
-            launchpad_config=extract_launchpad_config(context=context, fallback=config),
+            launchpad_config=extract_launchpad_config(context=context, fallback=config_as_dict),
             blueprint_yml={
                 "run_id_baseline": run_id_baseline,
                 "run_id_actual": run_id_actual,
@@ -129,14 +170,15 @@ def decompose_runs(context, database: ResourceParam[SqlAlchemyResource]) -> None
                 "metric": metric,
                 "population_mode": global_pop_mode,
                 "components": components,
-                **config,
+                **config_as_dict,
             },
             git=git,
             status="started",
-            trigger_source=config.get("trigger_source", "dagster"),
-            blueprint_id=str(config.get("blueprint_id"))
-            if config.get("blueprint_id") is not None
+            trigger_source=config.trigger_source,
+            blueprint_id=str(config.blueprint_id)
+            if config.blueprint_id is not None
             else None,
+            whoami=getpass.getuser(),
             created_at=now_utc(),
             updated_at=now_utc(),
         )

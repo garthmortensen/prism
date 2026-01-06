@@ -48,6 +48,25 @@ ORDER BY created_at DESC;
 
 `launch_analyses.py` launches runs into the Dagster instance at `DAGSTER_HOME`. If `DAGSTER_HOME` is not set, the script defaults to `./.dagster_home` (the same instance directory used by `make dagster`).
 
+
+## `permutation.py`
+
+This tool automatically generates exhaustive configuration permutations for testing purposes. It inspects the configuration schemas (`ra_dagster/config_schemas.py`) and creates a specific configuration file for every possible combination of enumerated options (e.g. Model Years, Calculation modes).
+
+### Output
+The generated YAML files are written to: `ra_dagster/configs/permutations/`
+
+### Usage
+```bash
+python ra_dagster/automated_execution/permutation.py
+```
+
+### Generation Logic
+- **Scoring**: Generates a permutation for every combination of `ModelYearOption` and `InvalidGenderOption`.
+    - *Exclusion Rule*: Configurations where `invalid_gender="error"` are skipped to prevent intentional pipeline failures during batch testing.
+- **Comparison**: Generates permutations for all `MetricType` (mean/sum) and `PopulationMode` (intersection/union/etc) options.
+- **Naming**: Files are named descriptively based on their parameters (e.g., `score_runs__diy_model_year-2024__invalid_gender-random.yaml`).
+
 To see those runs in the UI, start Dagster against the same instance directory:
 
 ```bash

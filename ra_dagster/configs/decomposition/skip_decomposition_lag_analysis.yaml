@@ -4,8 +4,8 @@ ops:
       # 1. The Bookends
       # Baseline: Start of year (or very early runout, e.g. 3 months)
       # Actual: Full year runout (Final)
-      baseline_run_id: "RUN_ID_3_MONTHS" 
-      actual_run_id:   "RUN_ID_FINAL" 
+      baseline_run_ref: "RUN_ID_3_MONTHS" 
+      actual_run_ref:   "RUN_ID_FINAL" 
       
       # 2. Analysis Settings
       run_description: "2024 Lag/Runout Decomposition (3mo -> Final)"
@@ -16,7 +16,7 @@ ops:
         # Driver A: Impact of Q2 Runout (Moving from 3mo -> 6mo)
         # Logic: Compare 3mo vs 6mo
         - name: "Q2 Runout (Apr-Jun)"
-          run_id: "2cc0144c-448e-4b00-a65b-bf446add2e6e"
+          run_ref: "2cc0144c-448e-4b00-a65b-bf446add2e6e"
           population_mode: intersection
 
         # Driver B: Impact of Q3 Runout (Moving from 6mo -> 9mo)
@@ -25,7 +25,7 @@ ops:
         # If you want strictly incremental (6->9), you'd need a sequential method, 
         # but marginal is fine for showing "Contribution of 9mo state".
         - name: "Q3 Runout (Jul-Sep)"
-          run_id: "RUN_ID_9_MONTHS"
+          run_ref: "RUN_ID_9_MONTHS"
           population_mode: intersection
 
 resources:

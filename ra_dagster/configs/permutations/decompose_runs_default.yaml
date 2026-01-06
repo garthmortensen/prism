@@ -1,0 +1,13 @@
+# Auto-generated permutation based on 1 for decompose_runs
+ops:
+  decompose_runs:
+    config:
+      baseline_run_ref: PLACEHOLDER
+      actual_run_ref: PLACEHOLDER
+      population_mode: intersection
+      components: []
+      group_id: null
+      group_description: null
+      run_description: Decomposition Analysis
+      trigger_source: dagster
+      blueprint_id: null

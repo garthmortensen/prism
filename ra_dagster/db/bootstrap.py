@@ -148,13 +148,20 @@ def ensure_core_schemas(con: Connection) -> None:
 
 def ensure_run_registry(con: Connection) -> None:
     """Ensure that the run_registry table exists."""
+    
+    if _is_duckdb(con):
+        con.execute(text("CREATE SEQUENCE IF NOT EXISTS main_runs.run_id_seq START 1"))
+
     metadata = MetaData(schema="main_runs")
     Table(
         "run_registry",
         metadata,
         Column("run_id", String, primary_key=True),
+        Column("run_seq", Integer),
+        Column("run_ref", String),
         Column("run_timestamp", String),
         Column("group_id", Integer),
+        Column("group_ref", String),
         Column("group_description", String),
         Column("run_description", String),
         Column("analysis_type", String),
@@ -171,6 +178,7 @@ def ensure_run_registry(con: Connection) -> None:
         Column("status", String),
         Column("trigger_source", String),
         Column("blueprint_id", String),
+        Column("whoami", String),
         Column("created_at", TIMESTAMP),
         Column("updated_at", TIMESTAMP),
     )
@@ -182,6 +190,7 @@ def ensure_run_registry(con: Connection) -> None:
             "ALTER TABLE main_runs.run_registry ADD COLUMN IF NOT EXISTS launchpad_config VARCHAR"
         )
     )
+    con.execute(text("ALTER TABLE main_runs.run_registry ADD COLUMN IF NOT EXISTS whoami VARCHAR"))
 
     # Add index on run_timestamp for sorting (not unique to allow sub-second collisions)
     con.execute(
@@ -261,26 +270,6 @@ def ensure_marts_tables(con: Connection) -> None:
     )
 
     metadata.create_all(con)
-
-    json_type = _get_json_type(con)
-
-    # Backfill columns for warehouses created before these fields were added.
-    con.execute(text("ALTER TABLE main_runs.risk_scores ADD COLUMN IF NOT EXISTS model_year VARCHAR"))
-    con.execute(
-        text(f"ALTER TABLE main_runs.risk_scores ADD COLUMN IF NOT EXISTS components {json_type}")
-    )
-    con.execute(text("ALTER TABLE main_runs.risk_scores ADD COLUMN IF NOT EXISTS gender VARCHAR"))
-    con.execute(text("ALTER TABLE main_runs.risk_scores ADD COLUMN IF NOT EXISTS model VARCHAR"))
-    con.execute(text("ALTER TABLE main_runs.risk_scores ADD COLUMN IF NOT EXISTS metal_level VARCHAR"))
-    con.execute(
-        text(
-            "ALTER TABLE main_runs.risk_scores ADD COLUMN IF NOT EXISTS enrollment_months INTEGER"
-        )
-    )
-
-    # If this warehouse existed before we standardized column ordering,
-    # details/components may not be physically last. Recreate table once to reorder.
-    _recreate_risk_scores_with_details_components_last(con)
 
 
 def ensure_prism_warehouse(con: Connection) -> None:

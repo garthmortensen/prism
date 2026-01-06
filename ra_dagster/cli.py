@@ -37,6 +37,7 @@ def db_bootstrap(
     con = engine.connect()
     try:
         ensure_prism_warehouse(con)
+        con.commit()
     finally:
         con.close()
 

@@ -1,3 +1,9 @@
+"""Export utility for Risk Adjustment results.
+
+Handles the efficient export of large result sets from DuckDB to CSV format.
+Includes logic for splitting files, handling headers, and formatting outputs.
+"""
+
 from __future__ import annotations
 
 import argparse

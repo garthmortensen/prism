@@ -11,6 +11,7 @@ Usage:
 """
 from __future__ import annotations
 
+import getpass
 from pathlib import Path
 
 from dagster import asset, ResourceParam
@@ -19,9 +20,12 @@ from ra_dagster.db.bootstrap import ensure_prism_warehouse, now_utc
 from ra_dagster.db.run_registry import (
     RunRecord,
     allocate_group_id,
+    allocate_run_seq,
     insert_run,
     update_run_status,
+    resolve_run_id,
 )
+from ra_dagster.utils.run_refs import generate_run_ref
 from ra_dagster.resources.sqlalchemy_resource import SqlAlchemyResource
 from ra_dagster.utils.run_ids import (
     extract_launchpad_config,
@@ -32,68 +36,97 @@ from ra_dagster.utils.run_ids import (
 from sqlalchemy import text
 
 
+from pathlib import Path
+
+from dagster import AssetExecutionContext, asset, ResourceParam
+from sqlalchemy import text
+
+from ra_dagster.config_schemas import ComparisonConfig
+from ra_dagster.db.bootstrap import ensure_prism_warehouse, now_utc
+from ra_dagster.db.run_registry import (
+    RunRecord,
+    allocate_group_id,
+    allocate_run_seq,
+    insert_run,
+    update_run_status,
+    resolve_run_id,
+)
+
 @asset
-def compare_runs(context, database: ResourceParam[SqlAlchemyResource]) -> None:
+def compare_runs(context: AssetExecutionContext, config: ComparisonConfig, database: ResourceParam[SqlAlchemyResource]) -> None:
     """
-    Compute member-level deltas between two scoring runs into main_analytics.run_comparison.
-
-    Config:
-        run_id_a: str
-        run_id_b: str
-        metric: str = "mean" | "sum" (default: "mean")
-        metric: str = "mean" | "sum" (default: "mean")
-        population_mode: str = "intersection" | "union" | "a_only" | "b_only"
-            (default: "intersection")
+    Compute member-level deltas between two scoring runs.
     """
-    config = context.op_config or {}
-    run_id_a = config.get("run_id_a")
-    run_id_b = config.get("run_id_b")
-    metric = config.get("metric", "mean")
-    population_mode = config.get("population_mode", "intersection")
+    run_ref_a_raw = config.run_ref_a
+    run_ref_b_raw = config.run_ref_b
+    metric = config.metric
+    population_mode = config.population_mode
 
-    if not (run_id_a and run_id_b):
-        raise ValueError("compare_runs requires op config: run_id_a and run_id_b")
+    if not (run_ref_a_raw and run_ref_b_raw):
+        raise ValueError("compare_runs requires op config: run_ref_a and run_ref_b")
+
 
     engine = database.get_engine()
     con = engine.connect()
 
     ensure_prism_warehouse(con)
 
+    # Resolve human-friendly codes to UUIDs if necessary
+    run_id_a = resolve_run_id(con, run_ref_a_raw)
+    run_id_b = resolve_run_id(con, run_ref_b_raw)
+
     run_id = context.run_id
     run_ts = generate_run_timestamp()
     git = get_git_provenance(cwd=str(Path(__file__).resolve().parents[2]))
 
-    group_id = config.get("group_id")
+    group_id = config.group_id
     if group_id is None:
         group_id = allocate_group_id(con)
 
+    run_seq = allocate_run_seq(con)
+    run_ref = generate_run_ref(run_seq, width=4, prefix="c")
+    group_ref = (
+        generate_run_ref(int(group_id), width=4, prefix="b")
+        if group_id is not None
+        else None
+    )
+
+    context.log.info(f"Run Ref: {run_ref}")
+    if group_ref:
+        context.log.info(f"Batch Ref: {group_ref}")
+
     record = RunRecord(
         run_id=run_id,
+        run_seq=run_seq,
+        run_ref=run_ref,
         run_timestamp=run_ts,
         group_id=int(group_id),
-        group_description=config.get("group_description"),
-        run_description=config.get(
-            "run_description",
-            f"Compare runs {run_id_a} vs {run_id_b}",
-        ),
+        group_ref=group_ref,
+        group_description=config.group_description,
+        run_description=config.run_description or f"Compare runs {run_id_a} vs {run_id_b}",
         analysis_type="comparison",
         calculator=None,
         model_version=None,
         benefit_year=None,
-        launchpad_config=extract_launchpad_config(context=context, fallback=config),
+        launchpad_config=extract_launchpad_config(
+            context=context,
+            fallback={
+                "ops": {
+                    "compare_runs": {
+                        "config": config.model_dump(),
+                    }
+                }
+            },
+        ),
         blueprint_yml={
-            "run_id_a": run_id_a,
-            "run_id_b": run_id_b,
-            "metric": metric,
-            "population_mode": population_mode,
-            **config,
+            "run_id_actual": run_id,  # store the generated UUID inside the blueprint for downstream use
+            **config.model_dump(),
         },
         git=git,
         status="started",
-        trigger_source=config.get("trigger_source", "dagster"),
-        blueprint_id=str(config.get("blueprint_id"))
-        if config.get("blueprint_id") is not None
-        else None,
+        trigger_source="dagster",
+        blueprint_id=None,
+        whoami=getpass.getuser(),
         created_at=now_utc(),
         updated_at=now_utc(),
     )
@@ -102,16 +135,16 @@ def compare_runs(context, database: ResourceParam[SqlAlchemyResource]) -> None:
 
     try:
         # Determine Join Type based on population_mode
-        if population_mode == "intersection":
+        if population_mode.value == "intersection":
             join_type = "INNER JOIN"
-        elif population_mode == "union":
+        elif population_mode.value == "union":
             join_type = "FULL OUTER JOIN"
-        elif population_mode == "a_only":
+        elif population_mode.value == "a_only":
             join_type = "LEFT JOIN"
-        elif population_mode == "b_only":
+        elif population_mode.value == "b_only":
             join_type = "RIGHT JOIN"
         else:
-            raise ValueError(f"Unknown population_mode: {population_mode}")
+            raise ValueError(f"Unknown population_mode: {population_mode.value}")
 
         # batch_id is the unique ID for this execution (using run_id)
         batch_id = context.run_id
