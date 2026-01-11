@@ -1,5 +1,5 @@
 ops:
-  score_members_aca:
+  risk_scores:
     config:
       # Scenario: Coding Intensity / Chart Review Impact
       # Using an enhanced claims view with simulated added diagnoses

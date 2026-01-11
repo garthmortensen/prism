@@ -9,12 +9,10 @@ Description:
 Usage:
     Executed via the `comparison_job` in Dagster.
 """
-from __future__ import annotations
-
 import getpass
 from pathlib import Path
 
-from dagster import asset, ResourceParam
+from dagster import asset, ResourceParam, AssetExecutionContext
 
 from ra_dagster.db.bootstrap import ensure_prism_warehouse, now_utc
 from ra_dagster.db.run_registry import (
@@ -34,23 +32,7 @@ from ra_dagster.utils.run_ids import (
     json_dumps,
 )
 from sqlalchemy import text
-
-
-from pathlib import Path
-
-from dagster import AssetExecutionContext, asset, ResourceParam
-from sqlalchemy import text
-
 from ra_dagster.config_schemas import ComparisonConfig
-from ra_dagster.db.bootstrap import ensure_prism_warehouse, now_utc
-from ra_dagster.db.run_registry import (
-    RunRecord,
-    allocate_group_id,
-    allocate_run_seq,
-    insert_run,
-    update_run_status,
-    resolve_run_id,
-)
 
 @asset
 def compare_runs(context: AssetExecutionContext, config: ComparisonConfig, database: ResourceParam[SqlAlchemyResource]) -> None:
@@ -199,10 +181,13 @@ def compare_runs(context: AssetExecutionContext, config: ComparisonConfig, datab
         )
 
         update_run_status(con, run_id=run_id, status="success")
+        con.commit()
         context.log.info(f"Wrote main_analytics.run_comparison for batch_id={batch_id}")
 
     except Exception:
+        con.rollback()
         update_run_status(con, run_id=run_id, status="failed")
+        con.commit()
         raise
 
     finally:

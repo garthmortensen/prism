@@ -24,7 +24,10 @@ class SqlAlchemyResource:
                 # Fallback to local duckdb
                 db_path = Path(__file__).resolve().parents[2] / "risk_adjustment.duckdb"
                 url = f"duckdb:///{db_path}"
-            return create_engine(url)
+            
+            # Use NullPool for DuckDB to avoid holding locks
+            from sqlalchemy.pool import NullPool
+            return create_engine(url, poolclass=NullPool)
         elif self.database == "prod":
             url = os.getenv("DATABASE_URL")
             if not url:

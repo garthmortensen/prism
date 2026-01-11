@@ -1,0 +1,29 @@
+exp_id,filename,claims_view,diy_model_year,enrollments_view,invalid_gender,member_age_basis_year,members_view,run_description
+ignore_scoring_monte_carlo_radv,ignore_scoring_monte_carlo_radv.yaml,main_raw.claims_monte_carlo_radv,2024,main_raw.enrollments_monte_carlo_radv,skip,2024,main_raw.members_monte_carlo_radv,Monte Carlo RADV Simulation (N=50)
+scoring_2021,scoring_2021.yaml,main_raw.raw_claims_2021,2021,main_raw.raw_enrollments_2021,skip,2021,main_raw.raw_members_2021,ACA scoring run 2021
+scoring_2022,scoring_2022.yaml,main_raw.raw_claims_2022,2022,main_raw.raw_enrollments_2022,skip,2022,main_raw.raw_members_2022,ACA scoring run 2022
+scoring_2023,scoring_2023.yaml,main_raw.raw_claims_2023,2023,main_raw.raw_enrollments_2023,skip,2023,main_raw.raw_members_2023,ACA scoring run 2023
+scoring_2024,scoring_2024.yaml,main_raw.raw_claims_2024,2024,main_raw.raw_enrollments_2024,skip,2024,main_raw.raw_members_2024,ACA scoring run 2024
+scoring_2025,scoring_2025.yaml,main_raw.raw_claims_2025,2025,main_raw.raw_enrollments_2025,skip,2025,main_raw.raw_members_2025,ACA scoring run 2025
+scoring_audit_risk,scoring_audit_risk.yaml,main_raw.high_confidence_claims,2024,main_raw.raw_enrollments_2024,skip,2024,main_raw.raw_members_2024,Audit Risk (High Confidence Claims Only)
+scoring_coding_intensity,scoring_coding_intensity.yaml,main_raw.raw_claims_2024_enhanced,2024,main_raw.raw_enrollments_2024,skip,2024,main_raw.raw_members_2024,Coding Intensity Simulation (Enhanced Claims)
+scoring_lag_analysis_2021_3m,scoring_lag_analysis_2021_3m.yaml,main_raw.claims_2021_3months,2021,main_raw.raw_enrollments_2021,skip,2021,main_raw.raw_members_2021,Lag Analysis 2021 (3-month runout)
+scoring_lag_analysis_2021_6m,scoring_lag_analysis_2021_6m.yaml,main_raw.claims_2021_6months,2021,main_raw.raw_enrollments_2021,skip,2021,main_raw.raw_members_2021,Lag Analysis 2021 (6-month runout)
+scoring_lag_analysis_2021_9m,scoring_lag_analysis_2021_9m.yaml,main_raw.claims_2021_9months,2021,main_raw.raw_enrollments_2021,skip,2021,main_raw.raw_members_2021,Lag Analysis 2021 (9-month runout)
+scoring_lag_analysis_2022_3m,scoring_lag_analysis_2022_3m.yaml,main_raw.claims_2022_3months,2022,main_raw.raw_enrollments_2022,skip,2022,main_raw.raw_members_2022,Lag Analysis 2022 (3-month runout)
+scoring_lag_analysis_2022_6m,scoring_lag_analysis_2022_6m.yaml,main_raw.claims_2022_6months,2022,main_raw.raw_enrollments_2022,skip,2022,main_raw.raw_members_2022,Lag Analysis 2022 (6-month runout)
+scoring_lag_analysis_2022_9m,scoring_lag_analysis_2022_9m.yaml,main_raw.claims_2022_9months,2022,main_raw.raw_enrollments_2022,skip,2022,main_raw.raw_members_2022,Lag Analysis 2022 (9-month runout)
+scoring_lag_analysis_2023_3m,scoring_lag_analysis_2023_3m.yaml,main_raw.claims_2023_3months,2023,main_raw.raw_enrollments_2023,skip,2023,main_raw.raw_members_2023,Lag Analysis 2023 (3-month runout)
+scoring_lag_analysis_2023_6m,scoring_lag_analysis_2023_6m.yaml,main_raw.claims_2023_6months,2023,main_raw.raw_enrollments_2023,skip,2023,main_raw.raw_members_2023,Lag Analysis 2023 (6-month runout)
+scoring_lag_analysis_2023_9m,scoring_lag_analysis_2023_9m.yaml,main_raw.claims_2023_9months,2023,main_raw.raw_enrollments_2023,skip,2023,main_raw.raw_members_2023,Lag Analysis 2023 (9-month runout)
+scoring_lag_analysis_2024_3m,scoring_lag_analysis_2024_3m.yaml,main_raw.claims_2024_3months,2024,main_raw.raw_enrollments_2024,skip,2024,main_raw.raw_members_2024,Lag Analysis 2024 (3-month runout)
+scoring_lag_analysis_2024_6m,scoring_lag_analysis_2024_6m.yaml,main_raw.claims_2024_6months,2024,main_raw.raw_enrollments_2024,skip,2024,main_raw.raw_members_2024,Lag Analysis 2024 (6-month runout)
+scoring_lag_analysis_2024_9m,scoring_lag_analysis_2024_9m.yaml,main_raw.claims_2024_9months,2024,main_raw.raw_enrollments_2024,skip,2024,main_raw.raw_members_2024,Lag Analysis 2024 (9-month runout)
+scoring_lag_analysis_2025_3m,scoring_lag_analysis_2025_3m.yaml,main_raw.claims_2025_3months,2025,main_raw.raw_enrollments_2025,skip,2025,main_raw.raw_members_2025,Lag Analysis 2025 (3-month runout)
+scoring_lag_analysis_2025_6m,scoring_lag_analysis_2025_6m.yaml,main_raw.claims_2025_6months,2025,main_raw.raw_enrollments_2025,skip,2025,main_raw.raw_members_2025,Lag Analysis 2025 (6-month runout)
+scoring_lag_analysis_2025_9m,scoring_lag_analysis_2025_9m.yaml,main_raw.claims_2025_9months,2025,main_raw.raw_enrollments_2025,skip,2025,main_raw.raw_members_2025,Lag Analysis 2025 (9-month runout)
+scoring_lag_analysis_3m,scoring_lag_analysis_3m.yaml,main_raw.claims_2024_3months,2024,main_raw.raw_enrollments_2024,skip,2024,main_raw.raw_members_2024,Lag Analysis (3-month runout)
+scoring_lag_analysis_6m,scoring_lag_analysis_6m.yaml,main_raw.claims_2024_6months,2024,main_raw.raw_enrollments_2024,skip,2024,main_raw.raw_members_2024,Lag Analysis (6-month runout)
+scoring_lag_analysis_9m,scoring_lag_analysis_9m.yaml,main_raw.claims_2024_9months,2024,main_raw.raw_enrollments_2024,skip,2024,main_raw.raw_members_2024,Lag Analysis (9-month runout)
+scoring_metal_level,scoring_metal_level.yaml,main_raw.raw_claims_2024,2024,main_raw.raw_enrollments_2024,skip,2024,main_raw.members_simulated_silver,Metal Level Sim (All Silver)
+scoring_regulatory_cliff,scoring_regulatory_cliff.yaml,main_raw.raw_claims_2024,2023,main_raw.raw_enrollments_2024,skip,2024,main_raw.raw_members_2024,Regulatory Cliff (2024 Data on 2023 Model)

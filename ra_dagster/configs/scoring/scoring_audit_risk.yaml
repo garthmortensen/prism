@@ -1,5 +1,5 @@
 ops:
-  score_members_aca:
+  risk_scores:
     config:
       # Scenario: Truncation / Audit Risk
       # Using a claims view filtered to high-confidence providers only

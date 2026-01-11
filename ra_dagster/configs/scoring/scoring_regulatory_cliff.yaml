@@ -1,5 +1,5 @@
 ops:
-  score_members_aca:
+  risk_scores:
     config:
       # Scenario: Model Version Cross-Walking (Regulatory Cliff)
       # Running 2024 data through the previous year's (2023) model

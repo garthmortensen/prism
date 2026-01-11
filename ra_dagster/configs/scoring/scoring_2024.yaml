@@ -1,5 +1,5 @@
 ops:
-  score_members_aca:
+  risk_scores:
     config:
       claims_view: main_raw.raw_claims_2024
       enrollments_view: main_raw.raw_enrollments_2024

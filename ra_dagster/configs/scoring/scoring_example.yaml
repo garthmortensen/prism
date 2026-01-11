@@ -1,5 +1,5 @@
 ops:
-  score_members_aca:
+  dagster_runs_outputs__risk_scores:
     config:
       # Optional: override where scoring inputs come from.
       # If set, you must set all three.

@@ -34,6 +34,19 @@ sources:
           - name: launchpad_config
             description: Serialized Dagster Launchpad config (when available).
 
+      - name: experiment_entity_attribute_value
+        description: Flexible key-value attributes for run configuration experiments.
+        columns:
+          - name: run_id
+            description: Foreign key to run_registry.
+          - name: run_ref
+            description: Human readable run identifier.
+          - name: attribute
+            description: Configuration parameter name.
+          - name: value
+            description: Configuration value.
+          - name: created_at
+
   - name: dagster_runs_outputs
     description: Dagster-managed atomic run outputs.
     schema: main_runs

@@ -20,6 +20,7 @@ from ra_dagster.assets.comparison_dashboard import comparison_dashboard_html, co
 from ra_dagster.assets.dashboard import dashboard_html, dashboard_metrics
 from ra_dagster.assets.dbt_assets import dbt_analytics_assets, dbt_project
 from ra_dagster.assets.decomposition import decompose_runs
+from ra_dagster.assets.exports import scoring_file_outputs
 from ra_dagster.assets.scoring import score_members_aca
 from ra_dagster.assets.visualizations import (
     comparison_visualizations,
@@ -49,7 +50,7 @@ with open(CONFIGS_DIR / "comparison" / "comparison_dashboard_config.yaml", encod
 
 scoring_job = define_asset_job(
     name="scoring_job",
-    selection=AssetSelection.assets(score_members_aca, scoring_visualizations) | AssetSelection.assets(dbt_analytics_assets),
+    selection=AssetSelection.assets(score_members_aca, scoring_visualizations, scoring_file_outputs) | AssetSelection.assets(dbt_analytics_assets),
     description="""
     # ACA Risk Scoring Job
 
@@ -60,6 +61,7 @@ scoring_job = define_asset_job(
     2. Applies HHS-HCC model logic
     3. Writes results to `main_runs.risk_scores`
     4. Materializes dbt analytics marts
+    5. Exports results to CSV
     """,
     tags={"team": "analytics", "priority": "high"},
     metadata={
@@ -172,6 +174,7 @@ definitions = Definitions(
         comparison_dashboard_metrics,
         comparison_dashboard_html,
         dbt_analytics_assets,
+        scoring_file_outputs,
     ],
     resources={
         "database": db_resource,

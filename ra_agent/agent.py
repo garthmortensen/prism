@@ -15,7 +15,9 @@ from ra_agent.tools import (
     get_comparison_by_dimension,
     get_decomposition_results,
     query_risk_scores,
-    compare_two_runs
+    compare_two_runs,
+    describe_hccs,
+    describe_rxcs
 )
 
 # Load environment variables from .env file if present
@@ -62,7 +64,9 @@ def create_agent():
         get_comparison_by_dimension,
         get_decomposition_results,
         query_risk_scores,
-        compare_two_runs
+        compare_two_runs,
+        describe_hccs,
+        describe_rxcs
     ]
     
     # Initialize memory

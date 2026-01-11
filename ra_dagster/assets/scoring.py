@@ -269,7 +269,7 @@ def _maybe_build_member_input_view(
 
 
 
-@asset
+@asset(key_prefix=["dagster_runs_outputs"], name="risk_scores")
 def score_members_aca(
     context: AssetExecutionContext, config: ScoringConfig, database: ResourceParam[SqlAlchemyResource]
 ) -> None:
@@ -371,7 +371,7 @@ def score_members_aca(
             context=context,
             fallback={
                 "ops": {
-                    "score_members_aca": {
+                    "risk_scores": {
                         "config": config.model_dump(),
                     }
                 }
@@ -540,6 +540,7 @@ def score_members_aca(
         context.log.info(
             f"Wrote {total_written} rows to main_runs.risk_scores for run_timestamp={run_ts}"
         )
+        con.commit()
 
     except Exception:
         update_run_status(con, run_id=run_id, status="failed")

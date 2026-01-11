@@ -201,6 +201,26 @@ def ensure_run_registry(con: Connection) -> None:
     )
 
 
+def ensure_experiment_entity_attribute_value(con: Connection) -> None:
+    """
+    Ensure the experiment_entity_attribute_value table exists.
+    
+    This table uses an Entity-Attribute-Value (EAV) pattern to store flexible
+    experiment configuration parameters linked to specific runs.
+    """
+    metadata = MetaData(schema="main_runs")
+    Table(
+        "experiment_entity_attribute_value",
+        metadata,
+        Column("run_id", String, primary_key=True),
+        Column("run_ref", String),
+        Column("attribute", String, primary_key=True),
+        Column("value", String),
+        Column("created_at", TIMESTAMP),
+    )
+    metadata.create_all(con)
+
+
 def ensure_marts_tables(con: Connection) -> None:
     """Ensure that the data marts tables exist."""
     metadata = MetaData()
@@ -276,6 +296,7 @@ def ensure_prism_warehouse(con: Connection) -> None:
     """Ensure that the entire Prism warehouse structure exists."""
     ensure_core_schemas(con)
     ensure_run_registry(con)
+    ensure_experiment_entity_attribute_value(con)
     ensure_marts_tables(con)
 
 

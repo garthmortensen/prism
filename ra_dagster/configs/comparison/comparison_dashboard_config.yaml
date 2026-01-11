@@ -1,3 +1,8 @@
 resources:
   database:
     config: "dev"
+
+ops:
+  comparison_dashboard_metrics:
+    config:
+      batch_ref: "c0001"

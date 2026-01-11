@@ -17,7 +17,7 @@ import re
 
 import altair as alt
 import pandas as pd
-from dagster import asset, ResourceParam
+from dagster import asset, ResourceParam, AssetKey
 from sqlalchemy import text
 
 from ra_dagster.resources.sqlalchemy_resource import SqlAlchemyResource
@@ -26,7 +26,7 @@ VISUALIZATIONS_DIR = Path(__file__).resolve().parents[1] / "output" / "visualiza
 VISUALIZATIONS_DIR.mkdir(parents=True, exist_ok=True)
 
 
-@asset(deps=["score_members_aca", "run_score_summary"])
+@asset(deps=[AssetKey(["dagster_runs_outputs", "risk_scores"]), "run_score_summary"])
 def scoring_visualizations(context, database: ResourceParam[SqlAlchemyResource]) -> None:
     """
     Generate visualizations for recent scoring runs.

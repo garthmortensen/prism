@@ -182,3 +182,7 @@ Analysis steps:
 1. source the SQL view in the config: https://github.com/garthmortensen/prism/blob/main/ra_dagster/configs/scoring/scoring_regulatory_cliff.yaml
 
 </details>
+
+## TODO
+
+Having added permutations.py and permutation.yaml, it does feel like im wringing a dry towel at this point. Adding features to support casaul inference studies would be cool, but that might be low cohesion with risk adjustment, That might be more in line with clinical studies or care/utilization managment. No reason Prism couldn't support a broader range of analyses...dagster is a job manager after all.

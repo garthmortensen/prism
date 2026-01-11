@@ -1,5 +1,5 @@
 ops:
-  score_members_aca:
+  risk_scores:
     config:
       # Scenario: Monte Carlo RADV Simulation
       # Using "stacked" views that replicate the population N times with random claim dropouts

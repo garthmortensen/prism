@@ -156,6 +156,40 @@ def insert_run(con: Connection, record: RunRecord) -> None:
         },
     )
 
+    # Populate experiment_entity_attribute_value
+    # We flatten the blueprint_yml (configuration) into EAV format
+    if record.blueprint_yml:
+        eav_rows = []
+        for key, value in record.blueprint_yml.items():
+            # Skip complex nested structures for now, persist primitives
+            if isinstance(value, (str, int, float, bool, type(None))):
+                eav_rows.append({
+                    "run_id": record.run_id,
+                    "run_ref": record.run_ref,
+                    "attribute": key,
+                    "value": str(value) if value is not None else None,
+                    "created_at": record.created_at
+                })
+        
+        if eav_rows:
+            con.execute(
+                text("""
+                INSERT INTO main_runs.experiment_entity_attribute_value (
+                    run_id,
+                    run_ref,
+                    attribute,
+                    value,
+                    created_at
+                ) VALUES (
+                    :run_id,
+                    :run_ref,
+                    :attribute,
+                    :value,
+                    :created_at
+                )
+                """),
+                eav_rows
+            )
 
 def update_run_status(
     con: Connection,

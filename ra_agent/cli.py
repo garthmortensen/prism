@@ -23,11 +23,13 @@ def chat():
                 break
             
             # Stream the response
-            console.print("\n[bold red]Agent:[/bold red] ", end="")
+            # console.print("\n[bold red]Agent:[/bold red] ", end="")
             
             # We use invoke for now, but could switch to stream
-            response = agent.invoke({"messages": [("human", user_input)]}, config)
-            console.print(response['messages'][-1].content)
+            with console.status("[bold green]Agent is thinking...[/bold green]", spinner="dots"):
+                response = agent.invoke({"messages": [("human", user_input)]}, config)
+            
+            console.print(f"\n[bold blue]Agent:[/bold blue] {response['messages'][-1].content}")
             
         except KeyboardInterrupt:
             break
@@ -42,7 +44,8 @@ def ask(question: str):
     config = {"configurable": {"thread_id": thread_id}}
     
     try:
-        response = agent.invoke({"messages": [("human", question)]}, config)
+        with console.status("[bold green]Agent is thinking...[/bold green]", spinner="dots"):
+            response = agent.invoke({"messages": [("human", question)]}, config)
         console.print(response['messages'][-1].content)
     except Exception as e:
         console.print(f"[bold red]Error:[/bold red] {e}")

@@ -9,8 +9,6 @@ Description:
 Usage:
     Executed via the `decomposition_job` in Dagster.
 """
-from __future__ import annotations
-
 import getpass
 from pathlib import Path
 

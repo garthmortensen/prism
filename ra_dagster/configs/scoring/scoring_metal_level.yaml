@@ -1,5 +1,5 @@
 ops:
-  score_members_aca:
+  risk_scores:
     config:
       # Scenario: Benefit Design Impact (Metal Level)
       # Using a member view where all members are simulated as Silver plan

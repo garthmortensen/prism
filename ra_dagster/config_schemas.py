@@ -59,29 +59,34 @@ class ScoringConfig(Config):
     csr_variant: CSRVariant | None = None
     allow_telehealth: bool = True
 
+    # Input views (Optional) if manual override is needed
+    claims_view: str | None = None
+    enrollments_view: str | None = None
+    members_view: str | None = None
+
 
 # -----------------------------------------------------------------------------
 # Comparison Configuration
 # -----------------------------------------------------------------------------
 
 class PopulationMode(str, Enum):
-    INTERSECTION = "intersection"
-    UNION = "union"
-    A_ONLY = "a_only"
-    B_ONLY = "b_only"
+    intersection = "intersection"
+    union = "union"
+    a_only = "a_only"
+    b_only = "b_only"
 
 
 class MetricType(str, Enum):
-    MEAN = "mean"
-    SUM = "sum"
+    mean = "mean"
+    sum = "sum"
 
 
 class ComparisonConfig(Config):
     run_ref_a: str
     run_ref_b: str
     run_description: str | None = None
-    metric: MetricType = MetricType.MEAN
-    population_mode: PopulationMode = PopulationMode.INTERSECTION
+    metric: MetricType = MetricType.mean
+    population_mode: PopulationMode = PopulationMode.intersection
     group_id: int | None = None
     group_description: str | None = None
 
@@ -96,8 +101,7 @@ class DashboardConfig(Config):
 
 
 class ComparisonDashboardConfig(Config):
-    run_ref_a: str
-    run_ref_b: str
+    batch_ref: str
 
 
 # -----------------------------------------------------------------------------

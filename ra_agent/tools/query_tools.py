@@ -2,12 +2,13 @@ import json
 import pandas as pd
 from langchain_core.tools import tool
 from sqlalchemy import MetaData, Table, Column, String, Float, Integer, JSON, select
-from ra_agent.db import engine
+from ra_agent.db import engine, resolve_run_id
+from ra_calculators.aca_risk_score_calculator.table_loader import load_hcc_labels, load_rxc_labels
 
 @tool
 def list_runs(analysis_type: str = "scoring", limit: int = 10) -> str:
     """
-    List recent runs. Returns run_id, timestamp, description, status.
+    List recent runs. Returns run_ref, run_id, timestamp, description, status.
     
     Args:
         analysis_type: Type of run to list (default: "scoring")
@@ -19,6 +20,7 @@ def list_runs(analysis_type: str = "scoring", limit: int = 10) -> str:
         "run_registry", 
         md, 
         Column("run_id", String),
+        Column("run_ref", String),
         Column("run_timestamp", String),
         Column("status", String),
         Column("run_description", String),
@@ -27,7 +29,7 @@ def list_runs(analysis_type: str = "scoring", limit: int = 10) -> str:
     )
 
     stmt = (
-        select(run_registry.c.run_id, run_registry.c.run_timestamp, run_registry.c.status, run_registry.c.run_description)
+        select(run_registry.c.run_ref, run_registry.c.run_id, run_registry.c.run_timestamp, run_registry.c.status, run_registry.c.run_description)
         .where(run_registry.c.analysis_type == analysis_type)
         .order_by(run_registry.c.run_timestamp.desc())
         .limit(limit)
@@ -51,8 +53,10 @@ def get_run_summary(run_id: str) -> str:
     Uses precomputed views in the data mart for performance.
     
     Args:
-        run_id: The UUID of the scoring run
+        run_id: The UUID or run_ref of the scoring run
     """
+    run_id = resolve_run_id(run_id)
+
     md = MetaData()
     # Explicitly define table to avoid reflection issues
     summary_table = Table(
@@ -91,9 +95,11 @@ def get_hcc_summary(run_id: str, limit: int = 20) -> str:
     Returns HCC codes, descriptions, and prevalence/counts.
     
     Args:
-        run_id: The UUID of the scoring run
+        run_id: The UUID or run_ref of the scoring run
         limit: Max number of HCCs to return (default: 20)
     """
+    run_id = resolve_run_id(run_id)
+
     md = MetaData()
     hcc_table = Table(
         "run_hcc_summary", 
@@ -260,29 +266,59 @@ def get_comparison_by_dimension(run_id_a: str, run_id_b: str, dimension: str = N
         run_id_b: The second run UUID (comparison)
         dimension: Optional dimension to filter by.
     """
-    md = MetaData()
-    comp_table = Table(
+    try:
+        # 1. Resolve run_ref to run_id if needed
+        run_id_a = resolve_run_id(run_id_a)
+        run_id_b = resolve_run_id(run_id_b)
+
+        md = MetaData()
+
+        # 2. Find batch_id from run_comparison table
+        run_comp = Table(
+            "run_comparison",
+            md,
+            Column("batch_id", String),
+            Column("run_id_a", String),
+            Column("run_id_b", String),
+            Column("created_at", String),
+            schema="main_analytics"
+        )
+
+        # Check both directions (a vs b or b vs a)
+        stmt_batch = select(run_comp.c.batch_id).where(
+            ((run_comp.c.run_id_a == run_id_a) & (run_comp.c.run_id_b == run_id_b)) |
+            ((run_comp.c.run_id_a == run_id_b) & (run_comp.c.run_id_b == run_id_a))
+        ).order_by(run_comp.c.created_at.desc()).limit(1)
+
+        with engine.connect() as conn:
+            batch_id = conn.execute(stmt_batch).scalar()
+            
+    except Exception as e:
+         return f"Error finding comparison batch (or resolving IDs): {str(e)}"
+
+    if not batch_id:
+        return f"No comparison found between {run_id_a} and {run_id_b}. Please run compare_two_runs first."
+
+    # 3. Query details from run_comparison_by_dim using batch_id
+    # Columns match main_analytics.run_comparison_by_dim view
+    comp_dim_table = Table(
         "run_comparison_by_dim", 
         md, 
         Column("batch_id", String),
-        Column("run_id_a", String),
-        Column("run_id_b", String),
-        Column("dimension", String),
+        Column("dimension_name", String),
         Column("dimension_value", String),
-        Column("member_count", Integer),
-        Column("avg_score_a", Float),
-        Column("avg_score_b", Float),
-        Column("avg_diff", Float),
+        Column("total_members", Integer),
+        Column("matched_count", Integer),
+        Column("avg_score_diff", Float),
+        Column("min_score_diff", Float),
+        Column("max_score_diff", Float),
         schema="main_analytics"
     )
 
-    stmt = select(comp_table).where(
-        (comp_table.c.run_id_a == run_id_a) & 
-        (comp_table.c.run_id_b == run_id_b)
-    )
+    stmt = select(comp_dim_table).where(comp_dim_table.c.batch_id == batch_id)
     
     if dimension:
-        stmt = stmt.where(comp_table.c.dimension == dimension)
+        stmt = stmt.where(comp_dim_table.c.dimension_name == dimension)
 
     try:
         with engine.connect() as conn:
@@ -291,13 +327,7 @@ def get_comparison_by_dimension(run_id_a: str, run_id_b: str, dimension: str = N
         return f"Error querying run_comparison_by_dim: {str(e)}"
         
     if df.empty:
-        stmt = stmt.where(comp_table.c.dimension == dimension)
-
-    with engine.connect() as conn:
-        df = pd.read_sql(stmt, conn)
-        
-    if df.empty:
-        return "No comparison data found for these runs. A comparison job may need to be run first."
+        return "No dimension data found for this comparison."
         
     return df.to_markdown(index=False)
 
@@ -391,3 +421,35 @@ def query_risk_scores(run_id: str, filters: str = "{}", limit: int = 100) -> str
         return "No records found matching criteria."
 
     return df.to_markdown(index=False)
+
+
+@tool
+def describe_hccs(model_year: str = "2024") -> str:
+    """
+    Get the descriptions/labels for HCCs (Hierarchical Condition Categories).
+    
+    Args:
+        model_year: The model year to fetch labels for (default: "2024")
+    """
+    try:
+        labels = load_hcc_labels(model_year)
+        df = pd.DataFrame(list(labels.items()), columns=["HCC", "Description"])
+        return df.to_markdown(index=False)
+    except Exception as e:
+        return f"Error loading HCC labels: {str(e)}"
+
+
+@tool
+def describe_rxcs(model_year: str = "2024") -> str:
+    """
+    Get the descriptions/labels for RXCs (Prescription Drug Hierarchical Condition Categories).
+    
+    Args:
+        model_year: The model year to fetch labels for (default: "2024")
+    """
+    try:
+        labels = load_rxc_labels(model_year)
+        df = pd.DataFrame(list(labels.items()), columns=["RXC", "Description"])
+        return df.to_markdown(index=False)
+    except Exception as e:
+        return f"Error loading RXC labels: {str(e)}"
