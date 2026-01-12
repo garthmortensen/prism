@@ -20,7 +20,7 @@ from ra_dagster.assets.comparison_dashboard import comparison_dashboard_html, co
 from ra_dagster.assets.dashboard import dashboard_html, dashboard_metrics
 from ra_dagster.assets.dbt_assets import dbt_analytics_assets, dbt_project
 from ra_dagster.assets.decomposition import decompose_runs
-from ra_dagster.assets.exports import scoring_file_outputs
+from ra_dagster.assets.exports import scoring_file_outputs, comparison_file_outputs
 from ra_dagster.assets.scoring import score_members_aca
 from ra_dagster.assets.visualizations import (
     comparison_visualizations,
@@ -73,7 +73,7 @@ scoring_job = define_asset_job(
 
 comparison_job = define_asset_job(
     name="comparison_job",
-    selection=AssetSelection.assets(compare_runs, comparison_visualizations) | AssetSelection.assets(dbt_analytics_assets),
+    selection=AssetSelection.assets(compare_runs, comparison_visualizations, comparison_file_outputs) | AssetSelection.assets(dbt_analytics_assets),
     description="""
     # Run Comparison Job
 
@@ -175,6 +175,7 @@ definitions = Definitions(
         comparison_dashboard_html,
         dbt_analytics_assets,
         scoring_file_outputs,
+        comparison_file_outputs,
     ],
     resources={
         "database": db_resource,

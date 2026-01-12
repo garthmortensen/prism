@@ -7,6 +7,9 @@ from ra_dagster.resources.sqlalchemy_resource import SqlAlchemyResource
 EXPORT_DIR = Path(__file__).resolve().parents[1] / "output" / "scoring"
 EXPORT_DIR.mkdir(parents=True, exist_ok=True)
 
+EXPORT_DIR_COMPARISON = Path(__file__).resolve().parents[1] / "output" / "comparison"
+EXPORT_DIR_COMPARISON.mkdir(parents=True, exist_ok=True)
+
 @asset(deps=["scoring_visualizations"])
 def scoring_file_outputs(context, database: ResourceParam[SqlAlchemyResource]) -> None:
     """
@@ -61,6 +64,63 @@ def scoring_file_outputs(context, database: ResourceParam[SqlAlchemyResource]) -
                 context.log.info(f"Exported {output_path}")
             except Exception as e:
                 # Catch query errors (e.g. if table doesn't exist or doesn't have run_id)
+                context.log.error(f"Failed to export {table}: {e}")
+
+    finally:
+        con.close()
+
+
+@asset(deps=["comparison_visualizations", AssetKey("run_comparison_by_dim")])
+def comparison_file_outputs(context, database: ResourceParam[SqlAlchemyResource]) -> None:
+    """
+    Exports comparison analytics views to CSV files for the most recent comparison run.
+    """
+    engine = database.get_engine()
+    con = engine.connect()
+
+    try:
+        # Get latest success comparison run
+        latest_run = con.execute(text("""
+            SELECT run_id, run_ref
+            FROM main_runs.run_registry
+            WHERE analysis_type = 'comparison' AND status = 'success'
+            ORDER BY created_at DESC
+            LIMIT 1
+        """)).fetchone()
+
+        if not latest_run:
+            context.log.warning("No successful comparison run found to export.")
+            return
+
+        run_id, run_ref = latest_run
+
+        # Fallback to run_id if run_ref is null, though run_ref is expected
+        file_prefix = run_ref if run_ref else run_id
+
+        context.log.info(f"Exporting CSVs for prefix: {file_prefix} (batch_id: {run_id})")
+
+        tables_to_export = [
+            "run_comparison",
+            "run_comparison_by_dim"
+        ]
+
+        for table in tables_to_export:
+            # Query the analytics table for this run_id (as batch_id)
+            query = f"SELECT * FROM main_analytics.{table} WHERE batch_id = :batch_id"
+
+            try:
+                df = pd.read_sql(text(query), con, params={"batch_id": run_id})
+
+                if df.empty:
+                    context.log.warning(f"No data found for {table} and batch_id {run_id}")
+                    continue
+
+                filename = f"{file_prefix}_{table}.csv"
+                output_path = EXPORT_DIR_COMPARISON / filename
+                df.to_csv(output_path, index=False)
+                context.log.info(f"Exported {output_path}")
+            except Exception as e:
+                # Catch query errors
                 context.log.error(f"Failed to export {table}: {e}")
 
     finally:

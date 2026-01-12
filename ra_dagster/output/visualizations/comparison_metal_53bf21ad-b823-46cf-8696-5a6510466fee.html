@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    #vis.vega-embed {
+      width: 100%;
+      display: flex;
+    }
+
+    #vis.vega-embed details,
+    #vis.vega-embed details summary {
+      position: relative;
+    }
+  </style>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vega@6"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vega-lite@6.1.0"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vega-embed@7"></script>
+</head>
+<body>
+  <div id="vis"></div>
+  <script>
+    (function(vegaEmbed) {
+      var spec = {"config": {"view": {"continuousWidth": 300, "continuousHeight": 300}}, "data": {"name": "data-eaa237f1abdea365842fb7fe2af49b82"}, "mark": {"type": "bar"}, "encoding": {"tooltip": [{"field": "metal_level", "type": "nominal"}, {"field": "mean_delta", "type": "quantitative"}], "x": {"field": "metal_level", "type": "nominal"}, "y": {"field": "mean_delta", "type": "quantitative"}}, "title": "Mean Delta by Metal Level: Compare runs c9a8abd5-d7e8-422e-bae7-e298e8f2aec0 vs 775e8655-609d-4f6d-aa66-004fbbd36d1d", "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json", "datasets": {"data-eaa237f1abdea365842fb7fe2af49b82": [{"metal_level": "Gold", "mean_delta": 0.0}, {"metal_level": "Platinum", "mean_delta": 0.0}, {"metal_level": "Bronze", "mean_delta": 0.0}, {"metal_level": "Silver", "mean_delta": 0.0}]}};
+      var embedOpt = {"mode": "vega-lite"};
+
+      function showError(el, error){
+          el.innerHTML = ('<div style="color:red;">'
+                          + '<p>JavaScript Error: ' + error.message + '</p>'
+                          + "<p>This usually means there's a typo in your chart specification. "
+                          + "See the javascript console for the full traceback.</p>"
+                          + '</div>');
+          throw error;
+      }
+      const el = document.getElementById('vis');
+      vegaEmbed("#vis", spec, embedOpt)
+        .catch(error => showError(el, error));
+    })(vegaEmbed);
+
+  </script>
+</body>
+</html>

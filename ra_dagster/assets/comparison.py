@@ -12,7 +12,7 @@ Usage:
 import getpass
 from pathlib import Path
 
-from dagster import asset, ResourceParam, AssetExecutionContext
+from dagster import asset, ResourceParam, AssetExecutionContext, AssetKey
 
 from ra_dagster.db.bootstrap import ensure_prism_warehouse, now_utc
 from ra_dagster.db.run_registry import (

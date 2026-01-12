@@ -76,7 +76,7 @@ def scoring_visualizations(context, database: ResourceParam[SqlAlchemyResource])
         con.close()
 
 
-@asset(deps=["compare_runs"])
+@asset(deps=["compare_runs", AssetKey("run_comparison_by_dim")])
 def comparison_visualizations(context, database: ResourceParam[SqlAlchemyResource]) -> None:
     """
     Generate visualizations for recent comparison runs.
