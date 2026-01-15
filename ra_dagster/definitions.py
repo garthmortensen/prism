@@ -12,7 +12,7 @@ Usage:
 from pathlib import Path
 
 import yaml
-from dagster import Definitions, define_asset_job, AssetSelection
+from dagster import Definitions, define_asset_job, AssetSelection, AssetKey
 from dagster_dbt import DbtCliResource
 
 from ra_dagster.assets.comparison import compare_runs
@@ -73,7 +73,7 @@ scoring_job = define_asset_job(
 
 comparison_job = define_asset_job(
     name="comparison_job",
-    selection=AssetSelection.assets(compare_runs, comparison_visualizations, comparison_file_outputs) | AssetSelection.assets(dbt_analytics_assets),
+    selection=AssetSelection.assets(compare_runs, comparison_visualizations, comparison_file_outputs) | AssetSelection.keys(AssetKey(["analytics", "run_comparison_by_dim"])),
     description="""
     # Run Comparison Job
 

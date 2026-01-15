@@ -86,6 +86,11 @@ def compare_two_runs(
                         "population_mode": population_mode
                     }
                 }
+            },
+            "resources": {
+                "database": {
+                    "config": "dev"
+                }
             }
         }
         
