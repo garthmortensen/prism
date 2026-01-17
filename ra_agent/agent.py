@@ -16,6 +16,9 @@ from ra_agent.tools import (
     get_decomposition_results,
     query_risk_scores,
     compare_two_runs,
+    configure_scoring_run,
+    execute_scoring_run,
+    get_last_execution_error,
     describe_hccs,
     describe_rxcs
 )
@@ -65,6 +68,9 @@ def create_agent():
         get_decomposition_results,
         query_risk_scores,
         compare_two_runs,
+        configure_scoring_run,
+        execute_scoring_run,
+        get_last_execution_error,
         describe_hccs,
         describe_rxcs
     ]

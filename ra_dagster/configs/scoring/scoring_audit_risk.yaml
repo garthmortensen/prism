@@ -1,5 +1,5 @@
 ops:
-  risk_scores:
+  dagster_runs_outputs__risk_scores:
     config:
       # Scenario: Truncation / Audit Risk
       # Using a claims view filtered to high-confidence providers only

@@ -1,5 +1,5 @@
 ops:
-  risk_scores:
+  dagster_runs_outputs__risk_scores:
     config:
       # Scenario: Monte Carlo RADV Simulation
       # Using "stacked" views that replicate the population N times with random claim dropouts

@@ -1,5 +1,5 @@
 ops:
-  risk_scores:
+  dagster_runs_outputs__risk_scores:
     config:
       # Scenario: Lag / Runout Analysis
       # Using a claims view filtered to 6 months of runout
