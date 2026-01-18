@@ -5,9 +5,14 @@ with source as (
     from {{ source('dagster_runs_outputs', 'risk_scores') }}
 ),
 
+runs as (
+    select run_id, run_ref
+    from {{ source('dagster_runs', 'run_registry') }}
+),
+
 aggregated as (
     select
-        run_id,
+        r.run_ref as user_ref,
         count(*) as member_count,
         avg(risk_score) as avg_score,
         min(risk_score) as min_score,
@@ -34,7 +39,8 @@ aggregated as (
         max(demographic_score) as max_demographic_score,
         stddev(demographic_score) as std_dev_demographic_score
 
-    from source
+    from source s
+    left join runs r on s.run_id = r.run_id
     group by 1
 )
 

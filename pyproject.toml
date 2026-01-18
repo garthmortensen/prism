@@ -48,7 +48,9 @@ select = ["E", "F", "I", "UP", "B"]
 [tool.commitizen]
 name = "cz_conventional_commits"
 version = "0.1.0"
-tag_format = "v$version"
+
+[tool.dagster]
+module_name = "ra_dagster.definitions"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -4,8 +4,8 @@ models:
   - name: run_score_summary
     description: Run-level summary metrics (1 row per run). Aggregates risk scores and component scores across the entire population for a given run.
     columns:
-      - name: run_id
-        description: Unique identifier for the scoring run.
+      - name: user_ref
+        description: User-friendly reference ID for the scoring run.
         tests:
           - unique
           - not_null
@@ -53,8 +53,8 @@ models:
   - name: run_score_distribution
     description: Run distribution binned by score. Used to visualize the shape of the risk score distribution (e.g., histograms).
     columns:
-      - name: run_id
-        description: Unique identifier for the scoring run.
+      - name: user_ref
+        description: User-friendly reference ID for the scoring run.
       - name: score_bucket
         description: Risk score bucket (floored to nearest 0.1).
       - name: member_count
@@ -77,8 +77,8 @@ models:
   - name: run_score_by_dim
     description: Run metrics broken down by various dimensions (model, gender, metal_level, enrollment_months, age_band). Useful for identifying segments driving risk.
     columns:
-      - name: run_id
-        description: Unique identifier for the scoring run.
+      - name: user_ref
+        description: User-friendly reference ID for the scoring run.
       - name: dimension_name
         description: Name of the dimension being aggregated (e.g., 'gender', 'age_band').
       - name: dimension_value
@@ -107,8 +107,8 @@ models:
   - name: run_hcc_summary
     description: Top driver summaries for HCCs. Aggregates prevalence and score contribution for each HCC code.
     columns:
-      - name: run_id
-        description: Unique identifier for the scoring run.
+      - name: user_ref
+        description: User-friendly reference ID for the scoring run.
       - name: hcc_code
         description: The HCC code (e.g., 'HCC001').
       - name: member_count
@@ -123,8 +123,8 @@ models:
   - name: run_rxc_summary
     description: Top driver summaries for RxCs. Aggregates prevalence and score contribution for each RxC code.
     columns:
-      - name: run_id
-        description: Unique identifier for the scoring run.
+      - name: user_ref
+        description: User-friendly reference ID for the scoring run.
       - name: rxc_code
         description: The RxC code (e.g., 'RXC001').
       - name: member_count
@@ -135,3 +135,15 @@ models:
         description: Average score contribution of this RxC (coefficient).
       - name: total_score_contribution
         description: Total score contribution from this RxC across all members (sum of coefficients).
+
+  - name: run_comparison_by_dim
+    description: Compare two runs by dimensions.
+    columns:
+      - name: batch_id
+        description: Comparison batch ID.
+      - name: user_ref_a
+        description: User reference for the first run (Baseline).
+      - name: user_ref_b
+        description: User reference for the second run (Actual/Comparison).
+      - name: dimension_name
+      - name: dimension_value

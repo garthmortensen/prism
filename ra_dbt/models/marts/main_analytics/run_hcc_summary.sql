@@ -2,6 +2,11 @@ with source as (
     select * from {{ source('dagster_runs_outputs', 'risk_scores') }}
 ),
 
+runs as (
+    select run_id, run_ref
+    from {{ source('dagster_runs', 'run_registry') }}
+),
+
 unnested as (
     select
         run_id,
@@ -25,7 +30,7 @@ run_totals as (
 )
 
 select
-    h.run_id,
+    r.run_ref as user_ref,
     h.hcc_code,
     count(*) as member_count,
     count(*)::double precision / max(rt.total_members) as prevalence,
@@ -33,4 +38,5 @@ select
     sum(h.score_contribution) as total_score_contribution
 from hccs h
 join run_totals rt on h.run_id = rt.run_id
+left join runs r on h.run_id = r.run_id
 group by 1, 2

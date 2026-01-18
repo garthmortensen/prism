@@ -7,9 +7,15 @@ with source as (
     from {{ source('dagster_runs_outputs', 'risk_scores') }}
 ),
 
+runs as (
+    select run_id, run_ref
+    from {{ source('dagster_runs', 'run_registry') }}
+),
+
 with_derived_dims as (
     select
-        *,
+        s.*,
+        r.run_ref,
         case
             when age < 18 then '0-17'
             when age < 30 then '18-29'
@@ -30,27 +36,28 @@ with_derived_dims as (
             when rxc_score > 0 then 'Yes'
             else 'No'
         end as has_rxc
-    from source
+    from source s
+    left join runs r on s.run_id = r.run_id
 ),
 
 unpivoted as (
-    select run_id, 'model' as dimension_name, cast(model as varchar) as dimension_value, risk_score, hcc_score, rxc_score, demographic_score from with_derived_dims
+    select run_ref as user_ref, 'model' as dimension_name, cast(model as varchar) as dimension_value, risk_score, hcc_score, rxc_score, demographic_score from with_derived_dims
     union all
-    select run_id, 'gender' as dimension_name, cast(gender as varchar) as dimension_value, risk_score, hcc_score, rxc_score, demographic_score from with_derived_dims
+    select run_ref as user_ref, 'gender' as dimension_name, cast(gender as varchar) as dimension_value, risk_score, hcc_score, rxc_score, demographic_score from with_derived_dims
     union all
-    select run_id, 'metal_level' as dimension_name, cast(metal_level as varchar) as dimension_value, risk_score, hcc_score, rxc_score, demographic_score from with_derived_dims
+    select run_ref as user_ref, 'metal_level' as dimension_name, cast(metal_level as varchar) as dimension_value, risk_score, hcc_score, rxc_score, demographic_score from with_derived_dims
     union all
-    select run_id, 'enrollment_months' as dimension_name, cast(enrollment_months as varchar) as dimension_value, risk_score, hcc_score, rxc_score, demographic_score from with_derived_dims
+    select run_ref as user_ref, 'enrollment_months' as dimension_name, cast(enrollment_months as varchar) as dimension_value, risk_score, hcc_score, rxc_score, demographic_score from with_derived_dims
     union all
-    select run_id, 'age_band' as dimension_name, cast(age_band as varchar) as dimension_value, risk_score, hcc_score, rxc_score, demographic_score from with_derived_dims
+    select run_ref as user_ref, 'age_band' as dimension_name, cast(age_band as varchar) as dimension_value, risk_score, hcc_score, rxc_score, demographic_score from with_derived_dims
     union all
-    select run_id, 'hcc_count_band' as dimension_name, cast(hcc_count_band as varchar) as dimension_value, risk_score, hcc_score, rxc_score, demographic_score from with_derived_dims
+    select run_ref as user_ref, 'hcc_count_band' as dimension_name, cast(hcc_count_band as varchar) as dimension_value, risk_score, hcc_score, rxc_score, demographic_score from with_derived_dims
     union all
-    select run_id, 'has_rxc' as dimension_name, cast(has_rxc as varchar) as dimension_value, risk_score, hcc_score, rxc_score, demographic_score from with_derived_dims
+    select run_ref as user_ref, 'has_rxc' as dimension_name, cast(has_rxc as varchar) as dimension_value, risk_score, hcc_score, rxc_score, demographic_score from with_derived_dims
 )
 
 select
-    run_id,
+    user_ref,
     dimension_name,
     dimension_value,
     count(*) as member_count,

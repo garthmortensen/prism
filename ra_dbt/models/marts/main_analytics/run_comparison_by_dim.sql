@@ -2,6 +2,11 @@ with comparison as (
     select * from {{ source('dagster_analytics', 'run_comparison') }}
 ),
 
+runs as (
+    select run_id, run_ref
+    from {{ source('dagster_runs', 'run_registry') }}
+),
+
 dims as (
     select * from {{ ref('int_run_member_dimensions') }}
 ),
@@ -9,8 +14,8 @@ dims as (
 comparison_with_dims as (
     select 
         c.batch_id,
-        c.run_id_a,
-        c.run_id_b,
+        ra.run_ref as user_ref_a,
+        rb.run_ref as user_ref_b,
         c.member_id,
         c.match_status,
         c.score_diff,
@@ -25,30 +30,32 @@ comparison_with_dims as (
         coalesce(dim_b.hcc_count_band, dim_a.hcc_count_band) as hcc_count_band,
         coalesce(dim_b.has_rxc, dim_a.has_rxc) as has_rxc
     from comparison c
-    left join dims dim_a 
-        on c.run_id_a = dim_a.run_id and c.member_id = dim_a.member_id
-    left join dims dim_b 
-        on c.run_id_b = dim_b.run_id and c.member_id = dim_b.member_id
+    left join dims dim_a on c.run_id_a = dim_a.run_id and c.member_id = dim_a.member_id
+    left join dims dim_b on c.run_id_b = dim_b.run_id and c.member_id = dim_b.member_id
+    left join runs ra on c.run_id_a = ra.run_id
+    left join runs rb on c.run_id_b = rb.run_id
 ),
 
 unpivoted as (
-    select batch_id, 'model' as dimension_name, cast(model as varchar) as dimension_value, match_status, score_diff, score_a, score_b from comparison_with_dims
+    select batch_id, user_ref_a, user_ref_b, 'model' as dimension_name, cast(model as varchar) as dimension_value, match_status, score_diff, score_a, score_b from comparison_with_dims
     union all
-    select batch_id, 'gender' as dimension_name, cast(gender as varchar) as dimension_value, match_status, score_diff, score_a, score_b from comparison_with_dims
+    select batch_id, user_ref_a, user_ref_b, 'gender' as dimension_name, cast(gender as varchar) as dimension_value, match_status, score_diff, score_a, score_b from comparison_with_dims
     union all
-    select batch_id, 'metal_level' as dimension_name, cast(metal_level as varchar) as dimension_value, match_status, score_diff, score_a, score_b from comparison_with_dims
+    select batch_id, user_ref_a, user_ref_b, 'metal_level' as dimension_name, cast(metal_level as varchar) as dimension_value, match_status, score_diff, score_a, score_b from comparison_with_dims
     union all
-    select batch_id, 'enrollment_months' as dimension_name, cast(enrollment_months as varchar) as dimension_value, match_status, score_diff, score_a, score_b from comparison_with_dims
+    select batch_id, user_ref_a, user_ref_b, 'enrollment_months' as dimension_name, cast(enrollment_months as varchar) as dimension_value, match_status, score_diff, score_a, score_b from comparison_with_dims
     union all
-    select batch_id, 'age_band' as dimension_name, cast(age_band as varchar) as dimension_value, match_status, score_diff, score_a, score_b from comparison_with_dims
+    select batch_id, user_ref_a, user_ref_b, 'age_band' as dimension_name, cast(age_band as varchar) as dimension_value, match_status, score_diff, score_a, score_b from comparison_with_dims
     union all
-    select batch_id, 'hcc_count_band' as dimension_name, cast(hcc_count_band as varchar) as dimension_value, match_status, score_diff, score_a, score_b from comparison_with_dims
+    select batch_id, user_ref_a, user_ref_b, 'hcc_count_band' as dimension_name, cast(hcc_count_band as varchar) as dimension_value, match_status, score_diff, score_a, score_b from comparison_with_dims
     union all
-    select batch_id, 'has_rxc' as dimension_name, cast(has_rxc as varchar) as dimension_value, match_status, score_diff, score_a, score_b from comparison_with_dims
+    select batch_id, user_ref_a, user_ref_b, 'has_rxc' as dimension_name, cast(has_rxc as varchar) as dimension_value, match_status, score_diff, score_a, score_b from comparison_with_dims
 )
 
 select
     batch_id,
+    user_ref_a,
+    user_ref_b,
     dimension_name,
     dimension_value,
     
@@ -68,4 +75,4 @@ select
     avg(case when match_status = 'a_only' then score_a end) as avg_score_removed
 
 from unpivoted
-group by 1, 2, 3
+group by 1, 2, 3, 4, 5
