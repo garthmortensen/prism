@@ -16,8 +16,8 @@ select
     m.gender,
     m.metal_level,
     m.date_of_birth,
-    coalesce(d.diagnosis_list, []) as diagnoses,
-    coalesce(r.ndc_list, []) as ndc_codes
+    coalesce(d.diagnosis_list, cast('{}' as varchar[])) as diagnoses,
+    coalesce(r.ndc_list, cast('{}' as varchar[])) as ndc_codes
 from members m
 left join diagnoses d on m.member_id = d.member_id
 left join rx r on m.member_id = r.member_id

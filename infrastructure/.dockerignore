@@ -1,0 +1,94 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+ENV/
+.eggs/
+*.egg-info/
+*.egg
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Build
+dist/
+build/
+*.manifest
+*.spec
+
+# Ruff
+.ruff_cache/
+
+# Git
+.git/
+.gitignore
+.github/
+
+# Documentation
+docs/
+images/
+*.md
+!README.md
+
+# Database files (use volume mounts instead)
+*.db
+risk_adjustment.duckdb
+ra_dbt/prism.duckdb
+
+# Local config
+.env
+.env.local
+*.local.yaml
+secrets/
+
+# Dagster local state
+.dagster_home/
+dagster_home/storage/
+dagster_home/schedules/
+dagster_home/history/
+dagster_home/logs/
+
+# Logs
+logs/
+*.log
+dagster_debug*.log
+
+# Output files
+output/
+ra_dagster/output/
+ra_calculators/aca_risk_score_calculator/tmp_exports/
+
+# Chat transcripts
+chat.json
+chat_ongoing.json
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.bak
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# dbt artifacts (regenerated in container)
+ra_dbt/target/
+ra_dbt/dbt_packages/
+ra_dbt/logs/

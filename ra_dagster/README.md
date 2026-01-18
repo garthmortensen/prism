@@ -5,19 +5,19 @@ Orchestration layer for risk adjustment analytics using [Dagster](https://dagste
 history
 
 ```sql
-select * from risk_adjustment.main_analytics.run_comparison
+select * from main_analytics.run_comparison
 where batch_id  = '9b41c01e-5c4a-4a2f-9bbc-a2cfcc92749c';
 
-select * from risk_adjustment.main_runs.risk_scores
+select * from main_runs.risk_scores
 where run_id = '54fe57ac-39ed-4192-8049-e3e7abf91dae';
 
-select * from risk_adjustment.main_runs.risk_scores
+select * from main_runs.risk_scores
 where run_id = 'f852d3fc-43a7-4e4b-a31d-8c856ad89057';
 
-select * from risk_adjustment.main_analytics.decomposition_definitions 
+select * from main_analytics.decomposition_definitions 
 where batch_id = '35a2841a-bbe3-4f9f-81bd-9e6fa4f9ed38';
 
-select * from risk_adjustment.main_analytics.decomposition_scenarios
+select * from main_analytics.decomposition_scenarios
 where batch_id = '35a2841a-bbe3-4f9f-81bd-9e6fa4f9ed38';
 ```
 

@@ -2,7 +2,13 @@ prism:
   target: dev
   outputs:
     dev:
-      type: duckdb
-      path: '../risk_adjustment.duckdb'
-      extensions: 
-        - httpfs
+      type: postgres
+      host: "{{ env_var('DB_HOST', 'localhost') }}"
+      port: 5432
+      user: ra_user
+
+      password: ra_pass
+      dbname: ra_database
+      schema: public
+      threads: 4
+      keepalives_idle: 0

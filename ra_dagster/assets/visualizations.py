@@ -10,7 +10,6 @@ Description:
 Usage:
     Runs automatically after core assets to produce reporting artifacts.
 """
-from __future__ import annotations
 
 from pathlib import Path
 import re

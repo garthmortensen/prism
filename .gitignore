@@ -56,9 +56,7 @@ dmypy.json
 .ipynb_checkpoints/
 *.ipynb
 
-# DuckDB / Data
-*.duckdb
-*.duckdb.wal
+# Database / Data
 *.db
 data/
 !data/.gitkeep

@@ -5,17 +5,17 @@ with source as (
 unnested as (
     select
         run_id,
-        unnest(from_json(components, '[{"component_type": "VARCHAR", "component_code": "VARCHAR", "coefficient": "DOUBLE"}]')) as component
+        jsonb_array_elements(components::jsonb) as component
     from source
 ),
 
 hccs as (
     select
         run_id,
-        component.component_code as hcc_code,
-        component.coefficient as score_contribution
+        component->>'component_code' as hcc_code,
+        (component->>'coefficient')::double precision as score_contribution
     from unnested
-    where component.component_type = 'hcc'
+    where component->>'component_type' = 'hcc'
 ),
 
 run_totals as (
@@ -28,7 +28,7 @@ select
     h.run_id,
     h.hcc_code,
     count(*) as member_count,
-    count(*)::double / max(rt.total_members) as prevalence,
+    count(*)::double precision / max(rt.total_members) as prevalence,
     avg(h.score_contribution) as avg_score_contribution,
     sum(h.score_contribution) as total_score_contribution
 from hccs h

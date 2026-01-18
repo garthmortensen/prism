@@ -20,6 +20,8 @@ clean-targets:         # directories to be removed by 'dbt clean'
 seeds:
   prism:
     schema: raw
+    +quote_columns: false
+    +enabled: true
 
 models:
   prism:

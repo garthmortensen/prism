@@ -27,17 +27,17 @@ By default, this writes to `ra_calculators/aca_risk_score_calculator/tmp_exports
 You can also specify a custom output path:
 
 ```bash
-uv run python -m ra_calculators.aca_risk_score_calculator.duckdb_to_csv \
+uv run python -m ra_calculators.aca_risk_score_calculator.postgresdb_to_csv \
   --output-csv scores.csv \
   --model-year 2024
 ```
 
 Defaults:
-- DuckDB path comes from `DUCKDB_PATH` if set, otherwise `risk_adjustment.duckdb` at repo root.
+- PostgreSQL database URL comes from `DATABASE_URL` if set, otherwise `postgresql://ra_user:ra_pass@localhost:5432/ra_database`.
 - Input relation defaults to `main_intermediate.int_aca_risk_input` (override with `--schema` / `--table`).
 - For the first 20 members, per-member YAML detail files are written under `yaml_details/` next to the output CSV.
 
-See `uv run python -m ra_calculators.aca_risk_score_calculator.duckdb_to_csv --help` for all available options.
+See `uv run python -m ra_calculators.aca_risk_score_calculator.postgresdb_to_csv --help` for all available options.
 
 ## Data Sources
 

@@ -2,8 +2,8 @@ with source as (
     select 
         *,
         -- Extract age and hcc_cnt from details JSON.
-        try_cast(json_extract_string(details, '$.age') as int) as age,
-        try_cast(json_extract_string(details, '$.hcc_cnt') as int) as hcc_cnt
+        (details->>'age')::int as age,
+        (details->>'hcc_cnt')::int as hcc_cnt
     from {{ source('dagster_runs_outputs', 'risk_scores') }}
 ),
 
@@ -57,9 +57,9 @@ select
     avg(risk_score) as avg_score,
     min(risk_score) as min_score,
     max(risk_score) as max_score,
-    quantile_cont(risk_score, 0.5) as p50,
-    quantile_cont(risk_score, 0.9) as p90,
-    quantile_cont(risk_score, 0.99) as p99,
+    percentile_cont(0.5) within group (order by risk_score) as p50,
+    percentile_cont(0.9) within group (order by risk_score) as p90,
+    percentile_cont(0.99) within group (order by risk_score) as p99,
     avg(hcc_score) as avg_hcc_score,
     avg(rxc_score) as avg_rxc_score,
     avg(demographic_score) as avg_demographic_score

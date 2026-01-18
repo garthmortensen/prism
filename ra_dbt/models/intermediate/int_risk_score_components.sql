@@ -81,7 +81,7 @@ exploded_components AS (
         calculator,
         model_year,
         risk_score,
-        unnest(CAST(components AS JSON[])) AS component
+        jsonb_array_elements(components::jsonb) AS component
     FROM source_data
 ),
 
@@ -94,22 +94,22 @@ parsed_components AS (
         risk_score,
         
         -- Component identification
-        json_extract_string(component, '$.component_type') AS component_type,
-        json_extract_string(component, '$.component_code') AS component_code,
-        CAST(json_extract_string(component, '$.coefficient') AS DECIMAL(10,4)) AS coefficient_value,
+        component->>'component_type' AS component_type,
+        component->>'component_code' AS component_code,
+        (component->>'coefficient')::DECIMAL(10,4) AS coefficient_value,
         
         -- Source data lineage
-        json_extract(component, '$.source_data') AS source_diagnoses_or_ndcs,
+        component->'source_data' AS source_diagnoses_or_ndcs,
         
         -- Hierarchy tracking
-        json_extract_string(component, '$.superseded_by') AS was_superseded_by,
-        json_extract(component, '$.supersedes') AS superseded_components,
-        json_extract_string(component, '$.grouped_into') AS is_part_of_group,
+        component->>'superseded_by' AS was_superseded_by,
+        component->'supersedes' AS superseded_components,
+        component->>'grouped_into' AS is_part_of_group,
         
         -- Calculation metadata
-        json_extract(component, '$.table_references') AS table_references,
-        json_extract_string(json_extract(component, '$.table_references'), '$.model') AS model_type,
-        json_extract_string(json_extract(component, '$.table_references'), '$.metal_level') AS metal_level,
+        component->'table_references' AS table_references,
+        component->'table_references'->>'model' AS model_type,
+        component->'table_references'->>'metal_level' AS metal_level,
         
         -- Timestamp
         current_timestamp AS created_at

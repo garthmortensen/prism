@@ -125,8 +125,8 @@ flowchart LR
       , hcc_list             -- ["209"]
       , rxc_list             -- ["2"]
       , details              -- {..."hcc_cnt":1,"edf_variable":"HCC_ED5","edf_factor":1.339,"hcc_coefficients":...}
-      , components           -- [...{"component_type":"demographic","component_code":"FAGE_LAST_45_49"...}
-    from risk_adjustment.main_runs.risk_scores
+      , components           -- [{...{"component_type":"demographic","component_code":"FAGE_LAST_45_49"...}
+    from main_runs.risk_scores
     where run_id = 'acedd1d5-3fcc-4613-ae55-51a96d0f8627'
     and member_id = 'MBR2024000109';
     ```

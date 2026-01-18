@@ -28,7 +28,7 @@ select
     run_id,
     score_bucket,
     member_count,
-    member_count::double / total_run_members as pct_members,
+    member_count::double precision / total_run_members as pct_members,
     avg_score,
     min_score,
     max_score,

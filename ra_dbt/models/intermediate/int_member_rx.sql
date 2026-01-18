@@ -4,6 +4,6 @@ with rx as (
 
 select
     member_id,
-    list(distinct ndc_code) as ndc_list
+    array_agg(distinct ndc_code) as ndc_list
 from rx
 group by member_id

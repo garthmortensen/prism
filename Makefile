@@ -1,7 +1,7 @@
 .PHONY: help init install sync lock hooks commit \
         lint format test test-cov ci \
         dagster dbt-run dbt-test dbt-build dbt-seed dbt-compile dbt-docs dbt-docs-serve dbt-deps dbt-clean \
-        build run stop logs shell compose-up compose-down compose-logs \
+        compose-up compose-down compose-logs compose-postgres \
         db-shell clean
 
 # Default target
@@ -48,20 +48,10 @@ help:
 	@echo ""
 	@echo "Services:"
 	@echo "  make dagster       Start Dagster dev server"
-	@echo "  make db-bootstrap  Initialize DuckDB warehouse schemas"
-	@echo "  make db-shell      Open DuckDB interactive shell"
-	@echo ""
-	@echo "Container:"
-	@echo "  make build         Build container image"
-	@echo "  make run           Run container"
-	@echo "  make stop          Stop container"
-	@echo "  make logs          View container logs"
-	@echo "  make shell         Shell into container"
-	@echo ""
-	@echo "Compose:"
-	@echo "  make compose-up    Start all services"
-	@echo "  make compose-down  Stop all services"
-	@echo "  make compose-logs  View logs from all services"
+	@echo "  make db-bootstrap  Initialize PostgreSQL warehouse schemas"
+	@echo "  make compose-up    Start PostgreSQL container"
+	@echo "  make compose-down  Stop PostgreSQL container"
+	@echo "  make compose-postgres Open psql in PostgreSQL"
 	@echo ""
 	@echo "Cleanup:"
 	@echo "  make clean         Remove build artifacts"
@@ -120,9 +110,6 @@ dagster:
 db-bootstrap:
 	uv run python -m ra_dagster.cli db-bootstrap
 
-db-shell:
-	uv run duckdb data/risk_adjustment.duckdb
-
 # =============================================================================
 # dbt
 # =============================================================================
@@ -155,42 +142,23 @@ dbt-clean:
 	cd ra_dbt && uv run dbt clean
 
 # =============================================================================
-# Container (Podman)
-# =============================================================================
-
-CONTAINER_NAME := prism
-IMAGE_NAME := prism:latest
-
-build:
-	podman build -t $(IMAGE_NAME) .
-
-run:
-	podman run -d --name $(CONTAINER_NAME) \
-		-p 3000:3000 \
-		-v $(PWD)/data:/app/data:Z \
-		$(IMAGE_NAME)
-
-stop:
-	podman stop $(CONTAINER_NAME) && podman rm $(CONTAINER_NAME)
-
-logs:
-	podman logs -f $(CONTAINER_NAME)
-
-shell:
-	podman exec -it $(CONTAINER_NAME) /bin/bash
-
-# =============================================================================
-# Compose (Podman)
+# Compose (Podman/Docker)
 # =============================================================================
 
 compose-up:
-	podman-compose up -d
+	podman-compose -f infrastructure/docker-compose.yml up -d
 
 compose-down:
-	podman-compose down
+	podman-compose -f infrastructure/docker-compose.yml down
 
 compose-logs:
-	podman-compose logs -f
+	podman-compose -f infrastructure/docker-compose.yml logs -f
+
+compose-postgres:
+	podman-compose -f infrastructure/docker-compose.yml exec postgres psql -U ra_user -d ra_database
+
+compose-restart:
+	podman-compose -f infrastructure/docker-compose.yml restart
 
 # =============================================================================
 # Cleanup

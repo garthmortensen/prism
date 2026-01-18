@@ -4,6 +4,6 @@ with diagnoses as (
 
 select
     member_id,
-    list(distinct diagnosis_code) as diagnosis_list
+    array_agg(distinct diagnosis_code) as diagnosis_list
 from diagnoses
 group by member_id

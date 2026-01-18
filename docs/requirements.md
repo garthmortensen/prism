@@ -195,7 +195,7 @@ services:
       - ./data:/app/data
       - ./dbt:/app/dbt
     environment:
-      - DUCKDB_PATH=/app/data/risk_adjustment.duckdb
+      - DATABASE_URL=postgresql://ra_user:ra_pass@postgres:5432/ra_database
 
   dagster-daemon:
     build: .
