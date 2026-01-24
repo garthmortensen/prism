@@ -15,6 +15,50 @@
 
 **Prism is a proof-of-concept platform** that modernizes Risk Adjustment operations by replacing opaque "black box" legacy tools with a transparent, code-first architecture. It treats Risk Adjustment as a software engineering problem, ensuring usability, accuracy, auditability, and rapid scenario planning.
 
+### Quick Start
+
+1. **Start PostgreSQL container**:
+   ```bash
+   podman-compose -f infrastructure/docker-compose.yml up -d
+   ```
+
+2. **Bootstrap database schemas**:
+   ```bash
+   uv run python -m ra_dagster
+   ```
+
+3. **Load seed data and build dbt models**:
+   ```bash
+   cd ra_dbt && uv run dbt seed --full-refresh && uv run dbt build
+   ```
+
+4. **Start Dagster UI** (optional, for running pipelines):
+   ```bash
+   make dagster
+   # Navigate to http://localhost:3000
+   ```
+
+### Reset Database
+
+To completely destroy and recreate the database with fresh data:
+
+```bash
+# Stop container and remove all data volumes
+podman-compose -f infrastructure/docker-compose.yml down -v
+
+# Start fresh container
+podman-compose -f infrastructure/docker-compose.yml up -d
+
+# Reinitialize
+uv run python -m ra_dagster
+cd ra_dbt && uv run dbt seed --full-refresh && uv run dbt build
+```
+
+Or use the shortcut:
+```bash
+make dbt-refresh
+```
+
 ### Problem & Solution
 
 Traditional risk adjustment tools are often opaque, fragile, and slow, making it difficult to answer "why did risk scores (revenue) change?".
@@ -57,11 +101,11 @@ Prism transforms raw claims into actionable intelligence through three primary s
 flowchart LR
   A[("source tables")]
   S[["score_members_aca"]]
-  RS[("runs.risk_scores")]
+  RS[("dag_runs.risk_scores")]
   C[["compare_runs"]]
-  RC[("analytics.run_comparison")]
+  RC[("dag_analytics.run_comparison")]
   D[["decompose_runs"]]
-  RD[("analytics.decomposition_scenarios")]
+  RD[("dag_analytics.decomposition_scenarios")]
   
   VS[["scoring_visualizations"]]
   VC[["comparison_visualizations"]]
@@ -126,7 +170,7 @@ flowchart LR
       , rxc_list             -- ["2"]
       , details              -- {..."hcc_cnt":1,"edf_variable":"HCC_ED5","edf_factor":1.339,"hcc_coefficients":...}
       , components           -- [{...{"component_type":"demographic","component_code":"FAGE_LAST_45_49"...}
-    from main_runs.risk_scores
+    from dag_runs.risk_scores
     where run_id = 'acedd1d5-3fcc-4613-ae55-51a96d0f8627'
     and member_id = 'MBR2024000109';
     ```

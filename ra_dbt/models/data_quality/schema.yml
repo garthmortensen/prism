@@ -1,0 +1,59 @@
+version: 2
+
+models:
+  - name: member_completeness
+    description: Data completeness checks for members across diagnoses, medications, and enrollment.
+    columns:
+      - name: member_id
+        description: Unique member identifier.
+        tests:
+          - relationships:
+              arguments:
+                to: ref('int_aca_risk_input')
+                field: member_id
+      - name: user_ref
+        description: User-facing reference for the run/member association.
+      - name: diagnosis_count
+        description: Count of diagnoses on file for the member.
+      - name: medication_count
+        description: Count of medications (NDCs) on file for the member.
+      - name: enrollment_months
+        description: Total months of enrollment coverage.
+      - name: quality_status
+        description: Overall data quality status (complete, missing_diagnoses, missing_medications, no_enrollment).
+      - name: checked_at
+        description: Timestamp when the check was performed.
+
+  - name: enrollment_gaps
+    description: Identifies gaps in member enrollment coverage (>0 days between periods).
+    columns:
+      - name: member_id
+        description: Unique member identifier.
+        tests:
+          - relationships:
+              arguments:
+                to: ref('stg_enrollment')
+                field: member_id
+      - name: prev_end
+        description: End date of the previous enrollment period.
+      - name: start_date
+        description: Start date of the current enrollment period.
+      - name: gap_days
+        description: Number of days between the end of previous period and start of current period.
+      - name: gap_status
+        description: Categorization of the gap (gap_detected, consecutive, overlapping_error, first_period).
+
+  - name: diagnosis_validity
+    description: Flags invalid or non-standard ICD-10 diagnosis codes in member records.
+    columns:
+      - name: member_id
+        description: Unique member identifier.
+        tests:
+          - relationships:
+              arguments:
+                to: ref('stg_claims_dx')
+                field: member_id
+      - name: diagnosis_code
+        description: The diagnosis code flagged as invalid.
+      - name: validity_issue
+        description: Type of validity issue (null_code, too_short, too_long, invalid_format, valid_icd10).

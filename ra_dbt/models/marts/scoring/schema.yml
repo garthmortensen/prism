@@ -1,0 +1,133 @@
+version: 2
+
+models:
+  - name: run_score_summary
+    description: Run-level summary metrics (1 row per run). Aggregates risk scores and component scores across the entire population.
+    meta:
+      owner: Risk Adjustment
+      category: Scoring
+    columns:
+      - name: user_ref
+        description: User-friendly reference ID for the scoring run.
+        tests:
+          - unique
+          - not_null
+          - relationships:
+              arguments:
+                to: source('dagster_runs', 'run_registry')
+                field: run_ref
+      - name: member_count
+        description: Total number of members scored in this run.
+      - name: avg_score
+        description: Average total risk score across all members.
+      - name: p50
+        description: Median (50th percentile) total risk score.
+      - name: p90
+        description: 90th percentile total risk score.
+      - name: p99
+        description: 99th percentile total risk score.
+
+  - name: run_score_distribution
+    description: Run distribution binned by score. Used to visualize the shape of the risk score distribution.
+    meta:
+      owner: Risk Adjustment
+      category: Scoring
+    columns:
+      - name: user_ref
+        description: User-friendly reference ID for the scoring run.
+        tests:
+          - relationships:
+              arguments:
+                to: source('dagster_runs', 'run_registry')
+                field: run_ref
+      - name: score_bucket
+        description: Risk score bucket (floored to nearest 0.1).
+      - name: member_count
+        description: Number of members in this score bucket.
+      - name: pct_members
+        description: Percentage of total members in this run falling into this bucket.
+
+  - name: run_score_by_dim
+    description: Run metrics broken down by various dimensions (gender, age_band, metal_level, enrollment_months).
+    meta:
+      owner: Risk Adjustment
+      category: Scoring
+    columns:
+      - name: user_ref
+        description: User-friendly reference ID for the scoring run.
+        tests:
+          - relationships:
+              arguments:
+                to: source('dagster_runs', 'run_registry')
+                field: run_ref
+      - name: dimension_name
+        description: Name of the dimension being aggregated (e.g., 'gender', 'age_band').
+      - name: dimension_value
+        description: Value of the dimension (e.g., 'M', '65+').
+      - name: member_count
+        description: Number of members in this segment.
+      - name: avg_score
+        description: Average total risk score for this segment.
+
+  - name: run_hcc_summary
+    description: Top driver summaries for HCCs. Aggregates prevalence and score contribution for each HCC code.
+    meta:
+      owner: Risk Adjustment
+      category: Scoring
+    columns:
+      - name: user_ref
+        description: User-friendly reference ID for the scoring run.
+        tests:
+          - relationships:
+              arguments:
+                to: source('dagster_runs', 'run_registry')
+                field: run_ref
+      - name: hcc_code
+        description: The HCC code (e.g., 'HCC001').
+      - name: member_count
+        description: Number of members with this HCC.
+      - name: prevalence
+        description: Percentage of the total population with this HCC.
+      - name: avg_score_contribution
+        description: Average score contribution of this HCC (coefficient).
+
+  - name: run_rxc_summary
+    description: Top driver summaries for RxCs. Aggregates prevalence and score contribution for each RxC code.
+    meta:
+      owner: Risk Adjustment
+      category: Scoring
+    columns:
+      - name: user_ref
+        description: User-friendly reference ID for the scoring run.
+        tests:
+          - relationships:
+              arguments:
+                to: source('dagster_runs', 'run_registry')
+                field: run_ref
+      - name: rxc_code
+        description: The RxC code (e.g., 'RXC001').
+      - name: member_count
+        description: Number of members with this RxC.
+      - name: prevalence
+        description: Percentage of the total population with this RxC.
+      - name: avg_score_contribution
+        description: Average score contribution of this RxC (coefficient).
+
+  - name: int_risk_score_components
+    description: Intermediate model detailing score component breakdown by member and run.
+    meta:
+      owner: Risk Adjustment
+      category: Scoring
+    columns:
+      - name: user_ref
+        description: User-friendly reference ID for the scoring run.
+      - name: member_id
+        description: Unique member identifier.
+      - name: demographic_score
+        description: Score from demographic factors (age, gender).
+      - name: hcc_score
+        description: Score from HCCs.
+      - name: rxc_score
+        description: Score from RxCs.
+      - name: total_score
+        description: Sum of all component scores.

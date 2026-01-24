@@ -49,12 +49,30 @@ seeds:
     description: Source table containing member demographic information.
     config:
       column_types:
+        member_id: text
+        first_name: text
+        last_name: text
         dob: date
+        gender: text
         zip: text
         phone: text
         email: text
+        street: text
+        city: text
+        state: text
         fpl_ratio: numeric(5,2)
         hios_id: text
+        plan_network_access_type: text
+        plan_metal: text
+        age_group: text
+        region: text
+        clinical_segment: text
+        general_agency_name: text
+        broker_name: text
+        sa_contracting_entity_name: text
+        mutually_exclusive_hcc_condition: text
+        geographic_reporting: text
+        wisconsin_area_deprivation_index: text
         ra_mm: numeric(5,3)
         year: integer
     columns:

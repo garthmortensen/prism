@@ -40,7 +40,7 @@ def score_from_postgres_to_csv(
     output_csv_path: str,
     model_year: str = "2024",
     prediction_year: str | None = None,
-    schema: str = "main_intermediate",
+    schema: str = "intermediate",
     table: str = "int_aca_risk_input",
     limit: int | None = None,
     invalid_gender: str = "skip",
@@ -171,7 +171,7 @@ def _build_arg_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="ra_calculators.aca_risk_score_calculator.postgresdb_to_csv",
         description=(
-            "Read main_intermediate.int_aca_risk_input from PostgreSQL and write "
+            "Read intermediate.int_aca_risk_input from PostgreSQL and write "
             "ACA risk scores to CSV."
         ),
     )
@@ -197,7 +197,7 @@ def _build_arg_parser() -> argparse.ArgumentParser:
     )
     p.add_argument(
         "--schema",
-        default="main_intermediate",
+        default="intermediate",
         help="PostgreSQL schema containing the input relation",
     )
     p.add_argument(

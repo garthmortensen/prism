@@ -58,6 +58,10 @@ class ScoringConfig(Config):
     metal_level: MetalLevel | None = None
     csr_variant: CSRVariant | None = None
     allow_telehealth: bool = True
+    # Optional: override where scoring inputs come from
+    claims_view: str | None = None
+    enrollments_view: str | None = None
+    members_view: str | None = None
 
 
 # -----------------------------------------------------------------------------

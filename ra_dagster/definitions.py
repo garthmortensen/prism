@@ -58,7 +58,7 @@ scoring_job = define_asset_job(
     **Steps:**
     1. Reads member data from `int_aca_risk_input`
     2. Applies HHS-HCC model logic
-    3. Writes results to `main_runs.risk_scores`
+    3. Writes results to `dag_runs.risk_scores`
     4. Materializes dbt analytics marts
     """,
     tags={"team": "analytics", "priority": "high"},
@@ -78,9 +78,9 @@ comparison_job = define_asset_job(
     Compares two scoring runs and writes summary + member-level deltas.
 
     **Steps:**
-    1. Reads scores from `main_runs.risk_scores` for `run_id_a` and `run_id_b`
+    1. Reads scores from `dag_runs.risk_scores` for `run_id_a` and `run_id_b`
     2. Aligns members (intersection/union/etc.) and computes deltas
-    3. Writes results to `main_analytics.run_comparison`
+    3. Writes results to `analytics.run_comparison`
     """,
     tags={"team": "analytics", "priority": "high"},
     metadata={
@@ -100,10 +100,10 @@ decomposition_job = define_asset_job(
     (e.g., model coefficients vs population mix) across multiple scenarios.
 
     **Steps:**
-    1. Reads scenario run scores from `main_runs.risk_scores`
+    1. Reads scenario run scores from `dag_runs.risk_scores`
     2. Applies the configured decomposition method (marginal)
-    3. Writes results to `main_analytics.decomposition_definitions`
-       + `main_analytics.decomposition_scenarios`
+    3. Writes results to `analytics.decomposition_definitions`
+       + `analytics.decomposition_scenarios`
     """,
     tags={"team": "analytics", "priority": "high"},
     metadata={

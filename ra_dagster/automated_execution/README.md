@@ -38,7 +38,7 @@ SELECT
     status, 
     created_at, 
     trigger_source
-FROM main_runs.run_registry
+FROM dag_runs.run_registry
 WHERE created_at > now() - INTERVAL 30 MINUTE
   AND analysis_type = 'scoring'
 ORDER BY created_at DESC;

@@ -4,8 +4,8 @@ ops:
       run_ref_a: "00ebabaf-c761-4e88-a1a1-a5fe6d7b0f1c"
       run_ref_b: "01d45526-3798-48f6-88e7-7699baccb287"
       run_description: "Comparison of Baseline vs Actual"
-      metric: "mean" # mean, sum
-      population_mode: "intersection" # intersection, union, a_only, b_only
+      metric: MEAN # MEAN, SUM
+      population_mode: INTERSECTION # INTERSECTION, UNION, A_ONLY, B_ONLY
 
 resources:
   database:

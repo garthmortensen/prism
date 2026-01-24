@@ -38,7 +38,7 @@ def scoring_visualizations(context, database: ResourceParam[SqlAlchemyResource])
         # Get most recent scoring run
         latest_run = con.execute(text("""
             SELECT run_id, run_description 
-            FROM main_runs.run_registry 
+            FROM dag_runs.run_registry 
             WHERE analysis_type = 'scoring' AND status = 'success'
             ORDER BY created_at DESC 
             LIMIT 1
@@ -50,7 +50,7 @@ def scoring_visualizations(context, database: ResourceParam[SqlAlchemyResource])
 
             df = pd.read_sql(text(f"""
                 SELECT risk_score 
-                FROM main_runs.risk_scores 
+                FROM dag_runs.risk_scores 
                 WHERE run_id = :run_id
             """), con, params={"run_id": run_id})
 
@@ -87,7 +87,7 @@ def comparison_visualizations(context, database: ResourceParam[SqlAlchemyResourc
         # Get most recent comparison run
         latest_run = con.execute(text("""
             SELECT run_id, run_description 
-            FROM main_runs.run_registry 
+            FROM dag_runs.run_registry 
             WHERE analysis_type = 'comparison' AND status = 'success'
             ORDER BY created_at DESC 
             LIMIT 1
@@ -102,7 +102,7 @@ def comparison_visualizations(context, database: ResourceParam[SqlAlchemyResourc
             # 1. Distribution of Deltas
             df_deltas = pd.read_sql(text(f"""
                 SELECT score_diff 
-                FROM main_analytics.run_comparison 
+                FROM dag_analytics.run_comparison 
                 WHERE batch_id = :batch_id 
                   AND match_status IN ('matched', 'both')
                   AND score_diff IS NOT NULL
@@ -125,24 +125,24 @@ def comparison_visualizations(context, database: ResourceParam[SqlAlchemyResourc
 
             # 2. Mean Delta by Metal Level (requires joining back to risk_scores)
             # We need to find run_id_b to get the metal level
-            # any_value is supported by DuckDB and Snowflake (ANY_VALUE)
+            # any_value is supported by DuckDB and Snowflake (ANY_VALUE). Postgres uses MAX/MIN.
             run_id_b = con.execute(text(f"""
-                SELECT any_value(run_id_b) 
-                FROM main_analytics.run_comparison 
+                SELECT MAX(run_id_b) 
+                FROM dag_analytics.run_comparison 
                 WHERE batch_id = :batch_id
             """), {"batch_id": batch_id}).fetchone()[0]
 
             df_metal = pd.read_sql(text(f"""
                 WITH compare AS (
                   SELECT member_id, score_diff
-                  FROM main_analytics.run_comparison
+                  FROM dag_analytics.run_comparison
                   WHERE batch_id = :batch_id
                     AND match_status IN ('matched','both')
                     AND score_diff IS NOT NULL
                 ),
                 risk_scores AS (
                   SELECT member_id, metal_level
-                  FROM main_runs.risk_scores
+                  FROM dag_runs.risk_scores
                   WHERE run_id = :run_id_b
                 )
                 SELECT
@@ -186,7 +186,7 @@ def decomposition_visualizations(context, database: ResourceParam[SqlAlchemyReso
         # Get most recent decomposition run
         latest_run = con.execute(text("""
             SELECT run_id, run_description 
-            FROM main_runs.run_registry 
+            FROM dag_runs.run_registry 
             WHERE analysis_type = 'decomposition' AND status = 'success'
             ORDER BY created_at DESC 
             LIMIT 1
@@ -201,7 +201,7 @@ def decomposition_visualizations(context, database: ResourceParam[SqlAlchemyReso
             # Waterfall / Bar chart of drivers
             df_drivers = pd.read_sql(text(f"""
                 SELECT driver_name, SUM(impact_value) as impact
-                FROM main_analytics.decomposition_scenarios
+                FROM dag_analytics.decomposition_scenarios
                 WHERE batch_id = :batch_id
                 GROUP BY driver_name
             """), con, params={"batch_id": batch_id})
@@ -244,7 +244,7 @@ def lag_trend_visualizations(context, database: ResourceParam[SqlAlchemyResource
         # 1. Find all Lag Analysis runs
         runs = con.execute(text("""
             SELECT run_id, run_description 
-            FROM main_runs.run_registry 
+            FROM dag_runs.run_registry 
             WHERE run_description LIKE 'Lag Analysis %' 
               AND status = 'success'
         """)).fetchall()
@@ -271,7 +271,7 @@ def lag_trend_visualizations(context, database: ResourceParam[SqlAlchemyResource
                 # Get average score
                 avg_score = con.execute(text(f"""
                     SELECT AVG(risk_score) 
-                    FROM main_runs.risk_scores 
+                    FROM dag_runs.risk_scores 
                     WHERE run_id = :run_id
                 """), {"run_id": run_id}).fetchone()[0]
 

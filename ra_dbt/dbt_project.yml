@@ -19,9 +19,28 @@ clean-targets:         # directories to be removed by 'dbt clean'
 
 seeds:
   prism:
-    schema: raw
+    schema: dbt_raw
     +quote_columns: false
     +enabled: true
+    raw_members:
+      +column_types:
+        member_id: varchar
+        plan_metal: varchar
+    raw_enrollments:
+      +column_types:
+        member_id: varchar
+        plan_id: varchar
+    raw_claims:
+      +column_types:
+        member_id: varchar
+        claim_id: varchar
+        provider_id: varchar
+    raw_plans:
+      +column_types:
+        plan_id: varchar
+    raw_providers:
+      +column_types:
+        provider_id: varchar
 
 models:
   prism:
@@ -30,14 +49,28 @@ models:
 
     raw_views:
       materialized: view
-      schema: raw
+      schema: dbt_raw
 
     staging:
       materialized: view
-      schema: staging
+      schema: dbt_staging
 
     intermediate:
       materialized: view
-      schema: intermediate
+      schema: dbt_intermediate
+
+    marts:
+      materialized: view
+      schema: dbt_marts
+      scoring:
+        materialized: view
+        schema: dbt_marts
+      operational:
+        materialized: view
+        schema: dbt_marts
+
+    quality:
+      materialized: view
+      schema: dbt_quality
 
 

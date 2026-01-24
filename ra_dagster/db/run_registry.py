@@ -51,30 +51,22 @@ class RunRecord:
 def allocate_group_id(con: Connection) -> int:
     """Allocate a new group ID for a set of runs."""
     row = con.execute(
-        text("SELECT COALESCE(MAX(group_id), 0) + 1 AS next_id FROM main_runs.run_registry")
+        text("SELECT COALESCE(MAX(group_id), 0) + 1 AS next_id FROM dag_runs.run_registry")
     ).fetchone()
     return int(row[0])
 
 
 def allocate_run_seq(con: Connection) -> int:
     """Allocate a new run sequence number."""
-    try:
-        # Try using the sequence first (DuckDB)
-        row = con.execute(text("SELECT nextval('main_runs.run_id_seq')")).fetchone()
-        return int(row[0])
-    except Exception:
-        # Fallback if sequence doesn't exist or not supported
-        row = con.execute(
-            text("SELECT COALESCE(MAX(run_seq), 0) + 1 AS next_id FROM main_runs.run_registry")
-        ).fetchone()
-        return int(row[0])
+    row = con.execute(text("SELECT nextval('dag_runs.run_id_seq')")).fetchone()
+    return int(row[0])
 
 
 def insert_run(con: Connection, record: RunRecord) -> None:
     """Insert a new run record into the registry."""
     con.execute(
         text("""
-        INSERT INTO main_runs.run_registry (
+        INSERT INTO dag_runs.run_registry (
             run_id,
             run_seq,
             run_ref,
@@ -166,7 +158,7 @@ def update_run_status(
     """Update the status of an existing run."""
     con.execute(
         text("""
-        UPDATE main_runs.run_registry
+        UPDATE dag_runs.run_registry
         SET status = :status, updated_at = :updated_at
         WHERE run_id = :run_id
         """),
@@ -186,7 +178,7 @@ def resolve_run_id(con: Connection, run_identifier: str) -> str:
 
     # Otherwise treat as ref
     row = con.execute(
-        text("SELECT run_id FROM main_runs.run_registry WHERE run_ref = :code"),
+        text("SELECT run_id FROM dag_runs.run_registry WHERE run_ref = :code"),
         {"code": run_identifier.lower()},
     ).fetchone()
 

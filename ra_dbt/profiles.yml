@@ -9,6 +9,6 @@ prism:
 
       password: ra_pass
       dbname: ra_database
-      schema: public
+      schema: marts
       threads: 4
       keepalives_idle: 0

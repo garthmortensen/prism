@@ -4,7 +4,7 @@ Description:
     Performs N-way decomposition of risk score changes.
     - Isolates the impact of specific factors (e.g., Model Version, Population Mix).
     - Calculates marginal effects and interaction residuals.
-    - Writes scenario results to `main_analytics`.
+    - Writes scenario results to `analytics`.
 
 Usage:
     Executed via the `decomposition_job` in Dagster.
@@ -101,7 +101,7 @@ def decompose_runs(context: AssetExecutionContext, config: DecompositionConfig, 
         meta_row = con.execute(
             text("""
             SELECT model_version, benefit_year
-            FROM main_runs.run_registry
+            FROM dag_runs.run_registry
             WHERE run_id = :run_id
             """),
             {"run_id": run_id_actual},
@@ -194,9 +194,9 @@ def decompose_runs(context: AssetExecutionContext, config: DecompositionConfig, 
             agg_func = "AVG"
 
             cte_sql = """
-                WITH A AS (SELECT member_id, risk_score FROM main_runs.risk_scores
+                WITH A AS (SELECT member_id, risk_score FROM dag_runs.risk_scores
                            WHERE run_id = :run_a),
-                     B AS (SELECT member_id, risk_score FROM main_runs.risk_scores
+                     B AS (SELECT member_id, risk_score FROM dag_runs.risk_scores
                            WHERE run_id = :run_b)
             """
 
@@ -278,7 +278,7 @@ def decompose_runs(context: AssetExecutionContext, config: DecompositionConfig, 
         
         con.execute(
             text("""
-            INSERT INTO main_analytics.decomposition_definitions 
+            INSERT INTO dag_analytics.decomposition_definitions 
             (batch_id, step_index, driver_name, description, created_at) 
             VALUES (:batch_id, :step_index, :driver_name, :description, :created_at)
             """),
@@ -296,7 +296,7 @@ def decompose_runs(context: AssetExecutionContext, config: DecompositionConfig, 
 
         con.execute(
             text("""
-            INSERT INTO main_analytics.decomposition_scenarios 
+            INSERT INTO dag_analytics.decomposition_scenarios 
             (batch_id, driver_name, impact_value, run_id, created_at) 
             VALUES (:batch_id, :driver_name, :impact_value, :run_id, :created_at)
             """),

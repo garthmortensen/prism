@@ -1,0 +1,44 @@
+version: 2
+
+models:
+  - name: run_comparison_by_dim
+    description: Compare two runs by dimensions, showing deltas and shifts in risk profiles across segments.
+    meta:
+      owner: Risk Adjustment
+      category: Operational
+    columns:
+      - name: batch_id
+        description: Comparison batch ID.
+        tests:
+          - relationships:
+              arguments:
+                to: source('dagster_analytics', 'run_comparison')
+                field: batch_id
+      - name: user_ref_a
+        description: User reference for the first run (Baseline).
+        tests:
+          - relationships:
+              arguments:
+                to: source('dagster_runs', 'run_registry')
+                field: run_ref
+      - name: user_ref_b
+        description: User reference for the second run (Actual/Comparison).
+        tests:
+          - relationships:
+              arguments:
+                to: source('dagster_runs', 'run_registry')
+                field: run_ref
+      - name: dimension_name
+        description: Name of the dimension being compared (e.g., 'gender', 'age_band').
+      - name: dimension_value
+        description: Value of the dimension (e.g., 'M', '65+').
+      - name: member_count_a
+        description: Member count in dimension_value for run A.
+      - name: member_count_b
+        description: Member count in dimension_value for run B.
+      - name: avg_score_a
+        description: Average score for this segment in run A.
+      - name: avg_score_b
+        description: Average score for this segment in run B.
+      - name: score_delta
+        description: Difference in average scores (B - A).

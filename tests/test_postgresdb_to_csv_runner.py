@@ -18,10 +18,10 @@ def test_postgresdb_to_csv_runner_smoke(tmp_path: Path) -> None:
     engine = create_engine(database_url)
     
     with engine.connect() as con:
-        con.execute(text("CREATE SCHEMA IF NOT EXISTS main_intermediate"))
+        con.execute(text("CREATE SCHEMA IF NOT EXISTS intermediate"))
         con.execute(
             text("""
-            CREATE TABLE main_intermediate.int_aca_risk_input (
+            CREATE TABLE intermediate.int_aca_risk_input (
                 member_id TEXT,
                 date_of_birth DATE,
                 gender TEXT,
@@ -36,7 +36,7 @@ def test_postgresdb_to_csv_runner_smoke(tmp_path: Path) -> None:
 
         con.execute(
             text("""
-            INSERT INTO main_intermediate.int_aca_risk_input 
+            INSERT INTO intermediate.int_aca_risk_input 
             (member_id, date_of_birth, gender, metal_level, enrollment_months, diagnoses, ndc_codes)
             VALUES
                 (:m1, :dob1, :g1, :ml1, :em1, :d1, :n1),
@@ -66,7 +66,7 @@ def test_postgresdb_to_csv_runner_smoke(tmp_path: Path) -> None:
         output_csv_path=str(out_csv),
         model_year="2024",
         prediction_year=None,
-        schema="main_intermediate",
+        schema="intermediate",
         table="int_aca_risk_input",
         limit=None,
     )
@@ -97,10 +97,10 @@ def test_postgresdb_to_csv_runner_coerces_invalid_gender(tmp_path: Path) -> None
     engine = create_engine(database_url)
     
     with engine.connect() as con:
-        con.execute(text("CREATE SCHEMA IF NOT EXISTS main_intermediate"))
+        con.execute(text("CREATE SCHEMA IF NOT EXISTS intermediate"))
         con.execute(
             text("""
-            CREATE TABLE main_intermediate.int_aca_risk_input (
+            CREATE TABLE intermediate.int_aca_risk_input (
                 member_id TEXT,
                 date_of_birth DATE,
                 gender TEXT,
@@ -115,7 +115,7 @@ def test_postgresdb_to_csv_runner_coerces_invalid_gender(tmp_path: Path) -> None
 
         con.execute(
             text("""
-            INSERT INTO main_intermediate.int_aca_risk_input
+            INSERT INTO intermediate.int_aca_risk_input
             (member_id, date_of_birth, gender, metal_level, enrollment_months, diagnoses, ndc_codes)
             VALUES
                 (:m1, :dob1, :g1, :ml1, :em1, :d1, :n1),
@@ -145,7 +145,7 @@ def test_postgresdb_to_csv_runner_coerces_invalid_gender(tmp_path: Path) -> None
         output_csv_path=str(out_csv),
         model_year="2024",
         prediction_year=None,
-        schema="main_intermediate",
+        schema="intermediate",
         table="int_aca_risk_input",
         limit=None,
         invalid_gender="coerce",
@@ -170,10 +170,10 @@ def test_postgresdb_to_csv_runner_skips_invalid_gender(tmp_path: Path) -> None:
     engine = create_engine(database_url)
     
     with engine.connect() as con:
-        con.execute(text("CREATE SCHEMA IF NOT EXISTS main_intermediate"))
+        con.execute(text("CREATE SCHEMA IF NOT EXISTS intermediate"))
         con.execute(
             text("""
-            CREATE TABLE main_intermediate.int_aca_risk_input (
+            CREATE TABLE intermediate.int_aca_risk_input (
                 member_id TEXT,
                 date_of_birth DATE,
                 gender TEXT,
@@ -188,7 +188,7 @@ def test_postgresdb_to_csv_runner_skips_invalid_gender(tmp_path: Path) -> None:
 
         con.execute(
             text("""
-            INSERT INTO main_intermediate.int_aca_risk_input
+            INSERT INTO intermediate.int_aca_risk_input
             (member_id, date_of_birth, gender, metal_level, enrollment_months, diagnoses, ndc_codes)
             VALUES
                 (:m1, :dob1, :g1, :ml1, :em1, :d1, :n1),

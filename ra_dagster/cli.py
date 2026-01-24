@@ -26,7 +26,7 @@ def db_bootstrap(
 ) -> None:
     """Create core Prism schemas + tables.
 
-    Creates: `main_intermediate`, `main_runs`, `main_analytics`.
+    Creates: `runs`, `analytics`.
     """
 
     res = SqlAlchemyResource(database=database)
@@ -41,5 +41,10 @@ def db_bootstrap(
     typer.echo(f"Bootstrapped warehouse for environment: {database}")
 
 
-if __name__ == "__main__":
+def main() -> None:
+    """Entry point for the CLI."""
     app()
+
+
+if __name__ == "__main__":
+    main()

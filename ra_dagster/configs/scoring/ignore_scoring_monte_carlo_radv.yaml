@@ -3,9 +3,9 @@ ops:
     config:
       # Scenario: Monte Carlo RADV Simulation
       # Using "stacked" views that replicate the population N times with random claim dropouts
-      claims_view: main_raw.claims_monte_carlo_radv
-      enrollments_view: main_raw.enrollments_monte_carlo_radv
-      members_view: main_raw.members_monte_carlo_radv
+      claims_view: dbt_raw.claims_monte_carlo_radv
+      enrollments_view: dbt_raw.enrollments_monte_carlo_radv
+      members_view: dbt_raw.members_monte_carlo_radv
       invalid_gender: skip
       diy_model_year: "2024"
       member_age_basis_year: "2024"

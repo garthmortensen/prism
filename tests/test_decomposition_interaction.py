@@ -22,7 +22,7 @@ def test_decomposition_writes_interaction_row(tmp_path: Path) -> None:
         # Minimal metadata row for the "actual" run.
         con.execute(
             text("""
-            INSERT INTO main_runs.run_registry (run_id, model_version, benefit_year, data_effective)
+            INSERT INTO runs.run_registry (run_id, model_version, benefit_year, data_effective)
             VALUES (:run_id, :model_version, :benefit_year, :data_effective)
             """),
             {"run_id": "ACTUAL", "model_version": "hhs_2025", "benefit_year": 2025, "data_effective": None},
@@ -31,7 +31,7 @@ def test_decomposition_writes_interaction_row(tmp_path: Path) -> None:
         # Two members; baseline -> actual total mean delta = 2.0
         con.execute(
             text("""
-            INSERT INTO main_runs.risk_scores (run_id, member_id, risk_score)
+            INSERT INTO runs.risk_scores (run_id, member_id, risk_score)
             VALUES (:run_id, :member_id, :risk_score)
             """),
             [
@@ -75,7 +75,7 @@ def test_decomposition_writes_interaction_row(tmp_path: Path) -> None:
         row = con.execute(
             text("""
             SELECT impact_value
-            FROM main_analytics.decomposition_scenarios
+            FROM analytics.decomposition_scenarios
             WHERE batch_id = :batch_id AND driver_name = 'Interaction'
             """),
             {"batch_id": batch_id},

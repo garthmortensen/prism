@@ -46,7 +46,7 @@ def comparison_dashboard_metrics(context, config: ComparisonDashboardConfig, dat
                 SUM(CASE WHEN match_status = 'matched' THEN 1 ELSE 0 END) as matched_count,
                 SUM(CASE WHEN match_status = 'a_only' THEN 1 ELSE 0 END) as a_only_count,
                 SUM(CASE WHEN match_status = 'b_only' THEN 1 ELSE 0 END) as b_only_count
-            FROM main_analytics.run_comparison
+            FROM dag_analytics.run_comparison
             WHERE batch_id = :batch_id
         """), {"batch_id": batch_id}).fetchone()
 
@@ -66,7 +66,7 @@ def comparison_dashboard_metrics(context, config: ComparisonDashboardConfig, dat
         # 3. Score Difference Distribution (Histogram)
         diff_rows = con.execute(text("""
             SELECT score_diff
-            FROM main_analytics.run_comparison
+            FROM dag_analytics.run_comparison
             WHERE batch_id = :batch_id AND match_status = 'matched'
         """), {"batch_id": batch_id}).fetchall()
         score_diffs = [row[0] for row in diff_rows]
@@ -74,7 +74,7 @@ def comparison_dashboard_metrics(context, config: ComparisonDashboardConfig, dat
         # 4. Scatter Plot Data (Sampled if too large)
         scatter_rows = con.execute(text("""
             SELECT score_a, score_b
-            FROM main_analytics.run_comparison
+            FROM dag_analytics.run_comparison
             WHERE batch_id = :batch_id AND match_status = 'matched'
             LIMIT 5000
         """), {"batch_id": batch_id}).fetchall()

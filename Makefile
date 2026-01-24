@@ -1,7 +1,7 @@
 .PHONY: help init install sync lock hooks commit \
         lint format test test-cov ci \
-        dagster dbt-run dbt-test dbt-build dbt-seed dbt-compile dbt-docs dbt-docs-serve dbt-deps dbt-clean \
-        compose-up compose-down compose-logs compose-postgres \
+        dagster dbt-run dbt-test dbt-build dbt-seed dbt-compile dbt-docs dbt-docs-serve dbt-deps dbt-clean dbt-refresh \
+        compose-up compose-down compose-logs compose-postgres compose-restart \
         db-shell clean
 
 # Default target
@@ -45,6 +45,7 @@ help:
 	@echo "  make dbt-docs-serve Serve dbt docs locally"
 	@echo "  make dbt-deps      Install dbt packages"
 	@echo "  make dbt-clean     Clean dbt artifacts"
+	@echo "  make dbt-refresh   Stop/drop/restart DB, then run dbt build"
 	@echo ""
 	@echo "Services:"
 	@echo "  make dagster       Start Dagster dev server"
@@ -108,7 +109,7 @@ dagster:
 	export DAGSTER_HOME=$$(pwd)/.dagster_home && uv run dagster dev -m ra_dagster.definitions
 
 db-bootstrap:
-	uv run python -m ra_dagster.cli db-bootstrap
+	uv run python -m ra_dagster
 
 # =============================================================================
 # dbt
@@ -140,6 +141,9 @@ dbt-deps:
 
 dbt-clean:
 	cd ra_dbt && uv run dbt clean
+
+dbt-refresh: compose-down compose-up dbt-build
+	@echo "Database refreshed and dbt build complete"
 
 # =============================================================================
 # Compose (Podman/Docker)

@@ -6,7 +6,7 @@
 /*
     WHAT THIS MODEL DOES:
     ---------------------
-    Explodes the JSON `components` array from `main_runs.risk_scores` into individual rows,
+    Explodes the JSON `components` array from `runs.risk_scores` into individual rows,
     one per score component (demographic, HCC, RXC, HCC group, EDF).
     
     This gives you a granular audit trail showing exactly which diagnosis codes, NDC codes,
@@ -14,7 +14,7 @@
     
     WHY THE CONDITIONAL LOGIC:
     --------------------------
-    This model depends on Dagster writing `main_runs.risk_scores` with a `components` column.
+    This model depends on Dagster writing `runs.risk_scores` with a `components` column.
     
     - If you run `dbt build` before running the Dagster scoring pipeline, that table won't exist yet.
     - Without defensive checks, dbt would error: "Table does not exist!"
@@ -68,7 +68,7 @@ WITH source_data AS (
         CAST(NULL AS VARCHAR) AS run_timestamp,
         CAST(NULL AS VARCHAR) AS calculator,
         CAST(NULL AS VARCHAR) AS model_year,
-        CAST(NULL AS DOUBLE) AS risk_score,
+        CAST(NULL AS DOUBLE PRECISION) AS risk_score,
         CAST(NULL AS JSON) AS components
     WHERE 1 = 0
     {%- endif %}

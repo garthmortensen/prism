@@ -116,6 +116,7 @@ def compare_runs(context: AssetExecutionContext, config: ComparisonConfig, datab
     )
 
     insert_run(con, record)
+    con.commit()
 
     try:
         # Determine Join Type based on population_mode
@@ -139,7 +140,7 @@ def compare_runs(context: AssetExecutionContext, config: ComparisonConfig, datab
 
         con.execute(
             text(f"""
-            INSERT INTO main_analytics.run_comparison (
+            INSERT INTO dag_analytics.run_comparison (
                 batch_id,
                 run_id_a,
                 run_id_b,
@@ -151,8 +152,8 @@ def compare_runs(context: AssetExecutionContext, config: ComparisonConfig, datab
                 created_at,
                 details
             )
-            WITH A AS (SELECT member_id, risk_score FROM main_runs.risk_scores WHERE run_id = :run_id_a_filter),
-                 B AS (SELECT member_id, risk_score FROM main_runs.risk_scores WHERE run_id = :run_id_b_filter)
+            WITH A AS (SELECT member_id, risk_score FROM dag_runs.risk_scores WHERE run_id = :run_id_a_filter),
+                 B AS (SELECT member_id, risk_score FROM dag_runs.risk_scores WHERE run_id = :run_id_b_filter)
             SELECT
                 :batch_id,
                 :run_id_a,
@@ -183,10 +184,12 @@ def compare_runs(context: AssetExecutionContext, config: ComparisonConfig, datab
         )
 
         update_run_status(con, run_id=run_id, status="success")
-        context.log.info(f"Wrote main_analytics.run_comparison for batch_id={batch_id}")
+        con.commit()
+        context.log.info(f"Wrote dag_analytics.run_comparison for batch_id={batch_id}")
 
     except Exception:
         update_run_status(con, run_id=run_id, status="failed")
+        con.commit()
         raise
 
     finally:
