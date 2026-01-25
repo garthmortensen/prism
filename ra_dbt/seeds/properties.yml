@@ -5,6 +5,8 @@ seeds:
     description: Reference table of insurance plans offered.
     config:
       column_types:
+        plan_id: text
+        name: text
         monthly_premium: numeric(10,2)
         deductible: integer
         oop_max: integer
@@ -29,6 +31,8 @@ seeds:
     description: Reference table of healthcare providers.
     config:
       column_types:
+        provider_id: text
+        name: text
         zip: text
         phone: text
         npi: text
@@ -92,6 +96,9 @@ seeds:
     description: Source table containing member enrollment periods.
     config:
       column_types:
+        enrollment_id: text
+        member_id: text
+        plan_id: text
         start_date: date
         end_date: date
         premium_paid: numeric(10,2)

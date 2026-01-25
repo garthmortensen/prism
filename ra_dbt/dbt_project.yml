@@ -28,6 +28,7 @@ seeds:
         plan_metal: varchar
     raw_enrollments:
       +column_types:
+        enrollment_id: varchar
         member_id: varchar
         plan_id: varchar
     raw_claims:
@@ -38,9 +39,11 @@ seeds:
     raw_plans:
       +column_types:
         plan_id: varchar
+        name: varchar
     raw_providers:
       +column_types:
         provider_id: varchar
+        name: varchar
 
 models:
   prism:

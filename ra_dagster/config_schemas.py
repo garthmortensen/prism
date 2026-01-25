@@ -100,8 +100,7 @@ class DashboardConfig(Config):
 
 
 class ComparisonDashboardConfig(Config):
-    run_ref_a: str
-    run_ref_b: str
+    run_ref: str
 
 
 # -----------------------------------------------------------------------------

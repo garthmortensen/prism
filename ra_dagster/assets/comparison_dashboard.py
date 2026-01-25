@@ -33,7 +33,7 @@ def comparison_dashboard_metrics(context, config: ComparisonDashboardConfig, dat
     con = engine.connect()
     
     # Resolve batch_ref if it's a human code
-    batch_id = resolve_run_id(con, config.batch_ref)
+    batch_id = resolve_run_id(con, config.run_ref)
 
     try:
         # 1. Get Summary Metrics

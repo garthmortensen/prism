@@ -22,4 +22,5 @@ dbt_project = DbtProject(
 
 @dbt_assets(manifest=dbt_project.manifest_path)
 def dbt_analytics_assets(context: AssetExecutionContext, dbt: DbtCliResource):
-    yield from dbt.cli(["build"], context=context).stream()
+    # Exclude seeds to prevent timeout (seeds should be loaded manually or via a separate job)
+    yield from dbt.cli(["build", "--exclude", "resource_type:seed"], context=context).stream()

@@ -5,5 +5,4 @@ resources:
 ops:
   comparison_dashboard_metrics:
     config:
-      run_ref_a: "CHANGE_ME"  # Replace with actual run_id or run_ref for first run
-      run_ref_b: "CHANGE_ME"  # Replace with actual run_id or run_ref for second run
+      run_ref: "CHANGE_ME"  # Replace with actual run_ref of the comparison job (e.g. c0001)
