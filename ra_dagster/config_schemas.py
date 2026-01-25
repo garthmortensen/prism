@@ -101,6 +101,7 @@ class DashboardConfig(Config):
 
 class ComparisonDashboardConfig(Config):
     run_ref: str
+    description: str = "Comparison Dashboard"
 
 
 # -----------------------------------------------------------------------------

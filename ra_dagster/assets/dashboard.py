@@ -35,14 +35,26 @@ def dashboard_metrics(context, config: DashboardConfig, database: ResourceParam[
     
     # Resolve run_ref from potential human code
     run_id = resolve_run_id(con, config.run_ref)
+    
+    # NOTE: The dbt marts aggregate by `user_ref` (which corresponds to config.run_ref or run_id)
+    # Since config.run_ref might be an alias like 's001', we need to check if the marts are keyed by run_id or ref.
+    # Looking at the dbt model `run_score_summary.sql`, it joins `dag_runs.run_registry` and selects `run_ref as user_ref`.
+    # So we should query using the run_ref (from registry) matching our run_id.
+    
+    # Get the canonical run_ref for this run_id
+    run_ref_row = con.execute(text("SELECT run_ref FROM dag_runs.run_registry WHERE run_id = :run_id"), {"run_id": run_id}).fetchone()
+    if not run_ref_row:
+         raise ValueError(f"Run ID {run_id} not found in registry")
+    
+    user_ref = run_ref_row[0]
 
     try:
         # 1. Get Summary Metrics
         summary = con.execute(text("""
             SELECT member_count, avg_score, avg_age
-            FROM main.run_score_summary
-            WHERE run_id = :run_id
-        """), {"run_id": run_id}).fetchone()
+            FROM dbt_marts.score_summary
+            WHERE user_ref = :user_ref
+        """), {"user_ref": user_ref}).fetchone()
 
         if not summary:
             raise ValueError(f"No summary data found for run_id: {run_id}")
@@ -52,57 +64,57 @@ def dashboard_metrics(context, config: DashboardConfig, database: ResourceParam[
         # 2. Get Gender Counts
         gender_rows = con.execute(text("""
             SELECT dimension_value, member_count
-            FROM main.run_score_by_dim
-            WHERE run_id = :run_id AND dimension_name = 'gender'
-        """), {"run_id": run_id}).fetchall()
+            FROM dbt_marts.score_by_dim
+            WHERE user_ref = :user_ref AND dimension_name = 'gender'
+        """), {"user_ref": user_ref}).fetchall()
         
         gender_map = {row[0]: row[1] for row in gender_rows}
 
         # 3. Get Metal Level Counts
         metal_rows = con.execute(text("""
             SELECT lower(dimension_value), member_count
-            FROM main.run_score_by_dim
-            WHERE run_id = :run_id AND dimension_name = 'metal_level'
-        """), {"run_id": run_id}).fetchall()
+            FROM dbt_marts.score_by_dim
+            WHERE user_ref = :user_ref AND dimension_name = 'metal_level'
+        """), {"user_ref": user_ref}).fetchall()
         
         metal_map = {row[0]: row[1] for row in metal_rows}
 
         # 4. Score Distribution
         dist_rows = con.execute(text("""
             SELECT score_bucket, member_count
-            FROM main.run_score_distribution
-            WHERE run_id = :run_id
+            FROM dbt_marts.score_distribution
+            WHERE user_ref = :user_ref
             ORDER BY score_bucket
-        """), {"run_id": run_id}).fetchall()
+        """), {"user_ref": user_ref}).fetchall()
         score_dist = [{"bucket": row[0], "count": row[1]} for row in dist_rows]
 
         # 5. Top HCCs
         hcc_rows = con.execute(text("""
             SELECT hcc_code, prevalence, avg_score_contribution
-            FROM main.run_hcc_summary
-            WHERE run_id = :run_id
+            FROM dbt_marts.hcc_summary
+            WHERE user_ref = :user_ref
             ORDER BY prevalence DESC
             LIMIT 10
-        """), {"run_id": run_id}).fetchall()
+        """), {"user_ref": user_ref}).fetchall()
         top_hccs = [{"code": row[0], "prevalence": row[1], "contribution": row[2]} for row in hcc_rows]
 
         # 6. Top RxCs
         rxc_rows = con.execute(text("""
             SELECT rxc_code, prevalence, avg_score_contribution
-            FROM main.run_rxc_summary
-            WHERE run_id = :run_id
+            FROM dbt_marts.rxc_summary
+            WHERE user_ref = :user_ref
             ORDER BY prevalence DESC
             LIMIT 10
-        """), {"run_id": run_id}).fetchall()
+        """), {"user_ref": user_ref}).fetchall()
         top_rxcs = [{"code": row[0], "prevalence": row[1], "contribution": row[2]} for row in rxc_rows]
         
         # 7. Age Band
         age_rows = con.execute(text("""
             SELECT dimension_value, member_count, avg_score
-            FROM main.run_score_by_dim
-            WHERE run_id = :run_id AND dimension_name = 'age_band'
+            FROM dbt_marts.score_by_dim
+            WHERE user_ref = :user_ref AND dimension_name = 'age_band'
             ORDER BY dimension_value
-        """), {"run_id": run_id}).fetchall()
+        """), {"user_ref": user_ref}).fetchall()
         age_dist = [{"band": row[0], "count": row[1], "avg_score": row[2]} for row in age_rows]
 
         results = {
