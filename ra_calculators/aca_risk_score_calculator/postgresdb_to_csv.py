@@ -1,6 +1,6 @@
 """Export utility for Risk Adjustment results.
 
-Handles the efficient export of large result sets from DuckDB to CSV format.
+Handles the efficient export of large result sets from PostgreSQL to CSV format.
 Includes logic for splitting files, handling headers, and formatting outputs.
 """
 
@@ -13,8 +13,8 @@ import os
 from datetime import datetime
 from pathlib import Path
 
-import duckdb
 import yaml
+from sqlalchemy import create_engine, text
 
 from ra_calculators.aca_risk_score_calculator import ACACalculator
 from ra_calculators.aca_risk_score_calculator.member_processing import rows_to_member_inputs
@@ -25,27 +25,28 @@ def _get_repo_root() -> Path:
     return Path(__file__).resolve().parents[2]
 
 
-def _default_duckdb_path() -> str:
-    """Get the default path to the DuckDB database."""
-    env_path = os.environ.get("DUCKDB_PATH")
-    if env_path:
-        return env_path
-    return str((_get_repo_root() / "risk_adjustment.duckdb").resolve())
+def _default_database_url() -> str:
+    """Get the default PostgreSQL database URL."""
+    env_url = os.environ.get("DATABASE_URL")
+    if env_url:
+        return env_url
+    # Default to local Docker container
+    return "postgresql://ra_user:ra_pass@localhost:5432/ra_database"
 
 
-def score_from_duckdb_to_csv(
+def score_from_postgres_to_csv(
     *,
-    duckdb_path: str,
+    database_url: str,
     output_csv_path: str,
     model_year: str = "2024",
     prediction_year: str | None = None,
-    schema: str = "main_intermediate",
+    schema: str = "intermediate",
     table: str = "int_aca_risk_input",
     limit: int | None = None,
     invalid_gender: str = "skip",
     coerce_gender: str | None = None,
 ) -> int:
-    """Read member inputs from DuckDB and write ACA risk scores to CSV.
+    """Read member inputs from PostgreSQL and write ACA risk scores to CSV.
 
     Returns number of rows written.
 
@@ -53,8 +54,9 @@ def score_from_duckdb_to_csv(
     - member_id, date_of_birth, gender, metal_level, enrollment_months, diagnoses, ndc_codes
     """
 
-    con = duckdb.connect(str(Path(duckdb_path).expanduser().resolve()))
-    try:
+    engine = create_engine(database_url)
+    
+    with engine.connect() as con:
         sql = f"""
         SELECT
             member_id,
@@ -69,7 +71,9 @@ def score_from_duckdb_to_csv(
         if limit is not None:
             sql += f"\nLIMIT {int(limit)}"
 
-        rows = con.execute(sql).fetchall()
+        result = con.execute(text(sql))
+        rows = result.fetchall()
+        
         members, stats = rows_to_member_inputs(
             rows,
             invalid_gender=invalid_gender,
@@ -160,23 +164,21 @@ def score_from_duckdb_to_csv(
             )
 
         return len(members)
-    finally:
-        con.close()
 
 
 def _build_arg_parser() -> argparse.ArgumentParser:
     """Build the argument parser for the CLI."""
     p = argparse.ArgumentParser(
-        prog="ra_calculators.aca_risk_score_calculator.duckdb_to_csv",
+        prog="ra_calculators.aca_risk_score_calculator.postgresdb_to_csv",
         description=(
-            "Read main_intermediate.int_aca_risk_input from DuckDB and write "
+            "Read intermediate.int_aca_risk_input from PostgreSQL and write "
             "ACA risk scores to CSV."
         ),
     )
     p.add_argument(
-        "--duckdb-path",
-        default=_default_duckdb_path(),
-        help="Path to DuckDB file (default: DUCKDB_PATH env var or repo risk_adjustment.duckdb)",
+        "--database-url",
+        default=_default_database_url(),
+        help="PostgreSQL database URL (default: DATABASE_URL env var or local Docker container)",
     )
     p.add_argument(
         "--output-csv",
@@ -195,13 +197,13 @@ def _build_arg_parser() -> argparse.ArgumentParser:
     )
     p.add_argument(
         "--schema",
-        default="main_intermediate",
-        help="DuckDB schema containing the input relation",
+        default="intermediate",
+        help="PostgreSQL schema containing the input relation",
     )
     p.add_argument(
         "--table",
         default="int_aca_risk_input",
-        help="DuckDB table/view name containing the input relation",
+        help="PostgreSQL table/view name containing the input relation",
     )
     p.add_argument(
         "--limit",
@@ -226,20 +228,19 @@ def _build_arg_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
-    """Main entry point for the DuckDB to CSV scoring script."""
+    """Main entry point for the PostgreSQL to CSV scoring script."""
     args = _build_arg_parser().parse_args(argv)
 
     output_csv = args.output_csv
     if not output_csv:
         # Format: YYYYMMDD_HHMMSSssss_aca_scores_out.csv
         # Note: %f gives microseconds (6 digits).
-        # User asked for YYYYMMDD_HHMMSSssss. Let's assume they want microseconds.
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S%f")
         # Write to tmp_exports relative to this script
         output_csv = str(Path(__file__).parent / "tmp_exports" / f"{timestamp}_aca_scores_out.csv")
 
-    count = score_from_duckdb_to_csv(
-        duckdb_path=args.duckdb_path,
+    count = score_from_postgres_to_csv(
+        database_url=args.database_url,
         output_csv_path=output_csv,
         model_year=str(args.model_year),
         prediction_year=str(args.prediction_year) if args.prediction_year else None,

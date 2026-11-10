@@ -5,6 +5,8 @@ seeds:
     description: Reference table of insurance plans offered.
     config:
       column_types:
+        plan_id: text
+        name: text
         monthly_premium: numeric(10,2)
         deductible: integer
         oop_max: integer
@@ -29,6 +31,8 @@ seeds:
     description: Reference table of healthcare providers.
     config:
       column_types:
+        provider_id: text
+        name: text
         zip: text
         phone: text
         npi: text
@@ -49,12 +53,30 @@ seeds:
     description: Source table containing member demographic information.
     config:
       column_types:
+        member_id: text
+        first_name: text
+        last_name: text
         dob: date
+        gender: text
         zip: text
         phone: text
         email: text
+        street: text
+        city: text
+        state: text
         fpl_ratio: numeric(5,2)
         hios_id: text
+        plan_network_access_type: text
+        plan_metal: text
+        age_group: text
+        region: text
+        clinical_segment: text
+        general_agency_name: text
+        broker_name: text
+        sa_contracting_entity_name: text
+        mutually_exclusive_hcc_condition: text
+        geographic_reporting: text
+        wisconsin_area_deprivation_index: text
         ra_mm: numeric(5,3)
         year: integer
     columns:
@@ -74,6 +96,9 @@ seeds:
     description: Source table containing member enrollment periods.
     config:
       column_types:
+        enrollment_id: text
+        member_id: text
+        plan_id: text
         start_date: date
         end_date: date
         premium_paid: numeric(10,2)

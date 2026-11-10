@@ -32,6 +32,10 @@ models:
         description: Unique identifier for the member
         tests:
           - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_enrollment')
+                field: member_id
       - name: service_date
         description: Date when the medical service was provided
       - name: diagnosis_code
@@ -49,6 +53,10 @@ models:
         description: Unique identifier for the member
         tests:
           - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_enrollment')
+                field: member_id
       - name: fill_date
         description: Date when the prescription was filled
       - name: ndc_code

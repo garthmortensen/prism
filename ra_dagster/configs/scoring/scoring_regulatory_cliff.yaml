@@ -3,9 +3,9 @@ ops:
     config:
       # Scenario: Model Version Cross-Walking (Regulatory Cliff)
       # Running 2024 data through the previous year's (2023) model
-      claims_view: main_raw.raw_claims_2024
-      enrollments_view: main_raw.raw_enrollments_2024
-      members_view: main_raw.raw_members_2024
+      claims_view: dbt_raw.raw_claims
+      enrollments_view: dbt_raw.raw_enrollments
+      members_view: dbt_raw.raw_members
       invalid_gender: skip
       diy_model_year: "2023"
       member_age_basis_year: "2024"

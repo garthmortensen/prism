@@ -1,3 +1,3 @@
 select *
 from {{ ref('raw_claims') }}
-where year(cast(service_date as date)) = 2023
+where extract(year from cast(service_date as date)) = 2023

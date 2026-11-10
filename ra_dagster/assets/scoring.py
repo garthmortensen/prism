@@ -5,7 +5,7 @@ Description:
     - Resolves input views (claims, enrollment, members).
     - Normalizes data into a standard input format.
     - Executes the HHS-HCC risk model (via `ra_calculators`).
-    - Writes detailed results to `main_runs.risk_scores`.
+    - Writes detailed results to `runs.risk_scores`.
 
 Usage:
     Executed via the `scoring_job` in Dagster.
@@ -95,54 +95,15 @@ def _relation_exists(con: Connection, relation: str) -> bool:
 
 
 def _resolve_relation(con: Connection, relation: str) -> str:
-    """Resolve a relation name against DuckDB, handling common dbt/DuckDB prefixing.
-
-    DuckDB + dbt sometimes materialize a configured schema like `main_raw` as
-    `main_main_raw` (database+schema concatenation). If the user provides
-    `main_raw.table`, we try that first, then fall back to `main_main_raw.table`.
-    """
+    """Resolve a relation name, ensuring it exists."""
     relation = _validate_relation_name(relation)
 
     if _relation_exists(con, relation):
         return relation
 
-    parts = relation.split(".")
-    if len(parts) == 2:
-        schema, table = parts
-
-        # Common fallback: dbt may materialize `main_raw` as `main_main_raw`.
-        alt = f"main_{schema}.{table}"
-        if _relation_exists(con, alt):
-            return alt
-
-        # Common fallback: prefix schema with "main_".
-        if not schema.startswith("main_"):
-            alt = f"main_{schema}.{table}"
-            if _relation_exists(con, alt):
-                return alt
-
-        # Also try stripping a leading "main_" if present.
-        if schema.startswith("main_"):
-            alt = f"{schema.removeprefix('main_')}.{table}"
-            if _relation_exists(con, alt):
-                return alt
-
-        # As a last resort, try to locate it by table name.
-        rows = con.execute(
-            text("""
-            SELECT table_schema
-            FROM information_schema.tables
-            WHERE table_name = :table
-            ORDER BY table_schema
-            """),
-            {"table": table},
-        ).fetchall()
-        if len(rows) == 1:
-            return f"{rows[0][0]}.{table}"
-
     raise ValueError(
         f"Database relation not found: {relation!r}. "
-        "Check that dbt has been run and that the schema/table name is correct."
+        "Check that the schema/table name is correct."
     )
 
 
@@ -155,13 +116,13 @@ def _maybe_build_member_input_view(
 ) -> str:
     """Return the relation to read member inputs from.
 
-    - Default: use dbt-produced `main_intermediate.int_aca_risk_input`.
+    - Default: use dbt-produced `intermediate.int_aca_risk_input`.
     - If views are provided: build a TEMP view `int_aca_risk_input` from those sources.
     """
 
     any_set = any(v is not None for v in (claims_view, enrollments_view, members_view))
     if not any_set:
-        return "main_intermediate.int_aca_risk_input"
+        return "intermediate.int_aca_risk_input"
 
     if not all(v is not None for v in (claims_view, enrollments_view, members_view)):
         raise ValueError(
@@ -273,7 +234,7 @@ def _maybe_build_member_input_view(
 def score_members_aca(
     context: AssetExecutionContext, config: ScoringConfig, database: ResourceParam[SqlAlchemyResource]
 ) -> None:
-    """Score members using the ACA HHS-HCC calculator and write to main_runs.risk_scores."""
+    """Score members using the ACA HHS-HCC calculator and write to dag_runs.risk_scores."""
 
     engine = database.get_engine()
     context.log.info(f"Connecting to database: {engine.url}")
@@ -392,6 +353,7 @@ def score_members_aca(
     )
 
     insert_run(con, record)
+    con.commit()
 
     try:
         calculator = ACACalculator(model_year=str(diy_model_year))
@@ -400,12 +362,12 @@ def score_members_aca(
             text(f"""
             SELECT
                 member_id,
-                ANY_VALUE(dob) AS date_of_birth,
-                ANY_VALUE(gender) AS gender,
-                ANY_VALUE(metal_level) AS metal_level,
-                ANY_VALUE(enrollment_months) AS enrollment_months,
-                LIST(DISTINCT diagnoses) AS diagnoses,
-                LIST(DISTINCT ndc_codes) AS ndc_codes
+                MAX(dob) AS date_of_birth,
+                MAX(gender) AS gender,
+                MAX(metal_level) AS metal_level,
+                MAX(enrollment_months) AS enrollment_months,
+                ARRAY_AGG(DISTINCT diagnoses) AS diagnoses,
+                ARRAY_AGG(DISTINCT ndc_codes) AS ndc_codes
             FROM {input_relation}
             GROUP BY member_id
             ORDER BY member_id
@@ -445,7 +407,7 @@ def score_members_aca(
 
         # Clean up any existing data for this run_id (e.g. from a retry)
         con.execute(
-            text("DELETE FROM main_runs.risk_scores WHERE run_id = :run_id"),
+            text("DELETE FROM dag_runs.risk_scores WHERE run_id = :run_id"),
             {"run_id": run_id}
         )
 
@@ -454,7 +416,7 @@ def score_members_aca(
         created_at = now_utc()
         total_written = 0
 
-        # Columns must match main_runs.risk_scores definition order
+        # Columns must match dag_runs.risk_scores definition order
         db_columns = [
             "run_id",
             "member_id",
@@ -486,7 +448,7 @@ def score_members_aca(
             df.to_pandas().to_sql(
                 "risk_scores",
                 con=con,
-                schema="main_runs",
+                schema="dag_runs",
                 if_exists="append",
                 index=False,
             )
@@ -537,12 +499,14 @@ def score_members_aca(
         total_written += len(out_rows)
 
         update_run_status(con, run_id=run_id, status="success")
+        con.commit()
         context.log.info(
-            f"Wrote {total_written} rows to main_runs.risk_scores for run_timestamp={run_ts}"
+            f"Wrote {total_written} rows to dag_runs.risk_scores for run_timestamp={run_ts}"
         )
 
     except Exception:
         update_run_status(con, run_id=run_id, status="failed")
+        con.commit()
         raise
 
     finally:

@@ -2,8 +2,8 @@ with source as (
     select 
         *,
         -- Extract age and hcc_cnt from details JSON.
-        try_cast(json_extract_string(details, '$.age') as int) as age,
-        try_cast(json_extract_string(details, '$.hcc_cnt') as int) as hcc_cnt
+        (details->>'age')::int as age,
+        (details->>'hcc_cnt')::int as hcc_cnt
     from {{ source('dagster_runs_outputs', 'risk_scores') }}
 )
 

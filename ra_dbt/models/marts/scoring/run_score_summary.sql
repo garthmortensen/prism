@@ -1,23 +1,27 @@
 with source as (
     select 
         *,
-        try_cast(json_extract_string(details, '$.age') as int) as age
+        (details->>'age')::int as age
     from {{ source('dagster_runs_outputs', 'risk_scores') }}
+),
+
+runs as (
+    select run_id, run_ref
+    from {{ source('dagster_runs', 'run_registry') }}
 ),
 
 aggregated as (
     select
-        run_id,
+        r.run_ref as user_ref,
         count(*) as member_count,
         avg(risk_score) as avg_score,
         min(risk_score) as min_score,
         max(risk_score) as max_score,
-        quantile_cont(risk_score, 0.5) as p50,
-        quantile_cont(risk_score, 0.9) as p90,
-        quantile_cont(risk_score, 0.99) as p99,
+        percentile_cont(0.5) within group (order by risk_score) as p50,
+        percentile_cont(0.9) within group (order by risk_score) as p90,
+        percentile_cont(0.99) within group (order by risk_score) as p99,
         avg(age) as avg_age,
-        
-        -- HCC metrics
+                 -- HCC metrics
         avg(hcc_score) as avg_hcc_score,
         min(hcc_score) as min_hcc_score,
         max(hcc_score) as max_hcc_score,
@@ -35,7 +39,8 @@ aggregated as (
         max(demographic_score) as max_demographic_score,
         stddev(demographic_score) as std_dev_demographic_score
 
-    from source
+    from source s
+    left join runs r on s.run_id = r.run_id
     group by 1
 )
 

@@ -2,11 +2,12 @@ ops:
   score_members_aca:
     config:
       # Scenario: Benefit Design Impact (Metal Level)
-      # Using a member view where all members are simulated as Silver plan
-      claims_view: main_raw.raw_claims_2024
-      enrollments_view: main_raw.raw_enrollments_2024
-      members_view: main_raw.members_simulated_silver
+      # metal_level overrides every member's plan metal before scoring
+      claims_view: dbt_raw.raw_claims
+      enrollments_view: dbt_raw.raw_enrollments
+      members_view: dbt_raw.raw_members
       invalid_gender: skip
+      metal_level: silver
       diy_model_year: "2024"
       member_age_basis_year: "2024"
       run_description: "Metal Level Sim (All Silver)"

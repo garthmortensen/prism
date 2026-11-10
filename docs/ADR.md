@@ -231,19 +231,21 @@ This document consolidates ADRs for the **Prism Risk Adjustment Analytics Platfo
 
 ## Decision 2.1: Schema Naming Convention
 
-**Context:** DuckDB prefixes schemas with `main_`. Initial confusion between `main.raw_claims` vs `main_staging.claims_raw`.
+**Context:** Need clear separation between dbt layers and Dagster-managed schemas.
 
-**Decision:** Use dbt canonical layer names with `main_` prefix:
+**Decision:** Use dbt canonical layer names for dbt models, `main_*` prefix for Dagster schemas:
 
-| Logical Layer | DuckDB Schema | Contents |
-|--------------|---------------|----------|
-| raw | `main_raw` | Seeds, source data |
-| staging | `main_staging` | Cleaned/standardized |
-| intermediate | `main_intermediate` | Business logic, joins |
-| runs | `main_runs` | Dagster-managed scoring results |
-| analytics | `main_analytics` | Comparison/decomposition outputs |
+| Logical Layer | PostgreSQL Schema | Contents |
+|--------------|-------------------|----------|
+| raw | `raw` | Seeds, source data |
+| staging | `staging` | Cleaned/standardized |
+| intermediate | `intermediate` | Business logic, joins |
+| marts | `public` | Final outputs |
+| quality | `quality` | Data quality tests |
+| runs | `runs` | Dagster-managed scoring results |
+| analytics | `analytics` | Comparison/decomposition outputs |
 
-**Rationale:** Aligns with dbt conventions while accepting DuckDB's main_ prefix behavior.
+**Rationale:** Aligns with dbt conventions; `main_*` schemas clearly identify Dagster-managed data.
 
 ---
 
@@ -261,7 +263,7 @@ This document consolidates ADRs for the **Prism Risk Adjustment Analytics Platfo
 
 **Context:** Needed reproducibility tracking for every scoring execution.
 
-**Decision:** Create `main_runs.run_registry` table:
+**Decision:** Create `runs.run_registry` table:
 - PK: `run_id` (UUID from Dagster `context.run_id`)
 - Index: `run_timestamp` (sortable, not unique - allows sub-second runs)
 - Stores: `run_description`, `status`, `trigger_source`, `blueprint_yml`

@@ -33,7 +33,7 @@ def comparison_dashboard_metrics(context, config: ComparisonDashboardConfig, dat
     con = engine.connect()
     
     # Resolve batch_ref if it's a human code
-    batch_id = resolve_run_id(con, config.batch_ref)
+    batch_id = resolve_run_id(con, config.run_ref)
 
     try:
         # 1. Get Summary Metrics
@@ -46,7 +46,7 @@ def comparison_dashboard_metrics(context, config: ComparisonDashboardConfig, dat
                 SUM(CASE WHEN match_status = 'matched' THEN 1 ELSE 0 END) as matched_count,
                 SUM(CASE WHEN match_status = 'a_only' THEN 1 ELSE 0 END) as a_only_count,
                 SUM(CASE WHEN match_status = 'b_only' THEN 1 ELSE 0 END) as b_only_count
-            FROM main_analytics.run_comparison
+            FROM dag_analytics.run_comparison
             WHERE batch_id = :batch_id
         """), {"batch_id": batch_id}).fetchone()
 
@@ -66,7 +66,7 @@ def comparison_dashboard_metrics(context, config: ComparisonDashboardConfig, dat
         # 3. Score Difference Distribution (Histogram)
         diff_rows = con.execute(text("""
             SELECT score_diff
-            FROM main_analytics.run_comparison
+            FROM dag_analytics.run_comparison
             WHERE batch_id = :batch_id AND match_status = 'matched'
         """), {"batch_id": batch_id}).fetchall()
         score_diffs = [row[0] for row in diff_rows]
@@ -74,13 +74,15 @@ def comparison_dashboard_metrics(context, config: ComparisonDashboardConfig, dat
         # 4. Scatter Plot Data (Sampled if too large)
         scatter_rows = con.execute(text("""
             SELECT score_a, score_b
-            FROM main_analytics.run_comparison
+            FROM dag_analytics.run_comparison
             WHERE batch_id = :batch_id AND match_status = 'matched'
             LIMIT 5000
         """), {"batch_id": batch_id}).fetchall()
         scatter_data = [{"a": row[0], "b": row[1]} for row in scatter_rows]
 
         # 5. Dimension Breakdowns
+        # dbt model 'run_comparison_by_dim' is materialized in 'dbt_marts' schema
+        # Note: Custom aliasing macro removes 'run_' prefix for marts models -> 'comparison_by_dim'
         dim_rows = con.execute(text("""
             SELECT 
                 dimension_name,
@@ -92,7 +94,7 @@ def comparison_dashboard_metrics(context, config: ComparisonDashboardConfig, dat
                 avg_score_diff,
                 avg_score_added,
                 avg_score_removed
-            FROM main.run_comparison_by_dim
+            FROM dbt_marts.comparison_by_dim
             WHERE batch_id = :batch_id
             ORDER BY dimension_name, dimension_value
         """), {"batch_id": batch_id}).fetchall()

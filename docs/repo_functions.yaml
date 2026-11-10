@@ -45,7 +45,7 @@ ra_calculators.aca_risk_score_calculator.table_loader:
 - load_rxc_labels: Load RXC labels from table_10a.parquet.
 - clear_cache: Clear the table cache.
 ra_dagster.assets.comparison:
-- compare_runs: Compute member-level deltas between two scoring runs into main_analytics.run_comparison.
+- compare_runs: Compute member-level deltas between two scoring runs into analytics.run_comparison.
 ra_dagster.assets.dashboard:
 - dashboard_metrics: Calculate population metrics for a specific run.
 - dashboard_html: Generate an HTML dashboard from the calculated metrics.
@@ -60,7 +60,7 @@ ra_dagster.assets.scoring:
 - _resolve_relation: Resolve a relation name against DuckDB, handling common dbt/DuckDB
     prefixing.
 - _maybe_build_member_input_view: Return the relation to read member inputs from.
-- score_members_aca: Score members using the ACA HHS-HCC calculator and write to main_runs.risk_scores.
+- score_members_aca: Score members using the ACA HHS-HCC calculator and write to runs.risk_scores.
 - score_members_aca.flush_batch: Flush a batch of scored members to the database.
 ra_dagster.assets.visualizations:
 - scoring_visualizations: Generate visualizations for recent scoring runs.

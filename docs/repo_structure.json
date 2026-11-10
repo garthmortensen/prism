@@ -516,7 +516,7 @@
       {
         "name": "score_members_aca",
         "type": "function",
-        "doc": "Score members using the ACA HHS-HCC calculator and write to main_runs.risk_scores.",
+        "doc": "Score members using the ACA HHS-HCC calculator and write to runs.risk_scores.",
         "children": [
           {
             "name": "flush_batch",
@@ -535,7 +535,7 @@
       {
         "name": "compare_runs",
         "type": "function",
-        "doc": "Compute member-level deltas between two scoring runs into main_analytics.run_comparison.",
+        "doc": "Compute member-level deltas between two scoring runs into analytics.run_comparison.",
         "children": []
       }
     ]

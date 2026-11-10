@@ -3,9 +3,9 @@ ops:
     config:
       # Scenario: Coding Intensity / Chart Review Impact
       # Using an enhanced claims view with simulated added diagnoses
-      claims_view: main_raw.raw_claims_2024_enhanced
-      enrollments_view: main_raw.raw_enrollments_2024
-      members_view: main_raw.raw_members_2024
+      claims_view: dbt_raw.raw_claims_2024_enhanced
+      enrollments_view: dbt_raw.raw_enrollments
+      members_view: dbt_raw.raw_members
       invalid_gender: skip
       diy_model_year: "2024"
       member_age_basis_year: "2024"

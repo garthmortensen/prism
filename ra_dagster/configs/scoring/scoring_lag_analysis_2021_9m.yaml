@@ -1,9 +1,9 @@
 ops:
   score_members_aca:
     config:
-      claims_view: main_raw.claims_2021_9months
-      enrollments_view: main_raw.raw_enrollments_2021
-      members_view: main_raw.raw_members_2021
+      claims_view: dbt_raw.claims_2021_9months
+      enrollments_view: dbt_raw.raw_enrollments
+      members_view: dbt_raw.raw_members
       invalid_gender: skip
       diy_model_year: "2021"
       member_age_basis_year: "2021"

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    #vis.vega-embed {
+      width: 100%;
+      display: flex;
+    }
+
+    #vis.vega-embed details,
+    #vis.vega-embed details summary {
+      position: relative;
+    }
+  </style>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vega@6"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vega-lite@6.1.0"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vega-embed@7"></script>
+</head>
+<body>
+  <div id="vis"></div>
+  <script>
+    (function(vegaEmbed) {
+      var spec = {"config": {"view": {"continuousWidth": 300, "continuousHeight": 300}}, "data": {"name": "data-f53105e88982735cb9d97be9d7416217"}, "mark": {"type": "bar"}, "encoding": {"color": {"condition": {"test": "(datum.impact > 0)", "value": "steelblue"}, "value": "orange"}, "tooltip": [{"field": "driver_name", "type": "nominal"}, {"field": "impact", "type": "quantitative"}], "x": {"field": "driver_name", "sort": "-y", "type": "nominal"}, "y": {"field": "impact", "type": "quantitative"}}, "title": "Decomposition Drivers: lag analysis", "$schema": "https://vega.github.io/schema/vega-lite/v6.1.0.json", "datasets": {"data-f53105e88982735cb9d97be9d7416217": [{"driver_name": "3 month", "impact": -13.977697638079238}, {"driver_name": "6 month", "impact": -13.977697638079238}, {"driver_name": "Interaction", "impact": 13.977697638079238}]}};
+      var embedOpt = {"mode": "vega-lite"};
+
+      function showError(el, error){
+          el.innerHTML = ('<div style="color:red;">'
+                          + '<p>JavaScript Error: ' + error.message + '</p>'
+                          + "<p>This usually means there's a typo in your chart specification. "
+                          + "See the javascript console for the full traceback.</p>"
+                          + '</div>');
+          throw error;
+      }
+      const el = document.getElementById('vis');
+      vegaEmbed("#vis", spec, embedOpt)
+        .catch(error => showError(el, error));
+    })(vegaEmbed);
+
+  </script>
+</body>
+</html>

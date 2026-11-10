@@ -58,6 +58,10 @@ class ScoringConfig(Config):
     metal_level: MetalLevel | None = None
     csr_variant: CSRVariant | None = None
     allow_telehealth: bool = True
+    # Optional: override where scoring inputs come from
+    claims_view: str | None = None
+    enrollments_view: str | None = None
+    members_view: str | None = None
 
 
 # -----------------------------------------------------------------------------
@@ -96,8 +100,8 @@ class DashboardConfig(Config):
 
 
 class ComparisonDashboardConfig(Config):
-    run_ref_a: str
-    run_ref_b: str
+    run_ref: str
+    description: str = "Comparison Dashboard"
 
 
 # -----------------------------------------------------------------------------

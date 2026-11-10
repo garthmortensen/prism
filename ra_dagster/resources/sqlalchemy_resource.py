@@ -2,13 +2,12 @@
 Resource: sqlalchemy_resource.py
 Description:
     Provides a unified SQLAlchemy engine for database access.
-    - Abstracts connection details for DuckDB (Dev) and Snowflake (Prod).
+    - Abstracts connection details for PostgreSQL (Dev) and Snowflake (Prod).
     - Manages environment-specific configuration via `DATABASE_URL`.
 
 Usage:
     Injected into assets to provide `database.get_engine()`.
 """
-from pathlib import Path
 from dagster import resource
 from sqlalchemy import create_engine, Engine
 import os
@@ -21,9 +20,8 @@ class SqlAlchemyResource:
         if self.database == "dev":
             url = os.getenv("DATABASE_URL")
             if not url:
-                # Fallback to local duckdb
-                db_path = Path(__file__).resolve().parents[2] / "risk_adjustment.duckdb"
-                url = f"duckdb:///{db_path}"
+                # Fallback to local PostgreSQL (Docker)
+                url = "postgresql://ra_user:ra_pass@localhost:5432/ra_database"
             return create_engine(url)
         elif self.database == "prod":
             url = os.getenv("DATABASE_URL")

@@ -6,11 +6,16 @@ with raw_enrollments as (
 ),
 
 simulations as (
-    select unnest(generate_series(1, 50)) as sim_id
+    select generate_series(1, 50) as sim_id
 )
 
 select 
-    e.* exclude (member_id),
+    e.enrollment_id,
+    e.plan_id,
+    e.start_date,
+    e.end_date,
+    e.premium_paid,
+    e.csr_variant,
     e.member_id || '_sim_' || s.sim_id as member_id,
     s.sim_id
 from raw_enrollments e

@@ -1,0 +1,47 @@
+version: '3.8'
+
+# Prism Infrastructure - PostgreSQL Only
+# 
+# Launch:
+#   podman-compose -f infrastructure/docker-compose.yml up -d
+#
+# What starts:
+#   - PostgreSQL database (port 5432)
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: prism-postgres
+    command: >
+      postgres
+      -c fsync=off
+      -c synchronous_commit=off
+      -c full_page_writes=off
+    environment:
+      POSTGRES_USER: ra_user
+      POSTGRES_PASSWORD: ra_pass
+      POSTGRES_DB: ra_database
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ../ra_dbt/seeds_data:/mnt/seeds:ro,z
+      - ../scripts:/docker-entrypoint-initdb.d/scripts:z
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ra_user -d ra_database"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - prism-network
+
+volumes:
+  postgres_data:
+    name: prism-postgres-data
+
+networks:
+  prism-network:
+    name: prism-network
+    driver: bridge

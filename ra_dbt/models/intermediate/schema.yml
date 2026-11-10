@@ -1,57 +1,6 @@
 version: 2
 
 models:
-  - name: int_risk_score_components
-    description: |
-      Normalized table storing each risk score component individually for full audit trail.
-      Each row represents a single component (demographic, HCC, RXC, or HCC group) with 
-      source data lineage and calculation metadata.
-      
-      This table enables:
-      - Granular analysis of score composition
-      - Tracking which diagnoses/NDCs contribute to scores
-      - Understanding hierarchy and grouping impacts
-      - Regulatory audit requirements
-      - Score change attribution
-    
-    columns:
-      - name: member_id
-        description: Unique member identifier
-        tests:
-          - not_null
-      
-      - name: run_timestamp
-        description: Timestamp identifying the scoring run
-        tests:
-          - not_null
-      
-      - name: calculator
-        description: Calculator used (e.g., 'aca_risk_score_calculator')
-      
-      - name: model_year
-        description: HHS-HCC model year (e.g., '2024')
-      
-      - name: risk_score
-        description: Total risk score for the member (same across all components for this member/run)
-      
-      - name: component_type
-        description: Type of score component
-        tests:
-          - not_null
-          - accepted_values:
-              arguments:
-                values: ['demographic', 'hcc', 'rxc', 'hcc_group', 'edf']
-      
-      - name: component_code
-        description: Variable name for this component (e.g., 'MAGE_LAST_55_59', 'HHS_HCC019', 'RXC_01', 'G01')
-        tests:
-          - not_null
-      
-      - name: coefficient_value
-        description: The risk score value contributed by this component
-        tests:
-          - not_null
-
   - name: int_member_months
     description: Calculated enrollment duration in months for each member. Capped at 12 months.
     columns:
@@ -77,6 +26,9 @@ models:
         tests:
           - unique
           - not_null
+          - relationships:
+              to: ref('int_member_months')
+              field: member_id
       - name: diagnosis_list
         description: Array of unique ICD-10 diagnosis codes for the member
 
@@ -88,6 +40,9 @@ models:
         tests:
           - unique
           - not_null
+          - relationships:
+              to: ref('int_member_months')
+              field: member_id
       - name: ndc_list
         description: Array of unique NDC codes for the member
 
@@ -102,6 +57,9 @@ models:
         tests:
           - unique
           - not_null
+          - relationships:
+              to: ref('int_member_months')
+              field: member_id
       - name: enrollment_months
         description: Number of months the member was enrolled
       - name: gender
@@ -114,31 +72,35 @@ models:
         description: List of diagnosis codes
       - name: ndc_codes
         description: List of NDC codes
-      
-      - name: source_diagnoses_or_ndcs
-        description: |
-          JSON array of source ICD-10 codes (for HCCs) or NDC codes (for RXCs) 
-          that triggered this component
-      
-      - name: was_superseded_by
-        description: If this component was zeroed by hierarchy, the dominant component code
-      
-      - name: superseded_components
-        description: JSON array of component codes that this component superseded via hierarchy
-      
-      - name: is_part_of_group
-        description: If this HCC was grouped, the group variable name (e.g., 'G01')
-      
-      - name: model_type
-        description: Model type (Adult, Child, Infant)
-      
+
+  - name: int_run_member_dimensions
+    description: |
+      Derived dimensional attributes for members within a specifc run. 
+      Used for slicing and dicing metrics by Age Band, HCC Count Band, etc.
+    columns:
+      - name: run_id
+        description: FK to the run registry
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: source('dagster_runs', 'run_registry')
+                field: run_id
+      - name: member_id
+        description: FK to the member
+        tests:
+          - not_null
+      - name: model
+        description: The model version utilized (e.g., 'V05').
+      - name: gender
+        description: Member gender.
       - name: metal_level
-        description: Plan metal level (platinum, gold, silver, bronze, catastrophic)
-      
-      - name: table_references
-        description: |
-          JSON object tracking which DIY tables were used in the calculation
-          (e.g., table_3 for ICD mapping, table_4 for hierarchy, table_9 for coefficients)
-      
-      - name: created_at
-        description: Timestamp when this record was created
+        description: Metal level of the plan.
+      - name: enrollment_months
+        description: Duration of enrollment (1-12).
+      - name: age_band
+        description: Age bucket (0-17, 18-29, etc.)
+      - name: hcc_count_band
+        description: Bucketed count of HCCs (0, 1, 2, 3+)
+      - name: has_rxc
+        description: "'Yes' if the member triggered any RXC, else 'No'"

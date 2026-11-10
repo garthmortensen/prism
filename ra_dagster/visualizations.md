@@ -96,7 +96,7 @@ flowchart TB
 -- Guard: ensure 1 row per driver_name and ensure Interaction exists.
 WITH s AS (
   SELECT driver_name, impact_value
-  FROM main_analytics.decomposition_scenarios
+  FROM analytics.decomposition_scenarios
   WHERE batch_id = '92c6a354-b9af-494f-a97c-d6ee4b3b17c9'
 )
 SELECT
@@ -115,7 +115,7 @@ SELECT
   json_extract_string(blueprint_yml, '$.population_mode')   AS population_mode,
   json_extract_string(blueprint_yml, '$.metric')            AS metric,
   json_extract_string(blueprint_yml, '$.method')            AS method
-FROM main_runs.run_registry
+FROM dag_runs.run_registry
 WHERE run_id = '92c6a354-b9af-494f-a97c-d6ee4b3b17c9';
 ```
 
@@ -130,14 +130,14 @@ WITH meta AS (
     json_extract_string(blueprint_yml, '$.run_id_baseline') AS run_id_baseline,
     json_extract_string(blueprint_yml, '$.run_id_actual')   AS run_id_actual,
     COALESCE(json_extract_string(blueprint_yml, '$.population_mode'), 'intersection') AS population_mode
-  FROM main_runs.run_registry
+  FROM runs.run_registry
   WHERE run_id = '92c6a354-b9af-494f-a97c-d6ee4b3b17c9'
 ),
 A AS (
-  SELECT member_id FROM main_runs.risk_scores WHERE run_id = (SELECT run_id_baseline FROM meta)
+  SELECT member_id FROM dag_runs.risk_scores WHERE run_id = (SELECT run_id_baseline FROM meta)
 ),
 B AS (
-  SELECT member_id FROM main_runs.risk_scores WHERE run_id = (SELECT run_id_actual FROM meta)
+  SELECT member_id FROM runs.risk_scores WHERE run_id = (SELECT run_id_actual FROM meta)
 )
 SELECT
   (SELECT population_mode FROM meta) AS population_mode,
@@ -153,12 +153,12 @@ sql
 -- (Uses epsilon to avoid float noise counting as a change.)
 WITH A AS (
   SELECT member_id, risk_score AS score_a
-  FROM main_runs.risk_scores
+  FROM dag_runs.risk_scores
   WHERE run_id = 'bab52996-dd30-421a-9981-fbeabf5df52f'
 ),
 B AS (
   SELECT member_id, risk_score AS score_b
-  FROM main_runs.risk_scores
+  FROM dag_runs.risk_scores
   WHERE run_id = 'b42d2356-5fc4-4e03-90c2-21ed10025a4d'
 ),
 J AS (
@@ -182,17 +182,17 @@ WITH meta AS (
     json_extract_string(blueprint_yml, '$.run_id_baseline') AS run_id_baseline,
     json_extract_string(blueprint_yml, '$.run_id_actual')   AS run_id_actual,
     COALESCE(json_extract_string(blueprint_yml, '$.population_mode'), 'intersection') AS population_mode
-  FROM main_runs.run_registry
+  FROM runs.run_registry
   WHERE run_id = '92c6a354-b9af-494f-a97c-d6ee4b3b17c9'
 ),
 A AS (
   SELECT member_id, risk_score AS score_a
-  FROM main_runs.risk_scores
+  FROM runs.risk_scores
   WHERE run_id = (SELECT run_id_baseline FROM meta)
 ),
 B AS (
   SELECT member_id, risk_score AS score_b
-  FROM main_runs.risk_scores
+  FROM dag_runs.risk_scores
   WHERE run_id = (SELECT run_id_actual FROM meta)
 ),
 total_change AS (
@@ -207,7 +207,7 @@ total_change AS (
 ),
 sum_impacts AS (
   SELECT SUM(impact_value) AS delta_mean
-  FROM main_analytics.decomposition_scenarios
+  FROM analytics.decomposition_scenarios
   WHERE batch_id = '92c6a354-b9af-494f-a97c-d6ee4b3b17c9'
 )
 SELECT
@@ -231,7 +231,7 @@ Auto-filled example comparison batch: `9b41c01e-5c4a-4a2f-9bbc-a2cfcc92749c`
 -- Note: this warehouse uses match_status='matched' (older versions used 'both').
 WITH diffs AS (
   SELECT score_diff
-  FROM main_analytics.run_comparison
+  FROM analytics.run_comparison
   WHERE batch_id = '9b41c01e-5c4a-4a2f-9bbc-a2cfcc92749c'
     AND match_status IN ('matched', 'both')
     AND score_diff IS NOT NULL
@@ -280,7 +280,7 @@ xychart-beta
 Auto-filled example comparison batch: `9b41c01e-5c4a-4a2f-9bbc-a2cfcc92749c`
 
 Notes:
-- These groupings join to `main_runs.risk_scores` for **run B** to pull demographics (gender/metal/enrollment).
+- These groupings join to `runs.risk_scores` for **run B** to pull demographics (gender/metal/enrollment).
 - `% changed` here is `ABS(score_diff) > 1e-6` within matched members.
 
 ### By gender
@@ -288,19 +288,19 @@ Notes:
 ```sql
 WITH meta AS (
   SELECT any_value(run_id_b) AS run_id_b
-  FROM main_analytics.run_comparison
+  FROM analytics.run_comparison
   WHERE batch_id = '9b41c01e-5c4a-4a2f-9bbc-a2cfcc92749c'
 ),
 C AS (
   SELECT member_id, score_diff
-  FROM main_analytics.run_comparison
+  FROM analytics.run_comparison
   WHERE batch_id = '9b41c01e-5c4a-4a2f-9bbc-a2cfcc92749c'
     AND match_status IN ('matched','both')
     AND score_diff IS NOT NULL
 ),
 B AS (
   SELECT member_id, gender
-  FROM main_runs.risk_scores
+  FROM runs.risk_scores
   WHERE run_id = (SELECT run_id_b FROM meta)
 )
 SELECT
@@ -327,19 +327,19 @@ xychart-beta
 ```sql
 WITH meta AS (
   SELECT any_value(run_id_b) AS run_id_b
-  FROM main_analytics.run_comparison
+  FROM analytics.run_comparison
   WHERE batch_id = '9b41c01e-5c4a-4a2f-9bbc-a2cfcc92749c'
 ),
 C AS (
   SELECT member_id, score_diff
-  FROM main_analytics.run_comparison
+  FROM analytics.run_comparison
   WHERE batch_id = '9b41c01e-5c4a-4a2f-9bbc-a2cfcc92749c'
     AND match_status IN ('matched','both')
     AND score_diff IS NOT NULL
 ),
 B AS (
   SELECT member_id, metal_level
-  FROM main_runs.risk_scores
+  FROM runs.risk_scores
   WHERE run_id = (SELECT run_id_b FROM meta)
 )
 SELECT
@@ -366,19 +366,19 @@ xychart-beta
 ```sql
 WITH meta AS (
   SELECT any_value(run_id_b) AS run_id_b
-  FROM main_analytics.run_comparison
+  FROM analytics.run_comparison
   WHERE batch_id = '9b41c01e-5c4a-4a2f-9bbc-a2cfcc92749c'
 ),
 C AS (
   SELECT member_id, score_diff
-  FROM main_analytics.run_comparison
+  FROM analytics.run_comparison
   WHERE batch_id = '9b41c01e-5c4a-4a2f-9bbc-a2cfcc92749c'
     AND match_status IN ('matched','both')
     AND score_diff IS NOT NULL
 ),
 B AS (
   SELECT member_id, enrollment_months
-  FROM main_runs.risk_scores
+  FROM runs.risk_scores
   WHERE run_id = (SELECT run_id_b FROM meta)
 ),
 J AS (

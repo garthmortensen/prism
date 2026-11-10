@@ -14,16 +14,16 @@
 Member data in, decomposed risks out.
 
 - **1. Calculate member risk scores**  
-  Prepare `int_aca_risk_input` (dbt) → Score members (Python) → Persist to `main_runs.risk_scores`
+  Prepare `int_aca_risk_input` (dbt) → Score members (Python) → Persist to `runs.risk_scores`
 
 - **2. Register runs**  
-  Each execution is registered in `main_runs.run_registry` with provenance + config snapshot
+  Each execution is registered in `runs.run_registry` with provenance + config snapshot
 
 - **3. Compare runs**  
-  Compare two scoring runs (A vs B) → write deltas to `main_analytics.run_comparison`
+  Compare two scoring runs (A vs B) → write deltas to `analytics.run_comparison`
 
 - **4. Decompose changes**  
-  Multi-scenario decomposition → write steps to `main_analytics.decomposition_definitions` and values to `main_analytics.decomposition_scenarios`
+  Multi-scenario decomposition → write steps to `analytics.decomposition_definitions` and values to `analytics.decomposition_scenarios`
 
 ## Executive Summary
 
@@ -47,16 +47,17 @@ Member data in, decomposed risks out.
 
 #### Data Mart Schema Organization
 
-DuckDB tooling shows the `main_` prefix because `main` is the default database.
-This project documents *logical* layer names and treats `main_` prefixing as an implementation detail.
+The project uses PostgreSQL with the following schema organization:
 
-| Logical Layer | DuckDB Schema(s) you may see | Contents |
-| ------------- | ------------- | -------- |
-| `raw` | `raw` / `main_raw` | seeds + views over raw sources |
-| `staging` | `staging` / `main_staging` | cleaned/typed views |
-| `intermediate` | `intermediate` / `main_intermediate` | `int_aca_risk_input`, … |
-| `runs` | `main_runs` | `run_registry`, `risk_scores` (Dagster-managed) |
-| `analytics` | `main_analytics` | `run_comparison`, `decomposition_*` (Dagster-managed) |
+| Logical Layer | PostgreSQL Schema | Contents |
+| ------------- | ----------------- | -------- |
+| `raw` | `raw` | seeds + views over raw sources |
+| `staging` | `staging` | cleaned/typed views |
+| `intermediate` | `intermediate` | `int_aca_risk_input`, … |
+| `marts` | `public` | final output tables/views |
+| `quality` | `quality` | data quality tests |
+| `runs` | `runs` | `run_registry`, `risk_scores` (Dagster-managed) |
+| `analytics` | `analytics` | `run_comparison`, `decomposition_*` (Dagster-managed) |
 
 #### dbt materializations
 
@@ -74,8 +75,8 @@ This project documents *logical* layer names and treats `main_` prefixing as an 
 - `launchpad_config` / `blueprint_yml`: config snapshots persisted for reproducibility
 - `git_*`: git provenance
 
-Implementation note: `main_runs.run_registry` is the source of truth for run metadata.
-Atomic run outputs live in `main_runs` (e.g., `main_runs.risk_scores`), and downstream derived tables live in `main_analytics` (e.g., `main_analytics.run_comparison`, `main_analytics.decomposition_definitions`, `main_analytics.decomposition_scenarios`).
+Implementation note: `runs.run_registry` is the source of truth for run metadata.
+Atomic run outputs live in `runs` (e.g., `runs.risk_scores`), and downstream derived tables live in `analytics` (e.g., `analytics.run_comparison`, `analytics.decomposition_definitions`, `analytics.decomposition_scenarios`).
 
 ### Schema features built-in reproducibility
 
@@ -93,7 +94,7 @@ SELECT
   git_commit_short,
   launchpad_config,
   blueprint_yml
-FROM main_runs.run_registry
+FROM runs.run_registry
 ORDER BY created_at DESC
 LIMIT 20;
 ```
@@ -151,7 +152,7 @@ make test     # Run tests
 
 ### Core Output Tables
 
-The three primary downstream tables from `main_runs.run_registry` have a dependency hierarchy:
+The three primary downstream tables from `runs.run_registry` have a dependency hierarchy:
 
 1. **RISK_SCORES** is the base output — must exist for anything else
 2. **RUN_COMPARISON** compares two RISK_SCORES runs (needs `comparison_run_timestamp` reference)
@@ -159,9 +160,9 @@ The three primary downstream tables from `main_runs.run_registry` have a depende
 
 | Table | Granularity | Purpose |
 |-------|-------------|----------|
-| `main_runs.risk_scores` | member × run_timestamp | Raw scoring output per run |
-| `main_analytics.run_comparison` | member × run_timestamp_pair | Delta between two runs (FULL OUTER JOIN — includes members in A only, B only, or both) |
-| `main_analytics.decomposition` | analysis_id | Aggregate 4-run attribution |
+| `runs.risk_scores` | member × run_timestamp | Raw scoring output per run |
+| `analytics.run_comparison` | member × run_timestamp_pair | Delta between two runs (FULL OUTER JOIN — includes members in A only, B only, or both) |
+| `analytics.decomposition` | analysis_id | Aggregate 4-run attribution |
 
 ### Run Comparison Membership Matching
 
