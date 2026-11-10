@@ -45,7 +45,7 @@ help:
 	@echo "  make dbt-docs-serve Serve dbt docs locally"
 	@echo "  make dbt-deps      Install dbt packages"
 	@echo "  make dbt-clean     Clean dbt artifacts"
-	@echo "  make dbt-refresh   Stop/drop/restart DB, then run dbt build"
+	@echo "  make dbt-refresh   Drop DB volume, restart, bootstrap, seed, dbt build"
 	@echo ""
 	@echo "Services:"
 	@echo "  make dagster       Start Dagster dev server"
@@ -142,8 +142,13 @@ dbt-deps:
 dbt-clean:
 	cd ra_dbt && uv run dbt clean
 
-dbt-refresh: compose-down compose-up dbt-build
-	@echo "Database refreshed and dbt build complete"
+dbt-refresh:
+	podman-compose -f infrastructure/docker-compose.yml down -v
+	podman-compose -f infrastructure/docker-compose.yml up -d
+	@until podman-compose -f infrastructure/docker-compose.yml exec postgres pg_isready -U ra_user -d ra_database >/dev/null 2>&1; do echo "waiting for postgres..."; sleep 2; done
+	uv run python -m ra_dagster
+	cd ra_dbt && uv run dbt seed --full-refresh && uv run dbt build
+	@echo "Database reset, schemas bootstrapped, dbt build complete"
 
 # =============================================================================
 # Compose (Podman/Docker)

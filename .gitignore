@@ -58,6 +58,7 @@ dmypy.json
 
 # Database / Data
 *.db
+*.duckdb
 data/
 !data/.gitkeep
 

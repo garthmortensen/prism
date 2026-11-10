@@ -3,7 +3,7 @@ ops:
     config:
       run_ref_a: "9f776552-0171-4fc1-ada3-a2d8e39976a5"
       run_ref_b: "5b7e3047-0779-4281-a1d5-fe18b5c54d2a"
-      run_description: "Regulatory Cliff Analysis (V24 -> V28)"
+      run_description: "Regulatory Cliff (2024 data: 2023 vs 2024 HHS-HCC model)"
       metric: "mean"
       population_mode: "intersection"
 

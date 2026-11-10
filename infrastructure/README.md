@@ -45,12 +45,9 @@ podman-compose -f infrastructure/docker-compose.yml down
 podman-compose -f infrastructure/docker-compose.yml logs -f
 ```
 
-### Access Shells
+### Access the Database Shell
 
 ```bash
-# Prism application shell
-podman-compose -f infrastructure/docker-compose.yml exec prism bash
-
 # PostgreSQL shell
 podman-compose -f infrastructure/docker-compose.yml exec postgres psql -U ra_user -d ra_database
 ```

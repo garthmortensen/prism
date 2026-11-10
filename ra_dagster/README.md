@@ -2,24 +2,6 @@
 
 Orchestration layer for risk adjustment analytics using [Dagster](https://dagster.io/).
 
-history
-
-```sql
-select * from dag_analytics.run_comparison
-where batch_id  = '9b41c01e-5c4a-4a2f-9bbc-a2cfcc92749c';
-
-select * from dag_runs.risk_scores
-where run_id = '54fe57ac-39ed-4192-8049-e3e7abf91dae';
-
-select * from dag_runs.risk_scores
-where run_id = 'f852d3fc-43a7-4e4b-a31d-8c856ad89057';
-
-select * from dag_analytics.decomposition_definitions 
-where batch_id = '35a2841a-bbe3-4f9f-81bd-9e6fa4f9ed38';
-
-select * from dag_analytics.decomposition_scenarios
-where batch_id = '35a2841a-bbe3-4f9f-81bd-9e6fa4f9ed38';
-```
 
 ## Overview
 
@@ -30,16 +12,21 @@ where batch_id = '35a2841a-bbe3-4f9f-81bd-9e6fa4f9ed38';
 ```
 ra_dagster/
 ├── assets/          # Dagster assets (core analytics workflows)
-│   ├── scoring.py         → score_members_aca
-│   ├── comparison.py      → compare_runs
-│   └── decomposition.py   → decompose_runs
+│   ├── scoring.py             → score_members_aca
+│   ├── comparison.py          → compare_runs
+│   ├── decomposition.py       → decompose_runs
+│   ├── dashboard.py           → dashboard_metrics, dashboard_html
+│   ├── comparison_dashboard.py→ comparison_dashboard_*
+│   └── visualizations.py      → *_visualizations, lag_trend_visualizations
 ├── db/              # Database utilities
 │   ├── bootstrap.py       → Schema and table creation
 │   └── run_registry.py    → Run metadata management
 ├── resources/       # Dagster resources
-│   └── duckdb_resource.py → DuckDB connection management
+│   └── sqlalchemy_resource.py → PostgreSQL connection (SQLAlchemy)
 ├── utils/           # Helper utilities
 │   └── run_ids.py         → Run ID generation and git provenance
+├── configs/         # YAML launch configs (scoring, comparison, decomposition, dashboard)
+├── config_schemas.py # Pydantic config schemas for every asset
 ├── cli.py           # CLI commands (db-bootstrap)
 └── definitions.py   # Dagster definitions (assets, jobs, resources)
 ```
@@ -79,7 +66,7 @@ Every execution is tracked in the **run registry** (`dag_runs.run_registry`):
 ```mermaid
 graph TB
     subgraph "Setup Phase"
-    A[ra_dagster cli db-bootstrap] --> B[Create schemas:<br/>runs, analytics]
+    A[ra_dagster cli db-bootstrap] --> B[Create schemas:<br/>dag_runs, dag_analytics]
     B --> C[Create tables:<br/>dag_runs.run_registry,<br/>dag_runs.risk_scores,<br/>dag_analytics.run_comparison,<br/>dag_analytics.decomposition_*]
     end
 
@@ -239,24 +226,16 @@ uv run python -m ra_dagster
 make db-bootstrap
 ```
 
-**What it does:** Creates the required schemas (`runs`, `analytics`) and tables (`dag_runs.run_registry`, `dag_runs.risk_scores`, `dag_analytics.run_comparison`, `dag_analytics.decomposition_definitions`, `dag_analytics.decomposition_scenarios`) in the PostgreSQL warehouse. Run this once before executing any Dagster jobs.
+**What it does:** Creates the required schemas (`dag_runs`, `dag_analytics`) and tables (`dag_runs.run_registry`, `dag_runs.risk_scores`, `dag_analytics.run_comparison`, `dag_analytics.decomposition_definitions`, `dag_analytics.decomposition_scenarios`) in the PostgreSQL warehouse. Run this once before executing any Dagster jobs.
 
 ### 2. Start Dagster UI (Development)
 
 ```bash
-
 # From project root
-dagster dev -f ra_dagster/definitions.py
+make dagster
 
-# If your environment provides the newer Dagster CLI, you can use this instead:
-# dg dev -f ra_dagster/definitions.py
-
-
-# Or with custom port
-dagster dev -f ra_dagster/definitions.py -p 3001
-
-# Or with newer CLI:
-# dg dev -f ra_dagster/definitions.py -p 3001
+# Equivalent, with a custom port
+export DAGSTER_HOME=$(pwd)/.dagster_home && uv run dagster dev -m ra_dagster.definitions -p 3001
 ```
 
 Access the Dagster UI at: `http://localhost:3000`
@@ -274,12 +253,12 @@ dagster job launch scoring_job \
 # Launch comparison job
 dagster job launch comparison_job \
   -f ra_dagster/definitions.py \
-  --config '{"ops": {"compare_runs": {"config": {"run_id_a": "00ebabaf-c761-4e88-a1a1-a5fe6d7b0f1c", "run_id_b": "01d45526-3798-48f6-88e7-7699baccb287"}}}}'
+  --config '{"ops": {"compare_runs": {"config": {"run_ref_a": "00ebabaf-c761-4e88-a1a1-a5fe6d7b0f1c", "run_ref_b": "01d45526-3798-48f6-88e7-7699baccb287"}}}}'
 
 # Launch decomposition job
 dagster job launch decomposition_job \
   -f ra_dagster/definitions.py \
-  -c ra_dagster/configs/decomposition_example.yaml
+  -c ra_dagster/configs/decomposition/decomposition_example.yaml
 ```
 
 ## Usage Examples
@@ -293,8 +272,8 @@ dagster job launch scoring_job \
     "ops": {
       "score_members_aca": {
         "config": {
-          "model_year": "2024",
-          "member_age_basis_year": 2024,
+          "diy_model_year": "2024",
+          "member_age_basis_year": "2024",
           "run_description": "2024 baseline scoring",
           "group_description": "Q4 2024 analysis"
         }
@@ -320,8 +299,8 @@ dagster job launch comparison_job \
     "ops": {
       "compare_runs": {
         "config": {
-          "run_id_a": "00ebabaf-c761-4e88-a1a1-a5fe6d7b0f1c",
-          "run_id_b": "01d45526-3798-48f6-88e7-7699baccb287",
+          "run_ref_a": "00ebabaf-c761-4e88-a1a1-a5fe6d7b0f1c",
+          "run_ref_b": "01d45526-3798-48f6-88e7-7699baccb287",
           "run_description": "Compare 2023 vs 2024 model"
         }
       }
@@ -340,31 +319,23 @@ dagster job launch comparison_job \
 
 **Using a YAML config file (Recommended):**
 
-Create a config file (e.g., `ra_dagster/configs/decomposition_example.yaml`):
+Create a config file (e.g., `ra_dagster/configs/decomposition/decomposition_example.yaml`):
 
 ```yaml
 ops:
   decompose_runs:
     config:
-      scenarios:
-        baseline_2024: "00ebabaf-c761-4e88-a1a1-a5fe6d7b0f1c"
-        coeffs_2025:   "01d45526-3798-48f6-88e7-7699baccb287"
-        popmix_2025:   "12a11736-c06b-4f72-9a28-937423b6c03f"
-        actual_2025:   "2db22e4a-a787-4132-bea8-3e5f4226066d"
-
-      analysis:
-        method: marginal
-        run_description: "2024 vs 2025 Marginal Analysis"
-        metric: mean
-        population_mode: intersection
-        baseline: baseline_2024
-        actual: actual_2025
-        components:
-          - name: "Model Change"
-            scenario: coeffs_2025
-          - name: "Population Mix"
-            scenario: popmix_2025
-            population_mode: scenario_population
+      baseline_run_ref: "00ebabaf-c761-4e88-a1a1-a5fe6d7b0f1c"   # 2024 data / 2024 model
+      actual_run_ref:   "2db22e4a-a787-4132-bea8-3e5f4226066d"   # 2025 data / 2025 model
+      run_description: "2024 vs 2025 Marginal Analysis"
+      population_mode: intersection
+      components:
+        - name: "Model Change"            # 2024 data / 2025 model
+          run_ref: "01d45526-3798-48f6-88e7-7699baccb287"
+          population_mode: intersection
+        - name: "Population Mix"          # 2025 data / 2024 model
+          run_ref: "12a11736-c06b-4f72-9a28-937423b6c03f"
+          population_mode: scenario_population
 ```
 
 Run the job:
@@ -372,14 +343,14 @@ Run the job:
 ```bash
 dagster job launch decomposition_job \
   -f ra_dagster/definitions.py \
-  -c ra_dagster/configs/decomposition_example.yaml
+  -c ra_dagster/configs/decomposition/decomposition_example.yaml
 ```
 
-**Note:** The decomposition asset expects `scenarios` + `analysis` (see `ra_dagster/configs/decomposition_example.yaml`).
+**Note:** The decomposition asset expects `baseline_run_ref`, `actual_run_ref`, and `components` (see `ra_dagster/configs/decomposition/decomposition_example.yaml`).
 
 **What happens:**
 1. Reads scores from baseline, actual, and all component runs
-2. Computes effects based on `method` (marginal)
+2. Computes each component's marginal effect against the baseline
 3. Writes decomposition to `dag_analytics.decomposition_scenarios` and `dag_analytics.decomposition_definitions`
 4. Records decomposition run in `run_registry`
 
@@ -397,16 +368,18 @@ dagster job launch decomposition_job \
 | `group_description` | str | No | Description of the analysis group |
 | `run_description` | str | No | Description of this specific run |
 | `trigger_source` | str | No | Who/what triggered the run (defaults to "dagster") |
-| `claims_view` | str | No | Optional fully-qualified view to source claims from (e.g., `main_raw.raw_claims_2024`). If set, you must also set `enrollments_view` and `members_view`. |
-| `enrollments_view` | str | No | Optional fully-qualified view to source enrollments from (e.g., `main_raw.raw_enrollments_2024`). |
-| `members_view` | str | No | Optional fully-qualified view to source members from (e.g., `main_raw.raw_members_2024`). |
+| `claims_view` | str | No | Optional fully-qualified view to source claims from (e.g., `dbt_raw.raw_claims_2024`). If set, you must also set `enrollments_view` and `members_view`. |
+| `enrollments_view` | str | No | Optional fully-qualified view to source enrollments from (e.g., `dbt_raw.raw_enrollments_2024`). |
+| `members_view` | str | No | Optional fully-qualified view to source members from (e.g., `dbt_raw.raw_members_2024`). |
 
 ### `compare_runs` Config
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `run_id_a` | str | Yes | First run ID (Dagster UUID) to compare |
-| `run_id_b` | str | Yes | Second run ID (Dagster UUID) to compare |
+| `run_ref_a` | str | Yes | First run to compare (run UUID or human-readable `user_ref`) |
+| `run_ref_b` | str | Yes | Second run to compare |
+| `metric` | str | No | `mean` or `sum` (default `mean`) |
+| `population_mode` | str | No | `intersection`, `union`, `a_only`, `b_only` |
 | `group_id` | int | No | Link to existing group |
 | `run_description` | str | No | Description of comparison |
 
@@ -414,8 +387,10 @@ dagster job launch decomposition_job \
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `scenarios` | dict | Yes | Map scenario keys to scoring `run_id` UUIDs |
-| `analysis` | dict | Yes | Decomposition definition (method/metric/population/baseline/actual/components) |
+| `baseline_run_ref` | str | Yes | Starting run |
+| `actual_run_ref` | str | Yes | Ending run |
+| `components` | list | Yes | Named driver runs (`name`, `run_ref`, optional `population_mode`) |
+| `population_mode` | str | No | Default join mode for components (default `intersection`) |
 | `group_id` | int | No | Link to existing group |
 | `run_description` | str | No | Description of decomposition |
 
@@ -511,18 +486,6 @@ LIMIT 10;
 
 ## Advanced Topics
 
-### Custom DuckDB Path
-
-Override the default DuckDB path:
-
-```python
-# In your Dagster config
-resources:
-  duckdb:
-    config:
-      path: /custom/path/to/database.duckdb
-```
-
 ### Git Provenance
 
 All runs automatically capture git provenance:
@@ -558,7 +521,7 @@ config = {
 
 ## Troubleshooting
 
-### Error: "Schema main_meta does not exist"
+### Error: "Schema dag_runs does not exist"
 
 Run the bootstrap command:
 

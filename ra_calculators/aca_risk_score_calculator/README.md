@@ -16,10 +16,10 @@ This calculator implements the CMS HHS-HCC risk adjustment model used to calcula
 
 ## Usage
 
-You can run the calculator directly from the command line to process data from DuckDB and export scores to CSV:
+You can run the calculator directly from the command line to process data from PostgreSQL and export scores to CSV:
 
 ```bash
-uv run python -m ra_calculators.aca_risk_score_calculator.duckdb_to_csv \
+uv run python -m ra_calculators.aca_risk_score_calculator.postgresdb_to_csv \
   --model-year 2024
 ```
 
