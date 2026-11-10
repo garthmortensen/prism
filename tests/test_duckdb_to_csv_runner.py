@@ -85,8 +85,8 @@ def test_duckdb_to_csv_runner_smoke(tmp_path: Path) -> None:
         assert r["hcc_list"] is not None
 
 
-def test_duckdb_to_csv_runner_coerces_invalid_gender(tmp_path: Path) -> None:
-    """Test that invalid genders are coerced when configured."""
+def test_duckdb_to_csv_runner_randomizes_invalid_gender(tmp_path: Path) -> None:
+    """Test that invalid genders are randomly assigned M/F when configured."""
     duckdb_path = tmp_path / "risk_adjustment.duckdb"
     out_csv = tmp_path / "scores.csv"
 
@@ -141,8 +141,7 @@ def test_duckdb_to_csv_runner_coerces_invalid_gender(tmp_path: Path) -> None:
         schema="main_intermediate",
         table="int_aca_risk_input",
         limit=None,
-        invalid_gender="coerce",
-        coerce_gender="M",
+        invalid_gender="random",
     )
 
     assert written == 2

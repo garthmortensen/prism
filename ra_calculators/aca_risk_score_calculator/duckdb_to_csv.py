@@ -43,7 +43,6 @@ def score_from_duckdb_to_csv(
     table: str = "int_aca_risk_input",
     limit: int | None = None,
     invalid_gender: str = "skip",
-    coerce_gender: str | None = None,
 ) -> int:
     """Read member inputs from DuckDB and write ACA risk scores to CSV.
 
@@ -73,7 +72,6 @@ def score_from_duckdb_to_csv(
         members, stats = rows_to_member_inputs(
             rows,
             invalid_gender=invalid_gender,
-            coerce_gender=coerce_gender,
         )
 
         calculator = ACACalculator(model_year=model_year)
@@ -212,15 +210,9 @@ def _build_arg_parser() -> argparse.ArgumentParser:
 
     p.add_argument(
         "--invalid-gender",
-        choices=["skip", "coerce"],
+        choices=["skip", "random", "error"],
         default="skip",
-        help="What to do if gender is not M/F: skip row or coerce",
-    )
-    p.add_argument(
-        "--coerce-gender",
-        choices=["M", "F"],
-        default=None,
-        help="When --invalid-gender=coerce, coerce invalid genders to this value",
+        help="What to do if gender is not M/F: skip the row, assign M/F at random, or raise",
     )
     return p
 
@@ -247,7 +239,6 @@ def main(argv: list[str] | None = None) -> int:
         table=str(args.table),
         limit=args.limit,
         invalid_gender=str(args.invalid_gender),
-        coerce_gender=str(args.coerce_gender) if args.coerce_gender else None,
     )
 
     print(f"Wrote {count} rows to {Path(output_csv).expanduser().resolve()}")

@@ -1,8 +1,7 @@
 .PHONY: help init install sync lock hooks commit \
         lint format test test-cov ci \
-        dagster dbt-run dbt-test dbt-build dbt-seed dbt-compile dbt-docs dbt-docs-serve dbt-deps dbt-clean \
-        build run stop logs shell compose-up compose-down compose-logs \
-        db-shell clean
+        dagster db-bootstrap db-shell db-refresh dbt-run dbt-test dbt-build dbt-seed dbt-compile dbt-docs dbt-docs-serve dbt-deps dbt-clean \
+        build run stop logs shell clean
 
 # Default target
 help:
@@ -50,6 +49,7 @@ help:
 	@echo "  make dagster       Start Dagster dev server"
 	@echo "  make db-bootstrap  Initialize DuckDB warehouse schemas"
 	@echo "  make db-shell      Open DuckDB interactive shell"
+	@echo "  make db-refresh    Delete DuckDB file, bootstrap, seed, dbt build"
 	@echo ""
 	@echo "Container:"
 	@echo "  make build         Build container image"
@@ -57,11 +57,6 @@ help:
 	@echo "  make stop          Stop container"
 	@echo "  make logs          View container logs"
 	@echo "  make shell         Shell into container"
-	@echo ""
-	@echo "Compose:"
-	@echo "  make compose-up    Start all services"
-	@echo "  make compose-down  Stop all services"
-	@echo "  make compose-logs  View logs from all services"
 	@echo ""
 	@echo "Cleanup:"
 	@echo "  make clean         Remove build artifacts"
@@ -121,7 +116,13 @@ db-bootstrap:
 	uv run python -m ra_dagster.cli db-bootstrap
 
 db-shell:
-	uv run duckdb data/risk_adjustment.duckdb
+	uv run duckdb risk_adjustment.duckdb
+
+db-refresh:
+	rm -f risk_adjustment.duckdb risk_adjustment.duckdb.wal
+	uv run python -m ra_dagster.cli db-bootstrap
+	cd ra_dbt && uv run dbt seed --full-refresh && uv run dbt build
+	@echo "Database reset, schemas bootstrapped, dbt build complete"
 
 # =============================================================================
 # dbt
@@ -178,19 +179,6 @@ logs:
 
 shell:
 	podman exec -it $(CONTAINER_NAME) /bin/bash
-
-# =============================================================================
-# Compose (Podman)
-# =============================================================================
-
-compose-up:
-	podman-compose up -d
-
-compose-down:
-	podman-compose down
-
-compose-logs:
-	podman-compose logs -f
 
 # =============================================================================
 # Cleanup

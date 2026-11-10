@@ -9,36 +9,10 @@ Description:
 Usage:
     Executed via the `comparison_job` in Dagster.
 """
-from __future__ import annotations
-
 import getpass
 from pathlib import Path
 
-from dagster import asset, ResourceParam
-
-from ra_dagster.db.bootstrap import ensure_prism_warehouse, now_utc
-from ra_dagster.db.run_registry import (
-    RunRecord,
-    allocate_group_id,
-    allocate_run_seq,
-    insert_run,
-    update_run_status,
-    resolve_run_id,
-)
-from ra_dagster.utils.run_refs import generate_run_ref
-from ra_dagster.resources.sqlalchemy_resource import SqlAlchemyResource
-from ra_dagster.utils.run_ids import (
-    extract_launchpad_config,
-    generate_run_timestamp,
-    get_git_provenance,
-    json_dumps,
-)
-from sqlalchemy import text
-
-
-from pathlib import Path
-
-from dagster import AssetExecutionContext, asset, ResourceParam
+from dagster import AssetExecutionContext, ResourceParam, asset
 from sqlalchemy import text
 
 from ra_dagster.config_schemas import ComparisonConfig
@@ -48,9 +22,18 @@ from ra_dagster.db.run_registry import (
     allocate_group_id,
     allocate_run_seq,
     insert_run,
-    update_run_status,
     resolve_run_id,
+    update_run_status,
 )
+from ra_dagster.resources.sqlalchemy_resource import SqlAlchemyResource
+from ra_dagster.utils.run_ids import (
+    extract_launchpad_config,
+    generate_run_timestamp,
+    get_git_provenance,
+    json_dumps,
+)
+from ra_dagster.utils.run_refs import generate_run_ref
+
 
 @asset
 def compare_runs(context: AssetExecutionContext, config: ComparisonConfig, database: ResourceParam[SqlAlchemyResource]) -> None:

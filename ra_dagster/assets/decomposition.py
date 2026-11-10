@@ -9,32 +9,29 @@ Description:
 Usage:
     Executed via the `decomposition_job` in Dagster.
 """
-from __future__ import annotations
-
 import getpass
 from pathlib import Path
 
-from dagster import asset, ResourceParam, AssetExecutionContext
+from dagster import AssetExecutionContext, ResourceParam, asset
+from sqlalchemy import text
 
+from ra_dagster.config_schemas import DecompositionConfig
 from ra_dagster.db.bootstrap import ensure_prism_warehouse, now_utc
 from ra_dagster.db.run_registry import (
     RunRecord,
     allocate_group_id,
     allocate_run_seq,
     insert_run,
-    update_run_status,
     resolve_run_id,
+    update_run_status,
 )
-from ra_dagster.utils.run_refs import generate_run_ref
 from ra_dagster.resources.sqlalchemy_resource import SqlAlchemyResource
 from ra_dagster.utils.run_ids import (
     extract_launchpad_config,
     generate_run_timestamp,
     get_git_provenance,
 )
-from sqlalchemy import text
-
-from ra_dagster.config_schemas import DecompositionConfig
+from ra_dagster.utils.run_refs import generate_run_ref
 
 
 @asset
